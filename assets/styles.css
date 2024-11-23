@@ -1,0 +1,15 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+.patched-bg {
+  background: rgba(var(--v-theme-surface), .9)!important;
+}
+.min-h-70-vh {
+  min-height: 70vh;
+}
+
+.war-header > .w3-colored:first-of-type {
+  font-size: 1.6rem;
+}
