@@ -1,332 +1,466 @@
 import {
   abilitiesParser,
+  itemsParser,
   unitsParser,
-  unitWeapons,
+  Upgrades,
   upgradesParser,
-  upgradeData,
-  unitBalance,
 } from './objects';
-import { alliances } from './constants';
 import { W3Object } from './utils';
 import { hotkeys } from '~/utils/constants';
-import { scriptParser } from './script';
 import { ImageProcessor } from './images';
 import { writeFile, copyFile } from 'fs/promises';
 import { resolve } from 'path';
 import type {
+  IArtifactData,
+  IArtifactObject,
+  IBaseObject,
+  IBaseUltimateObject,
   IBuildingObject,
+  IDataFile,
   IRaceData,
   IRacePickerObject,
+  IRawPatchData,
   IRawRace,
+  IUltimateObject,
+  IUltimatesData,
   IUpgradeObject,
 } from '~/data/types';
 import { isNotNil } from '~/utils/guards';
 import { mapObject } from '~/utils/object';
+import { v4 as uuid } from 'uuid';
 
-export const raceParser = async () => {
-  const alliancesIDs = alliances
-    .map((all) => unitsParser.findIDByKey('nam', all))
-    .filter(isNotNil);
+const outputDir = resolve(process.cwd(), 'dataGenerated');
 
-  const racesMap = await scriptParser.getRaceIDs(alliancesIDs);
+const imgProcessor = new ImageProcessor(
+  resolve(process.cwd(), 'dataMap'),
+  outputDir
+);
 
-  const imagePaths = Object.values(racesMap)
-    .flat()
-    .reduce((acc, raceID) => {
-      const raceDesc = unitsParser.getById(raceID);
-      if (!raceDesc) return acc;
-      const path = raceDesc.getValueByKey('ico');
-      if (path) {
-        acc[raceID] = path;
-      }
-      return acc;
-    }, {} as Record<string, string>);
+export class SurvivalChaosParser {
+  constructor(private data: IRawPatchData) {}
 
-  const imgProcessor = new ImageProcessor(resolve(process.cwd(), 'dataMap'));
-
-  const racesCoords = await imgProcessor.processImages(imagePaths, 'races');
-
-  const racesData = await alliancesIDs.reduce(
-    async (allianceAcc, allianceID) => {
-      const prevAllianceAcc = await allianceAcc;
-      const allianceName = alliances[alliancesIDs.indexOf(allianceID)];
-      prevAllianceAcc[allianceName] = await racesMap[allianceID].reduce(
-        async (racesAcc, raceId) => {
-          const prevRacesAcc = await racesAcc;
-
-          const raceObj = unitsParser.getById(raceId);
-
-          const description = raceObj?.getValueByKey('tub');
-          const rawRaceData = scriptParser.getRaceData(raceId);
-          if (!rawRaceData) return prevRacesAcc;
-          const [raceData, raceIcons] = tokenizeRaceData(
-            rawRaceData,
-            description
-          );
-
-          const raceIconsCoords = await imgProcessor.processImages(
-            raceIcons,
-            `${raceData.key}`
-          );
-
-          await writeFile(
-            resolve(process.cwd(), 'dataGenerated', `${raceData.key}.json`),
-            JSON.stringify({ data: raceData, icons: raceIconsCoords }),
-            { encoding: 'utf8' }
-          );
-
-          prevRacesAcc.push({
-            id: raceId,
-            description,
-            key: raceData.key,
-            name: raceData.name,
-            hotkey: raceObj?.getValueByKey('hot'),
-          });
-
-          return prevRacesAcc;
-        },
-        Promise.resolve([]) as Promise<IRacePickerObject[]>
-      );
-      return prevAllianceAcc;
-    },
-    Promise.resolve({}) as Promise<Record<string, IRacePickerObject[]>>
-  );
-
-  await writeFile(
-    resolve(process.cwd(), 'dataGenerated', 'races.json'),
-    JSON.stringify({ data: racesData, icons: racesCoords }),
-    { encoding: 'utf8' }
-  );
-
-  await copyFile(
-    resolve(process.cwd(), 'generator', 'index.ts.example'),
-    resolve(process.cwd(), 'dataGenerated', 'index.ts')
-  );
-};
-
-const getUpgradeCost = (upgrade: W3Object, skipLast = false) => {
-  let basePrice = Number(upgrade.getValueByKey('glb')) ?? 0;
-
-  if (!basePrice) {
-    const baseData = upgradeData.find(
-      ({ upgradeid }) => upgradeid === upgrade.id
-    );
-    basePrice = Number(baseData?.goldbase ?? 0);
+  async generate() {
+    await this.parseRaces();
+    await this.parseUltimates();
+    await this.parseArtifacts();
   }
 
-  const addiction = Number(upgrade.getValueByKey('glm'));
-  return Array.from(
-    {
-      length: upgrade.getMaxLevel() - (skipLast ? 1 : 0),
-    },
-    (_, idx) => basePrice + idx * addiction
-  );
-};
+  private async parseRaces() {
+    const racesMap = this.data.pickers;
 
-const getBuilding = (id: string): IBuildingObject => {
-  return unitsParser.getById(id)?.withInstance((instance) => {
-    const attackType = instance.getValueByKey('a1t');
-    if (attackType) {
-      return {
-        attackType: instance.getValueByKey('a1t'),
-      };
-    }
-    const origId = instance.getValueByKey('origId') ?? id;
-    const originalUnit = unitWeapons.find(
-      ({ unitWeaponID }) => unitWeaponID === origId
+    const imagePaths = Object.values(racesMap)
+      .flat()
+      .reduce((acc, raceID) => {
+        const raceDesc = unitsParser.getById(raceID);
+        if (!raceDesc) return acc;
+        const path = raceDesc.getIcon();
+        if (path) {
+          acc[raceID] = path;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+
+    const racesCoords = await imgProcessor.processImages(imagePaths, 'races');
+
+    const racesData = await Object.keys(racesMap).reduce(
+      async (allianceAcc, allianceID) => {
+        const prevAllianceAcc = await allianceAcc;
+        const allianceName = unitsParser.getById(allianceID)?.getName() ?? '';
+        prevAllianceAcc[allianceName] = await racesMap[allianceID].reduce(
+          async (racesAcc, raceId) => {
+            const prevRacesAcc = await racesAcc;
+
+            const raceObj = unitsParser.getById(raceId);
+
+            const description = raceObj?.getValueByKey('tub');
+            const rawRaceData = this.data.races.find(({ id }) => id === raceId);
+            if (!rawRaceData) return prevRacesAcc;
+            const [raceData, raceIcons] = this.tokenizeRaceData(
+              rawRaceData,
+              description
+            );
+
+            const raceIconsCoords = await imgProcessor.processImages(
+              raceIcons,
+              `${raceData.key}`
+            );
+
+            await writeFile(
+              resolve(outputDir, `${raceData.key}.json`),
+              JSON.stringify({ data: raceData, icons: raceIconsCoords }),
+              { encoding: 'utf8' }
+            );
+
+            prevRacesAcc.push({
+              id: raceId,
+              description,
+              key: raceData.key,
+              name: raceData.name,
+              hotkey: raceObj?.getValueByKey('hot'),
+            });
+
+            return prevRacesAcc;
+          },
+          Promise.resolve([]) as Promise<IRacePickerObject[]>
+        );
+        return prevAllianceAcc;
+      },
+      Promise.resolve({}) as Promise<Record<string, IRacePickerObject[]>>
     );
-    return {
-      attackType: originalUnit?.atkType1 ?? '',
-    };
-  })!;
-};
 
-export const tokenizeRaceData = (data: IRawRace, description: string) => {
-  const icons: Record<string, string> = {};
+    await writeFile(
+      resolve(process.cwd(), 'dataGenerated', 'races.json'),
+      JSON.stringify({ data: racesData, icons: racesCoords }),
+      { encoding: 'utf8' }
+    );
 
-  const getUpgrade = (id: string): IUpgradeObject => {
-    return upgradesParser.getById(id)?.withInstance((instance) => {
-      const maxLvl = instance.getMaxLevel();
-      const upgradeIcons = instance
-        .getAllValuesByKey('ar1', ({ level }) => level <= maxLvl)
-        .filter(isNotNil)
-        .filter((val, idx, arr) => arr.indexOf(val) === idx);
+    await copyFile(
+      resolve(process.cwd(), 'generator', 'index.ts.example'),
+      resolve(process.cwd(), 'dataGenerated', 'index.ts')
+    );
+  }
 
-      if (upgradeIcons.length > 1) {
-        upgradeIcons.forEach((ico, idx) => {
-          icons[`${id}-${idx + 1}`] = ico;
-        });
-      } else {
-        icons[id] = upgradeIcons[0];
-      }
+  private getUpgradeCost(upgrade: W3Object<Upgrades>, skipLast = false) {
+    const basePrice = upgrade.parser.getBaseCost(upgrade);
+    const addiction = Number(upgrade.getValueByKey('glm'));
+    return Array.from(
+      {
+        length: upgrade.getMaxLevel() - (skipLast ? 1 : 0),
+      },
+      (_, idx) => basePrice + idx * addiction
+    );
+  }
 
+  private getBuilding(id: string): IBuildingObject {
+    return unitsParser.getById(id)?.withInstance((instance) => {
       return {
-        id,
-        name: instance.getValueByKey('nam'),
-        cost: getUpgradeCost(instance),
-        hotkey: instance.getValueByKey('hk1'),
-        description: instance.getValueByKey('ub1'),
-        iconsCount: upgradeIcons.length,
+        attackType: instance.parser.getAttackType(instance),
       };
     })!;
-  };
+  }
 
-  abilitiesParser.getById(data.ulti)?.withInstance((instance) => {
-    const icon = instance.getIcon();
-    if (icon) {
-      icons[data.ulti] = icon;
-    }
-  });
+  private prepareBuildings(bonuses: string[]) {
+    const models: Record<string, IBaseObject> = {};
+    const buildingsMap = bonuses.reduce((acc, bonusID) => {
+      const instance = unitsParser.getById(bonusID);
+      let model = instance?.parser.getModel(instance);
+      const modelName = model
+        ?.split(/[\\\/\.]/g)
+        .at(-2)
+        ?.toLocaleLowerCase();
+      if (!modelName || !instance) return acc;
+      if (modelName in models) {
+        acc[bonusID] = models[modelName].id;
+        return acc;
+      }
+      const id = uuid();
+      acc[bonusID] = id;
+      models[modelName] = {
+        id,
+        name: instance.getName(),
+        description: '',
+        hotkey: '',
+      };
+      return acc;
+    }, {} as Record<string, string>);
+    const bonusBuildings = Object.fromEntries(
+      Object.values(models).map((item) => [item.id, item])
+    );
 
-  const output: IRaceData = {
-    id: data.id,
-    key: data.key,
-    name: data.name,
-    description,
-    ultimateId: data.ulti,
-    auras: data.auras
-      .map((auraId, idx) =>
-        abilitiesParser.getById(auraId)?.withInstance((instance) => {
-          icons[auraId] = instance.getIcon();
-          return {
-            id: auraId,
-            name: instance.getValueByKey('nam'),
-            description: instance.getValueByKey('ub1'),
-            hotkey: hotkeys[idx],
-          };
-        })
-      )
-      .filter(isNotNil),
-    bonuses: data.bonuses
-      .map((bonusID) =>
-        unitsParser.getById(bonusID)?.withInstance((instance) => {
-          icons[bonusID] = instance.getIcon();
-          return {
-            id: bonusID,
-            hotkey: instance.getValueByKey('hot'),
-            name: instance.getValueByKey('tip'),
-            description: instance.getValueByKey('tub'),
-            buildingName: instance.getValueByKey('nam'),
-          };
-        })
-      )
-      .filter(isNotNil),
-    towerUpgrades: data.upgrades
-      .map((upgradeID) =>
-        upgradesParser.getById(upgradeID)?.withInstance((instance) => {
-          icons[upgradeID] = instance.getIcon();
+    return { bonusBuildings, buildingsMap };
+  }
 
+  private tokenizeRaceData(data: IRawRace, description: string) {
+    const icons: Record<string, string> = {};
+
+    const getUpgrade = (id: string): IUpgradeObject => {
+      return upgradesParser.getById(id)?.withInstance((instance) => {
+        const maxLvl = instance.getMaxLevel();
+        const upgradeIcons = instance
+          .getAllValuesByKey('ar1', ({ level }) => level <= maxLvl)
+          .filter(isNotNil)
+          .filter((val, idx, arr) => arr.indexOf(val) === idx);
+
+        if (upgradeIcons.length > 1) {
+          upgradeIcons.forEach((ico, idx) => {
+            icons[`${id}-${idx + 1}`] = ico;
+          });
+        } else {
+          icons[id] = upgradeIcons[0];
+        }
+
+        return {
+          id,
+          name: instance.getName(),
+          cost: this.getUpgradeCost(instance),
+          hotkey: instance.getValueByKey('hk1'),
+          description: instance.getValueByKey('ub1'),
+          iconsCount: upgradeIcons.length,
+        };
+      })!;
+    };
+
+    abilitiesParser.getById(data.ulti)?.withIcon(icons);
+
+    const { bonusBuildings, buildingsMap } = this.prepareBuildings(
+      data.bonuses
+    );
+
+    const output: IRaceData = {
+      id: data.id,
+      key: data.key,
+      name: data.name,
+      description,
+      ultimateId: data.ulti,
+      bonusBuildings,
+      auras: data.auras
+        .map((auraId, idx) =>
+          abilitiesParser
+            .getById(auraId)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: auraId,
+              name: instance.getName(),
+              description: instance.getValueByKey('ub1'),
+              hotkey: hotkeys[idx],
+            }))
+        )
+        .filter(isNotNil),
+      bonuses: data.bonuses
+        .map((bonusID) =>
+          unitsParser
+            .getById(bonusID)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: bonusID,
+              hotkey: instance.getValueByKey('hot'),
+              name: instance.getValueByKey('tip'),
+              description: instance.getValueByKey('tub'),
+              buildingId: buildingsMap[bonusID],
+            }))
+        )
+        .filter(isNotNil),
+      towerUpgrades: data.upgrades
+        .map((upgradeID) =>
+          upgradesParser
+            .getById(upgradeID)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: upgradeID,
+              hotkey: instance.getValueByKey('hk1'),
+              name: instance.getName(),
+              description: instance.getValueByKey('ub1'),
+              cost: this.getUpgradeCost(instance, true),
+            }))
+        )
+        .filter(isNotNil),
+      t1spell: abilitiesParser
+        .getById(data.t1spell)
+        ?.withIcon(icons)
+        .withInstance((instance) => ({
+          id: data.t1spell,
+          name: instance.getName(),
+          description: instance.getValueByKey('ub1'),
+          hotkey: instance.getValueByKey('hky'),
+        }))!,
+      t2spell: abilitiesParser
+        .getById(data.t2spell)
+        ?.withIcon(icons)
+        .withInstance((instance) => ({
+          id: data.t2spell,
+          name: instance.getName(),
+          description: instance.getValueByKey('ub1'),
+          hotkey: instance.getValueByKey('hky'),
+        }))!,
+      buildings: mapObject(data.buildings, this.getBuilding),
+      heroes: data.heroes.map((slotHeroes, slotIdx) =>
+        slotHeroes
+          .map((heroId) =>
+            unitsParser.getById(heroId)?.withInstance((instance) => {
+              icons[heroId] =
+                instance.getValueByKey('ssi') ?? instance.getIcon();
+              return {
+                id: heroId,
+                name: instance.getName(),
+                fullName: instance.getValueByKey('pro'),
+                hotkey: instance.getValueByKey('hot') ?? hotkeys[slotIdx],
+                description: instance.getValueByKey('tub'),
+                cost: instance.getValueByKey('gol'),
+                atkType: instance.parser.getAttackType(instance),
+                defType: instance.parser.getDefendType(instance),
+                atk: instance.parser.getAttack(instance),
+                def: instance.parser.getDefend(instance),
+              };
+            })
+          )
+          .filter(isNotNil)
+      ),
+      magic: upgradesParser.getById(data.magic)?.withInstance((instance) => {
+        // Process icons
+        const { cost, iconsCount } = getUpgrade(data.magic);
+
+        return Array.from({ length: instance.getMaxLevel() }, (_, idx) => {
+          const level = idx + 1;
           return {
-            id: upgradeID,
+            id: data.magic,
+            name: instance.getValueByKey('tp1', level) ?? instance.getName(),
+            description:
+              instance.getValueByKey('ub1', level) ??
+              instance.getValueByKey('ub1'),
             hotkey: instance.getValueByKey('hk1'),
-            name: instance.getValueByKey('nam'),
-            description: instance.getValueByKey('ub1'),
-            cost: getUpgradeCost(instance, true),
+            cost: [cost[idx]],
+            level,
+            iconsCount,
           };
-        })
-      )
-      .filter(isNotNil),
-    t1spell: abilitiesParser.getById(data.t1spell)?.withInstance((instance) => {
-      icons[data.t1spell] = instance.getIcon();
-      return {
-        id: data.t1spell,
-        name: instance.getValueByKey('nam'),
-        description: instance.getValueByKey('ub1'),
-        hotkey: instance.getValueByKey('hky'),
-      };
-    })!,
-    t2spell: abilitiesParser.getById(data.t2spell)?.withInstance((instance) => {
-      icons[data.t2spell] = instance.getIcon();
-      return {
-        id: data.t2spell,
-        name: instance.getValueByKey('nam'),
-        description: instance.getValueByKey('ub1'),
-        hotkey: instance.getValueByKey('hky'),
-      };
-    })!,
-    buildings: mapObject(data.buildings, getBuilding),
-    heroes: data.heroes.map((slotHeroes, slotIdx) =>
-      slotHeroes
-        .map((heroId) =>
-          unitsParser.getById(heroId)?.withInstance((instance) => {
-            icons[heroId] = instance.getValueByKey('ssi') ?? instance.getIcon();
-            return {
-              id: heroId,
-              name: instance.getValueByKey('nam'),
-              fullName: instance.getValueByKey('pro'),
-              hotkey: instance.getValueByKey('hot') ?? hotkeys[slotIdx],
+        });
+      })!,
+      baseUpgrades: mapObject(data.baseUpgrades, (id) => getUpgrade(id)),
+      bonusUpgrades: Object.entries(data.bonusUpgrades).reduce(
+        (acc, [bonusID, upgrades]) => {
+          acc[bonusID] = upgrades.map(([id, baseLevel]) => {
+            const upgrade = getUpgrade(id);
+            upgrade.cost.splice(0, baseLevel);
+            return upgrade;
+          });
+          return acc;
+        },
+        {} as Record<string, IUpgradeObject[]>
+      ),
+      units: mapObject(
+        data.units,
+        (unitID) =>
+          unitsParser
+            .getById(unitID)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: unitID,
+              name: instance.getName(),
+              hotkey: instance.getValueByKey('hot'),
               description: instance.getValueByKey('tub'),
               cost: instance.getValueByKey('gol'),
-            };
-          })
-        )
-        .filter(isNotNil)
-    ),
-    magic: upgradesParser.getById(data.magic)?.withInstance((instance) => {
-      // Process icons
-      const { cost, iconsCount } = getUpgrade(data.magic);
+              atkType: instance.parser.getAttackType(instance),
+              defType: instance.parser.getDefendType(instance),
+              atk: instance.parser.getAttack(instance),
+              def: instance.parser.getDefend(instance),
+            }))!
+      ),
+    };
 
-      return Array.from({ length: instance.getMaxLevel() }, (_, idx) => {
-        const level = idx + 1;
-        return {
-          id: data.magic,
-          name:
-            instance.getValueByKey('tp1', level) ??
-            instance.getValueByKey('nam'),
-          description:
-            instance.getValueByKey('ub1', level) ??
-            instance.getValueByKey('ub1'),
-          hotkey: instance.getValueByKey('hk1'),
-          cost: [cost[idx]],
-          level,
-          iconsCount,
-        };
-      });
-    })!,
-    baseUpgrades: mapObject(data.baseUpgrades, getUpgrade),
-    bonusUpgrades: Object.entries(data.bonusUpgrades).reduce(
-      (acc, [bonusID, upgrades]) => {
-        acc[bonusID] = upgrades.map(getUpgrade);
-        return acc;
-      },
-      {} as Record<string, IUpgradeObject[]>
-    ),
-    units: mapObject(
-      data.units,
-      (unitID) =>
-        unitsParser.getById(unitID)?.withInstance((instance) => {
-          const icon = instance.getIcon();
-          if (icon) {
-            icons[unitID] = icon;
-          }
+    return [output, icons] as const;
+  }
 
-          let atkType = instance.getValueByKey('a1t');
-          if (!atkType) {
-            const weaponObj = unitWeapons.find(
-              ({ unitWeaponID }) => unitWeaponID === unitID
-            );
-            atkType = weaponObj?.atkType1 ?? '';
-          }
-          let defType = instance.getValueByKey('def');
-          if (!defType) {
-            const balanceObj = unitBalance.find(
-              ({ unitBalanceID }) => unitBalanceID === unitID
-            );
-            defType = balanceObj?.defType ?? '';
-          }
+  private async parseArtifacts() {
+    const { combineMap, list } = this.data.artifacts;
 
-          return {
-            id: unitID,
-            name: instance.getValueByKey('nam'),
-            hotkey: instance.getValueByKey('hot'),
+    const icons = {} as Record<string, string>;
+
+    const items: IArtifactObject[] = list.map(
+      (artId) =>
+        itemsParser
+          .getById(artId)
+          ?.withIcon(icons)
+          .withInstance((instance) => ({
+            id: artId,
+            name: instance.getName(),
             description: instance.getValueByKey('tub'),
-            cost: instance.getValueByKey('gol'),
-            atkType,
-            defType,
-          };
-        })!
-    ),
-  };
+            level:
+              instance.getValueByKey('lvo') ?? instance.getValueByKey('lev'),
+            hotkey: instance.getRawValue('nam'),
+          }))!
+    );
 
-  return [output, icons] as const;
-};
+    const coords = await imgProcessor.processImages(icons, 'artifacts');
+
+    const output: IDataFile<IArtifactData> = {
+      data: {
+        items,
+        combineMap,
+      },
+      icons: coords,
+    };
+
+    await writeFile(
+      resolve(outputDir, `artifacts.json`),
+      JSON.stringify(output),
+      { encoding: 'utf8' }
+    );
+  }
+
+  private async parseUltimates() {
+    const rawData = this.data.ultimates;
+
+    const icons: Record<string, string> = {};
+    const requires: Record<string, string> = {};
+
+    const getItemRequires = (data: W3Object) => {
+      const reqIdArr = String(data.getValueByKey('req'))
+        .split(',')
+        .map((a) => a.trim());
+      const reqValArr = String(data.getValueByKey('rqa'))
+        .split(',')
+        .map((a) => Number(a.trim()));
+
+      return reqIdArr.reduce((acc, id, idx) => {
+        if (!(id in requires)) {
+          const name = String(upgradesParser.getById(id)?.getRawValue('nam', 1))
+            .replace(/\(.*?\)/g, '')
+            .trim();
+          requires[id] = name;
+        }
+        acc[id] = reqValArr[idx] ?? 0;
+        return acc;
+      }, {} as Record<string, number>);
+    };
+
+    const pickers: IBaseUltimateObject[] = rawData.pickers.map(
+      (pickerID) =>
+        abilitiesParser
+          .getById(pickerID)
+          ?.withIcon(icons)
+          .withInstance((instance) => ({
+            id: pickerID,
+            name: instance.getValueByKey('tp1') ?? instance.getName(),
+            description: instance.getValueByKey('ub1'),
+            hotkey: instance.getValueByKey('hky'),
+            requires: getItemRequires(instance),
+          }))!
+    );
+
+    const spells: Record<string, IUltimateObject[]> = mapObject(
+      rawData.spells,
+      (spells) =>
+        spells.map(
+          (spellId) =>
+            abilitiesParser
+              .getById(spellId)
+              ?.withIcon(icons)
+              .withInstance((instance) => ({
+                id: spellId,
+                hotkey: instance.getValueByKey('hky'),
+                name: instance.getValueByKey('tp1', 1) ?? instance.getName(),
+                description: instance.getValueByKey('ub1', 1),
+                cooldown: instance.getValueByKey('cdn', 1),
+                manaCost: instance.getValueByKey('mcs', 1),
+                requires: getItemRequires(instance),
+              }))!
+        )
+    );
+
+    const iconsCoors = await imgProcessor.processImages(icons, 'ultimates');
+
+    const output: IDataFile<IUltimatesData> = {
+      data: {
+        pickers,
+        spells,
+        requires,
+      },
+      icons: iconsCoors,
+    };
+
+    await writeFile(
+      resolve(outputDir, `ultimates.json`),
+      JSON.stringify(output),
+      { encoding: 'utf8' }
+    );
+  }
+}

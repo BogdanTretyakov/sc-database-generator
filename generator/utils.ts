@@ -1,7 +1,8 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { ObjectsTranslator } from 'wc3maptranslator';
-import { hotkeys } from '~/utils/constants';
+import { ObjectsTranslator, StringsTranslator } from 'wc3maptranslator';
+import type { JsonResult } from 'wc3maptranslator/dist/CommonInterfaces';
+import XLSX from 'xlsx';
 
 interface W3RawObject {
   id: string;
@@ -11,12 +12,20 @@ interface W3RawObject {
   value: any;
 }
 
+const { json: w3strings } = StringsTranslator.warToJson(
+  readFileSync(resolve(process.cwd(), 'dataMap', 'war3map.wts'))
+) as JsonResult<Record<string, string>>;
+
 export abstract class W3Parser {
   protected data: Record<string, W3RawObject[]>;
-  protected ObjectConstructor: typeof W3Object
+  abstract skins: Record<string, Record<string, string>>;
+
+  abstract iconID: string;
 
   private initData() {
-    const w3Buffer = readFileSync(resolve(process.cwd(), 'dataMap', this.fileName));
+    const w3Buffer = readFileSync(
+      resolve(process.cwd(), 'dataMap', this.fileName)
+    );
     const { json } = ObjectsTranslator.warToJson(this.type, w3Buffer);
 
     return Object.entries({
@@ -26,12 +35,12 @@ export abstract class W3Parser {
       const [newKey, origId] = key.split(':');
       if (origId) {
         (value as W3RawObject[]).push({
-          id: 'origId',
+          id: 'Dwc3id',
           column: 0,
           level: 0,
           type: 'string',
-          value: origId
-        })
+          value: origId,
+        });
       }
       acc[newKey] = (value as W3RawObject[]).map((obj) => {
         obj.id = obj.id.slice(1);
@@ -41,37 +50,8 @@ export abstract class W3Parser {
     }, {} as Record<string, W3RawObject[]>);
   }
 
-  private initSkinsData() {
-    const fileContent = readFileSync(
-      resolve(process.cwd(), 'generator', 'skinsData', this.skinsFileName),
-      { encoding: 'utf8' }
-    )
-
-    return Array
-      .from(fileContent.matchAll(/^\[(?<id>\w+)\]$\n(?<content>[\s\S]+?)^$/gm))
-      .reduce((acc, { groups: blockGroups }) => {
-        if (!blockGroups) return acc
-        const { id, content } = blockGroups
-        acc[id] = Array
-          .from(content.matchAll(/^(?<key>.+)=(?<value>.+)$/gm))
-          .reduce((innerAcc, { groups }) => {
-            if (!groups) return innerAcc
-            const { key, value } = groups
-            innerAcc[key.toLocaleLowerCase()] = value
-            return innerAcc
-          }, {} as Record<string, string>)
-        return acc
-      }, {} as Record<string, Record<string, string>>)
-  }
-
-  constructor(
-    private fileName: string,
-    private type: string,
-    private skinsFileName: string,
-    iconId = 'ico',
-  ) {
-    this.data = this.initData()
-    this.ObjectConstructor = withIcon(iconId, this.initSkinsData())
+  constructor(private fileName: string, private type: string) {
+    this.data = this.initData();
   }
 
   findIDByKey(key: string, findValue: any) {
@@ -81,41 +61,73 @@ export abstract class W3Parser {
     return result?.[0];
   }
 
-  getById(id: string): W3Object | undefined {
-    return this.data[id] ? this.ObjectConstructor.create(this.data[id], id) : void 0;
+  getById(id: string): W3Object<typeof this> | undefined {
+    //@ts-expect-error
+    return this.data[id] ? W3Object.create(this.data[id], this, id) : void 0;
+  }
+
+  getIcon(data: W3Object<typeof this>, level?: number): string | undefined {
+    let icon = data.getValueByKey(this.iconID, level);
+    if (icon) return icon;
+    const skin = this.skins[data.id] ?? this.skins[data.wc3id];
+    if (!skin) return;
+    return skin.art ?? skin['art:sd'] ?? skin['art:hd'];
+  }
+
+  getName(data: W3Object<typeof this>): string {
+    return data.getValueByKey('nam');
+  }
+
+  protected getWithSlkFallback(
+    data: W3Object,
+    key: string,
+    slk: W3Slk,
+    slkKey: string
+  ) {
+    const value = data.getValueByKey(key);
+    if (value !== undefined) return value;
+    return slk.data[data.id]?.[slkKey] ?? slk.data[data.wc3id]?.[slkKey];
   }
 }
 
-const withIcon = (
-  iconId: string,
-  skinsData: Record<string, Record<string,string>>
-) => class extends W3Object {
-  override iconId = iconId
-  override skinsData = skinsData
-}
-
-export class W3Object {
-  protected iconId = 'ico';
-  protected skinsData: Record<string, Record<string,string>> = {}
-
-  constructor(
+export class W3Object<T extends W3Parser = W3Parser> {
+  private constructor(
     private data: W3RawObject[],
-    public id = '',
+    public parser: T,
+    public id: string
   ) {}
 
-  static create(
-    data: W3RawObject[],
-    id = ''
-  ) {
-    return new this(data, id);
+  get wc3id() {
+    return this.getValueByKey('wc3id');
+  }
+
+  static create(data: W3RawObject[], parser: W3Parser, id: string) {
+    return new this(data, parser, id);
   }
 
   withInstance<T>(cb: (instance: this) => T): T {
     return cb(this);
   }
 
-  private formatValue(value: any) {
+  /**
+   * @param icons icons map (will mutate)
+   * @returns
+   */
+  withIcon(icons: Record<string, string>): this {
+    const icon = this.getIcon();
+    if (icon) {
+      icons[this.id] = icon;
+    }
+    return this;
+  }
+
+  private formatValue(value: any): any {
     if (typeof value === 'string') {
+      if (value.startsWith('TRIGSTR_')) {
+        const [key] = value.match(/(?<=TRIGSTR_)\d+/) ?? [''];
+        return this.formatValue(w3strings[key]);
+      }
+
       return value
         .replace(
           /\|c(?<transparency>[0-9a-fA-F]{2})(?<color>[0-9a-fA-F]{6})(?<content>.*?)(?:(?:\|r)|(?=\|c)|$)/gms,
@@ -124,18 +136,26 @@ export class W3Object {
             return `<span class="w3-colored" style="color: #${color}${transparency}">${content}</span>`;
           }
         )
-        .replace(/(?:\|n)+/gm, '<br/>');
+        .replace(/\|n/gm, '<br/>');
     }
 
     return value;
   }
 
-  getValueByKey(key: string, level: number | void) {
+  getValueByKey(key: string, level: number | void): any {
+    const obj = this.data.find(
+      (item) => item.id === key && (level === undefined || item.level === level)
+    );
+
+    return this.formatValue(obj?.value);
+  }
+
+  getRawValue(key: string, level?: number | void) {
     const value = this.data.find(
       (item) => item.id === key && (level === undefined || item.level === level)
     )?.value;
-
-    return this.formatValue(value);
+    if (typeof value !== 'string') return value;
+    return value.replace(/(?:\|n)|(?:\|c[a-fA-F0-9]{8})|(?:\|r)/gm, '');
   }
 
   getAllValuesByKey(key: string, filter?: (val: W3RawObject) => boolean) {
@@ -143,7 +163,7 @@ export class W3Object {
       .slice()
       .sort(({ level: l1 }, { level: l2 }) => l1 - l2)
       .filter(({ id }) => id === key)
-      .filter(value => filter ? filter(value) : true)
+      .filter((value) => (filter ? filter(value) : true))
       .map(({ value }) => value)
       .map(this.formatValue);
   }
@@ -157,11 +177,25 @@ export class W3Object {
     return Math.max(...levels);
   }
 
+  getName() {
+    return this.parser.getName(this);
+  }
+
   getIcon(level?: number) {
-    let icon = this.getValueByKey(this.iconId, level)
-    if (icon) return icon
-    const skin = this.skinsData[this.id]
-    if (!skin) return
-    return skin.art ?? skin['art:sd']
+    return this.parser.getIcon(this, level);
+  }
+}
+
+export class W3Slk {
+  public data: Record<string, Record<string, string>>;
+
+  constructor(fileName: string, itemId: string) {
+    const book = XLSX.readFile(
+      resolve(process.cwd(), 'generator', 'skinsData', fileName)
+    );
+    const sheet = book.Sheets[book.SheetNames[0]];
+    const parsed = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
+
+    this.data = Object.fromEntries(parsed.map((item) => [item[itemId], item]));
   }
 }

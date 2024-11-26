@@ -1,173 +1,281 @@
 import { readFile } from 'fs/promises';
-import { resolve } from 'path'
-import { scriptsVariables } from './constants';
+import { resolve } from 'path';
 import { abilitiesParser, unitsParser } from './objects';
-import type { IRawRace } from '~/data/types';
+import type {
+  IRawArtifacts,
+  IRawPatchData,
+  IRawRace,
+  IRawUltimates,
+} from '~/data/types';
+import { isNotNil } from '~/utils/guards';
 
-class ScriptParser {
-  private buildingsMap: Record<string, Record<string, string>>
+export class Sur5alScriptParser {
+  private alliances = ['nfh1', 'nfr2', 'nfr1', 'ngnh'];
+  private scriptVariables = {
+    globals: {
+      fort: 'OOQ',
+      barrack: 'OIQ',
+      tower: 'O1Q',
+      bonusPicker: 'O2Q',
+    },
+    raceName: {
+      key: 'OQ',
+      full: 30,
+      short: 38,
+    },
+    replaceable: {
+      key: 'I0Q',
+      aura: 1,
+      ulti: 5,
+      description: 38,
+    },
+    upgrades: {
+      key: 'I2Q',
+      melee: '$D',
+      range: 17,
+      magic: 5,
+      armor: 1,
+      wall: 9,
+      towerUpgrades: [21, 25, 29, 33, 37, 41, 45, 49, 53],
+      bonusUpgrades: [61, 65, 69],
+    },
+    buildings: {
+      tower: {
+        key: 'I1',
+        key2: 1,
+      },
+      fort: {
+        key: 'OI',
+        key2: 1,
+      },
+      barrack: {
+        key: 'Q1',
+        key2: 1,
+      },
+    },
+    units: {
+      key: 1,
+      melee: 'QO',
+      mage: 'IO',
+      range: 'OO',
+      siege: 'QI',
+      air: 'Q6',
+      catapult: 'O6',
+    },
+    bonuses: 'I7',
+    heroes: ['Q2', 'O2', 'I2', 'Q3'],
+  };
+
+  private ultimatePicker = 'A0OA';
+  private buildingsMap: Record<string, Record<string, string>>;
   private constructor(private script: string) {
-    this.buildingsMap = this.getBuildingsMap()
+    this.buildingsMap = this.getBuildingsMap();
   }
 
-  private getIfBlockByCondition(condition: string|RegExp, endCondition = 0) {
-    let output = ''
-    let pos = this.script.search(condition)
-    if (pos < 0) return output
-    let codeBlock = 0
-    let done = false
-    let word = ''
-    while(!done && pos <= this.script.length) {
+  getPatchData(): IRawPatchData {
+    const pickers = this.getRaceIDs();
+    return {
+      ultimates: this.getUltimates(),
+      artifacts: this.getArtifacts(),
+      pickers,
+      races: Object.values(pickers)
+        .flat()
+        .map(this.getRaceData.bind(this))
+        .filter(isNotNil),
+    };
+  }
+
+  private getIfBlockByCondition(condition: string | RegExp, endCondition = 0) {
+    const match = this.script.match(condition);
+    if (!match) return '';
+    let pos = match[0].length + (match?.index ?? 0);
+    const startPos = pos;
+    if (pos < 0) return '';
+    let codeBlock = 1;
+    let word = '';
+    while (pos < this.script.length && codeBlock !== endCondition) {
       const char = this.script[pos++];
       word += char;
-      if (char !== ' ' && char !== '\n') continue
-      if (word.startsWith('if(')) codeBlock += 1
-      if (word.startsWith('endif')) {
-        codeBlock -= 1
-        if (codeBlock === endCondition) done = true
+      if (char !== ' ' && char !== '\n') continue;
+      if (word.startsWith('if(')) codeBlock += 1;
+      if (word.startsWith('endif') || word.startsWith('else')) {
+        codeBlock -= 1;
       }
-      output += word
-      word = ''
+      word = '';
     }
-    return output
+    return this.script.slice(startPos, pos);
   }
 
   private getBuildingsMap() {
-    const initCodeBlock = this.script.match(/(?<=^function \w{3,5} takes nothing returns nothing$\n)(?:(?:[^function]^.*$)\n)*?^call SetTimeOfDay\(12\.\)$\n(?:(?:^.*$)\n)*?(?=^endfunction$)/mi)?.[0]
+    const initCodeBlock = this.script.match(
+      /(?<=^function \w{3,5} takes nothing returns nothing$\n)(?:(?:[^function]^.*$)\n)*?^call SetTimeOfDay\(12\.\)$\n(?:(?:^.*$)\n)*?(?=^endfunction$)/im
+    )?.[0];
 
-    if (!initCodeBlock) return {}
+    if (!initCodeBlock) return {};
 
     return Array.from(
-      initCodeBlock.matchAll(/^set (?<varName>.*?(?=\[))\[(?<varKey>.*?)\].*?['"](?<varValue>.{4})['"]$/gmi)
+      initCodeBlock.matchAll(
+        /^set (?<varName>.*?(?=\[))\[(?<varKey>.*?)\].*?['"](?<varValue>.{4})['"]$/gim
+      )
     ).reduce((acc, { groups }) => {
-      if (!groups) return acc
-      const { varName, varValue, varKey } = groups
+      if (!groups) return acc;
+      const { varName, varValue, varKey } = groups;
       if (!(varName in acc)) {
-        acc[varName] = {}
+        acc[varName] = {};
       }
-      acc[varName][varKey] = varValue
-      return acc
-    }, {} as Record<string, Record<string, string>>)
-
+      acc[varName][varKey] = varValue;
+      return acc;
+    }, {} as Record<string, Record<string, string>>);
   }
 
   static async create() {
     const content = (
-      await readFile(
-        resolve(process.cwd(), 'dataMap', 'war3map.j'),
-        { encoding: 'utf8' }
-      )
+      await readFile(resolve(process.cwd(), 'dataMap', 'war3map.j'), {
+        encoding: 'utf8',
+      })
     ).replace(/(\r\n)|\r/g, '\n');
 
     return new this(content);
   }
 
-  getRaceData(raceID: string) {
-    const {
-      raceName,
-      upgrades,
-      buildings,
-      units,
-    } = scriptsVariables;
+  public getRaceData(raceID: string) {
+    const { raceName, upgrades, buildings, units, globals } =
+      this.scriptVariables;
 
     const checkRaceRegex = new RegExp(
       String.raw`(?<=function )\w*?(?=\s.*\n.*GetSoldUnit\(\)\)=='${raceID})`,
       'gmi'
-    )
-    const checkRaceFuncNames = Array.from(this.script.match(checkRaceRegex) ?? [])
+    );
+    const checkRaceFuncNames = Array.from(
+      this.script.match(checkRaceRegex) ?? []
+    );
 
-    if (!checkRaceFuncNames.length) return
+    if (!checkRaceFuncNames.length) return;
 
-    const [fortVar, fortId] = checkRaceFuncNames.map(checkFuncName => {
-      const setVarRegex = new RegExp(
-        String.raw`^if\(${checkFuncName}\(\)\)then$\n^set (?<tempVar1>.*?)=(?<storedVarKey>.*?)$`,
-        'm'
-      )
-      const { tempVar1, storedVarKey } = this.script.match(setVarRegex)?.groups ?? {}
+    const [fortVar, fortId, buildingsKey] =
+      checkRaceFuncNames
+        .map((checkFuncName) => {
+          const setVarRegex = new RegExp(
+            String.raw`^if\(${checkFuncName}\(\)\)then$\n^set (?<tempVar1>.*?)=(?<storedVarKey>.*?)$`,
+            'm'
+          );
+          const { tempVar1, storedVarKey } =
+            this.script.match(setVarRegex)?.groups ?? {};
 
-      const escapedTempVar1 = tempVar1.replace('[', '\\[').replace(']', '\\]')
+          const escapedTempVar1 = tempVar1
+            .replace('[', '\\[')
+            .replace(']', '\\]');
 
-      const findReplacerRegex = new RegExp(
-        String.raw`set (?<fortVar>.*)=ReplaceUnitBJ\(.*?,(?<storedVarName>.*?)\[${escapedTempVar1}\],bj_UNIT_STATE_METHOD_DEFAULTS\)`,
-        'm'
-      )
+          const findReplacerRegex = new RegExp(
+            String.raw`set (?<fortVar>.*)=ReplaceUnitBJ\(.*?,(?<storedVarName>.*?)\[${escapedTempVar1}\],bj_UNIT_STATE_METHOD_DEFAULTS\)`,
+            'm'
+          );
 
-      const { fortVar, storedVarName } = this.script.match(findReplacerRegex)?.groups ?? {}
+          const { fortVar, storedVarName } =
+            this.script.match(findReplacerRegex)?.groups ?? {};
 
-      const fortId = this.buildingsMap[storedVarName][storedVarKey]
+          const fortId = this.buildingsMap[storedVarName][storedVarKey];
 
-      if (!fortId) return
+          if (!fortId || !storedVarKey) return;
 
-      return [fortVar, fortId]
-    }).reduce((acc, value) => {
-      if (!value) return acc
-      if (value[0].includes(`[${scriptsVariables.buildings.fort.key2}]`)) return value
-      return acc
-    }) ?? []
+          return [fortVar, fortId, storedVarKey];
+        })
+        .reduce((acc, value) => {
+          if (!value) return acc;
+          if (
+            value[0].includes(`[${this.scriptVariables.buildings.fort.key2}]`)
+          )
+            return value;
+          return acc;
+        }) ?? [];
 
-    if (!fortId) return
+    if (!fortId || !buildingsKey) return;
 
-    const escapedFortVar = fortVar.replace('[', '\\[').replace(']', '\\]')
+    const escapedFortVar = fortVar.replace('[', '\\[').replace(']', '\\]');
 
     const checkRaceFnRegex = new RegExp(
       String.raw`(?<=function ).*?(?=\s.*?$\n^return\(GetUnitTypeId\(${escapedFortVar}\)=='${fortId}'\))`,
       'gmi'
-    )
+    );
 
-    const checkRaceFn = Array.from(this.script.match(checkRaceFnRegex) ?? []).map(s => `(?:${s})`).join('|')
+    const checkRaceFn = Array.from(this.script.match(checkRaceFnRegex) ?? [])
+      .map((s) => `(?:${s})`)
+      .join('|');
 
-    if (!checkRaceFn.length) return
-
+    if (!checkRaceFn.length) return;
 
     const raceUpgradeBlockRegex = new RegExp(
       String.raw`(?<=if\((?:${checkRaceFn})\(\)\)then\n)[\s\S]*?set ${raceName.key}\[${raceName.short}\].*$`,
       'mi'
-    )
+    );
 
-    const raceUpgradeBlock = this.script.match(raceUpgradeBlockRegex)?.[0]
+    const raceUpgradeBlock = this.script.match(raceUpgradeBlockRegex)?.[0];
 
-    if (!raceUpgradeBlock) return
+    if (!raceUpgradeBlock) return;
 
     const varRegex =
       /^set (?<varName>.*?(?=\[))\[(?<varKey>.*?)\].*?['"](?<varValue>.*?)['"]$/gim;
 
-    const rawRaceData = Array.from(raceUpgradeBlock.matchAll(varRegex)).reduce((acc, { groups }) => {
-      if (!groups) return acc;
-      const { varName, varKey, varValue } = groups;
-      if (!(varName in acc)) {
-        acc[varName] = {};
-      }
-      if (varKey in acc[varName]) return acc;
-      acc[varName][varKey] = varValue;
-      return acc
-    }, {} as Record<string, Record<string, string>>)
+    const rawRaceData = Array.from(raceUpgradeBlock.matchAll(varRegex)).reduce(
+      (acc, { groups }) => {
+        if (!groups) return acc;
+        const { varName, varKey, varValue } = groups;
+        if (!(varName in acc)) {
+          acc[varName] = {};
+        }
+        if (varKey in acc[varName]) {
+          return acc;
+        }
+        acc[varName][varKey] = varValue;
+        return acc;
+      },
+      {} as Record<string, Record<string, string>>
+    );
 
-    const hiddenDoomId = this.script.match(new RegExp(
-      String.raw`(?<=^call BlzUnitHideAbility\(${escapedFortVar},['|"]).*?(?=['|"],true\)$)`,
-      'i'
-    ))?.[0] ?? ''
+    const hiddenDoomId =
+      this.script.match(
+        new RegExp(
+          String.raw`(?<=^call BlzUnitHideAbility\(${escapedFortVar},['|"]).*?(?=['|"],true\)$)`,
+          'i'
+        )
+      )?.[0] ?? '';
 
-    const auraID = rawRaceData[scriptsVariables.replaceable.key][scriptsVariables.replaceable.aura]
-    const auras = abilitiesParser.getById(auraID)?.withInstance(data => {
-      return String(data.getValueByKey('pb1')).split(',')
-    }) ?? []
-    const ulti = rawRaceData[scriptsVariables.replaceable.key][scriptsVariables.replaceable.ulti]
+    const auraID =
+      rawRaceData[this.scriptVariables.replaceable.key][
+        this.scriptVariables.replaceable.aura
+      ];
+    const auras =
+      abilitiesParser.getById(auraID)?.withInstance((data) => {
+        return String(data.getValueByKey('pb1')).split(',');
+      }) ?? [];
+    const ulti =
+      rawRaceData[this.scriptVariables.replaceable.key][
+        this.scriptVariables.replaceable.ulti
+      ];
 
-    const [t1spell, t2spell] = unitsParser.getById(fortId)?.withInstance(data => {
-      const skills = String(data.getValueByKey('abi')).split(',')
-      return skills
-        .filter(id => ![ulti, auraID, hiddenDoomId].includes(id))
-        .filter(id => Boolean(abilitiesParser.getById(id)))
-    }) ?? []
-
+    const [t1spell, t2spell] =
+      unitsParser.getById(fortId)?.withInstance((data) => {
+        const skills = String(data.getValueByKey('abi')).split(',');
+        return skills
+          .filter((id) => ![ulti, auraID, hiddenDoomId].includes(id))
+          .filter((id) => Boolean(abilitiesParser.getById(id)));
+      }) ?? [];
 
     const output: IRawRace = {
       id: raceID,
       name: rawRaceData[raceName.key][raceName.full],
       key: rawRaceData[raceName.key][raceName.short].toLocaleLowerCase(),
-      bonuses: Object.values(rawRaceData[scriptsVariables.bonuses]),
-      upgrades: scriptsVariables.upgrades.towerUpgrades
-        .map(key => rawRaceData[upgrades.key][key]),
+      bonuses:
+        unitsParser
+          .getById(this.buildingsMap[globals.bonusPicker][buildingsKey])
+          ?.withInstance((instance) =>
+            String(instance.getValueByKey('upt') || '')
+              .split(',')
+              .map((s) => s.trim())
+          ) ?? [],
+      upgrades: this.scriptVariables.upgrades.towerUpgrades.map(
+        (key) => rawRaceData[upgrades.key][key]
+      ),
       auras,
       ulti,
       t1spell,
@@ -179,12 +287,30 @@ class ScriptParser {
         range: rawRaceData[upgrades.key][upgrades.range],
         wall: rawRaceData[upgrades.key][upgrades.wall],
       },
-      heroes: scriptsVariables.heroes.map(key => Object.values(rawRaceData[key])),
+      heroes: this.scriptVariables.heroes.map((key) =>
+        Object.values(rawRaceData[key])
+      ),
       buildings: {
         fort: fortId,
         tower: rawRaceData[buildings.tower.key][buildings.tower.key2],
         barrack: rawRaceData[buildings.barrack.key][buildings.barrack.key2],
       },
+      towerAbilities:
+        unitsParser
+          .getById(this.buildingsMap[globals.tower][buildingsKey])
+          ?.withInstance((instance) =>
+            String(instance.getValueByKey('upt') || '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter((id) =>
+                abilitiesParser.getById(id)?.withInstance((abiInstance) => {
+                  return (
+                    !!abiInstance.getValueByKey('art') &&
+                    abiInstance.getValueByKey('ub1') !== 'Fuck You'
+                  );
+                })
+              )
+          ) ?? [],
       units: {
         melee: rawRaceData[units.melee][units.key],
         air: rawRaceData[units.air][units.key],
@@ -194,62 +320,75 @@ class ScriptParser {
         siege: rawRaceData[units.siege][units.key],
       },
       bonusUpgrades: {},
-    }
+    };
 
-    this.enrichRaceData(output)
+    this.enrichRaceData(output);
 
-    return output
+    return output;
   }
 
   private enrichRaceData(data: IRawRace) {
-    data.bonuses.forEach(bonusID => {
+    data.bonuses.forEach((bonusID) => {
       const conditionFnNameRegex = new RegExp(
         String.raw`\w+(?= takes nothing returns boolean$\n^return\(GetUnitTypeId\(GetTriggerUnit\(\)\)=='${bonusID}'\)$)`,
         'gmi'
-      )
+      );
 
-      const conditionFnName = this.script.match(conditionFnNameRegex)?.[0]
-      if (!conditionFnName) return
+      const conditionFnName = this.script.match(conditionFnNameRegex)?.[0];
+      if (!conditionFnName) return;
 
-      const codeBlock = this.getIfBlockByCondition(new RegExp(
-        String.raw`^if\(${conditionFnName}\(\)\)`,
-        'mi'
-      ), 1);
+      const codeBlock = this.getIfBlockByCondition(
+        new RegExp(String.raw`^if\(${conditionFnName}\(\)\)`, 'mi')
+      );
 
-      const heroesPrepared = scriptsVariables.heroes.map(k => `(?:${k})`).join('|')
+      const heroesPrepared = this.scriptVariables.heroes
+        .map((k) => `(?:${k})`)
+        .join('|');
 
-      const heroReplace = codeBlock.match(new RegExp(
-        String.raw`^set (?<heroVar>${heroesPrepared})\[1\].*?['|"](?<heroReplaceId>.*?)['|"].*?$`,
-        'mi'
-      ))
+      const heroReplace = codeBlock.match(
+        new RegExp(
+          String.raw`^set (?<heroVar>${heroesPrepared})\[1\].*?['|"](?<heroReplaceId>.*?)['|"].*?$`,
+          'mi'
+        )
+      );
 
       if (heroReplace) {
-        const { heroVar, heroReplaceId } = heroReplace.groups ?? {}
-        const idx = scriptsVariables.heroes.indexOf(heroVar)
-        if (idx < 0) return
-        data.heroes[idx].push(heroReplaceId)
-        return
+        const { heroVar, heroReplaceId } = heroReplace.groups ?? {};
+        const idx = this.scriptVariables.heroes.indexOf(heroVar);
+        if (idx < 0) return;
+        data.heroes[idx].push(heroReplaceId);
+        return;
       }
 
-      const upgradesPrepared = scriptsVariables.upgrades.bonusUpgrades.map(k => `(?:${k})`).join('|')
+      const upgradesPrepared = this.scriptVariables.upgrades.bonusUpgrades
+        .map((k) => `(?:${k})`)
+        .join('|');
 
-      const upgrades = codeBlock.match(new RegExp(
-        String.raw`(?<=^set ${scriptsVariables.upgrades.key}\[(?:${upgradesPrepared})\].*?['"])\w+(?=['"]$)`,
-        'gmi'
-      ))
+      const upgrades = codeBlock.match(
+        new RegExp(
+          String.raw`(?<=^set ${this.scriptVariables.upgrades.key}\[(?:${upgradesPrepared})\].*?['"])\w+(?=['"]$)`,
+          'gmi'
+        )
+      );
 
       if (upgrades) {
-        data.bonusUpgrades[bonusID] = Array.from(upgrades)
-        return
+        const output = Array.from(upgrades).map((upgrId) => {
+          const [baseLevel] = this.script.match(
+            new RegExp(
+              String.raw`(?<=SetPlayerTechResearchedSwap\('${upgrId}',)\d+`,
+              'im'
+            )
+          ) ?? [0];
+          return [upgrId, Number(baseLevel)] as [string, number];
+        });
+        data.bonusUpgrades[bonusID] = output;
+        return;
       }
-
-    })
+    });
   }
 
-  getRaceIDs<const T extends string[]>(
-    allianceIDs: T
-  ): Record<T[number], string[]> {
-    const alliancesRegexString = allianceIDs.map((a) => `(${a})`).join('|');
+  private getRaceIDs(): Record<string, string[]> {
+    const alliancesRegexString = this.alliances.map((a) => `(${a})`).join('|');
 
     const racePickersRegex = new RegExp(
       String.raw`^set (?<varName>.*?)=CreateUnit\(.*?,\s?'(?<unitName>${alliancesRegexString})'.*$`,
@@ -265,15 +404,86 @@ class ScriptParser {
       return acc;
     }, {});
 
-    return allianceIDs.reduce((acc, allianceID) => {
+    return this.alliances.reduce((acc, allianceID) => {
       const raceAddRegex = new RegExp(
         String.raw`(?<=^call AddUnitToStockBJ\(').*(?=',\s?${racePickers[allianceID]})`,
         'gm'
       );
-      acc[allianceID as T[number]] = Array.from(this.script.match(raceAddRegex) ?? []);
+      acc[allianceID] = Array.from(this.script.match(raceAddRegex) ?? []);
       return acc;
-    }, {} as Record<T[number], string[]>);
+    }, {} as Record<string, string[]>);
+  }
+
+  private getUltimates(): IRawUltimates {
+    const pickers =
+      abilitiesParser.getById(this.ultimatePicker)?.withInstance((instance) => {
+        return String(instance.getValueByKey('pb1'))
+          .split(',')
+          .map((a: string) => a.trim());
+      }) ?? [];
+
+    const spells = pickers.reduce((acc, pickerId) => {
+      const [funcId] =
+        this.script.match(
+          new RegExp(
+            String.raw`(?<=function )\w+(?= takes nothing returns boolean\nreturn\(GetSpellAbilityId\(\)=='${pickerId}'\)\n)`,
+            'm'
+          )
+        ) ?? [];
+      if (!funcId) return acc;
+      const setUltiBlock = this.getIfBlockByCondition(
+        new RegExp(String.raw`if\(${funcId}\(\)\)then`, 'mi')
+      );
+      const ultimates = Array.from(
+        setUltiBlock.match(
+          /(?<=(?:call UnitAddAbilityBJ\(')|(?:call BlzUnitHideAbility\(GetTriggerUnit\(\),'))\w+(?=')/gm
+        ) ?? []
+      );
+      if (ultimates.length) {
+        acc[pickerId] = ultimates;
+      }
+
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    return {
+      pickers,
+      spells,
+    };
+  }
+
+  private getArtifacts(): IRawArtifacts {
+    const artiCodeBlocks = Array.from(
+      this.script.match(
+        /call AddSpecialEffectTargetUnitBJ.+$(?=\n^call RemoveItem\(GetItemOfTypeFromUnitBJ.+$)[\S\s]*?call UnitAddItemByIdSwapped.+$/gm
+      ) ?? []
+    );
+
+    const combineMap = artiCodeBlocks.reduce((acc, code) => {
+      const [resultItem] =
+        code.match(/(?<=call UnitAddItemByIdSwapped\(')\w+/) ?? [];
+      const neededItems = Array.from(
+        code.match(
+          /(?<=call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),')\w+/gm
+        ) ?? []
+      );
+      if (resultItem && neededItems.length) {
+        acc[resultItem] = neededItems;
+      }
+
+      return acc;
+    }, {} as Record<string, string[]>);
+
+    const list = Object.entries(combineMap)
+      .flat(2)
+      .filter((val, idx, arr) => arr.indexOf(val) === idx);
+
+    return {
+      combineMap,
+      list,
+    };
   }
 }
 
-export const scriptParser = await ScriptParser.create();
+const findArtsRegex =
+  /(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part1>\w{3,5})'\)\)\n)(?:(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part2>\w{3,5})'\)\)\n)|(?:^endif$\n){1,7})(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part3>\w{3,5})'\)\)\n)?^call UnitAddItemByIdSwapped\('(?<result>\w{3,5})',GetTriggerUnit\(\)\)/gim;

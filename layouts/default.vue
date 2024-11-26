@@ -9,36 +9,98 @@
       <AppHeader />
     </v-app-bar>
     <v-main>
-      <div class="overflow-y-scroll fill-height scroll-offset">
+      <div
+        class="overflow-y-scroll fill-height scroll-offset position-relative"
+      >
         <v-container fluid>
-          <NuxtPage />
+          <v-fade-transition leave-absolute>
+            <NuxtPage />
+          </v-fade-transition>
         </v-container>
+        <v-overlay
+          absolute
+          :model-value="loading"
+          content-class="fill-height d-flex align-center justify-center flex-grow-1"
+          class="loading-overlay"
+          :close-on-content-click="false"
+          :close-on-back="false"
+          disabled
+          :offset="[48, 0, 0, 0]"
+          width="100%"
+          scrim="black"
+          location-strategy="connected"
+        >
+          <v-progress-circular size="100" width="6" indeterminate />
+        </v-overlay>
       </div>
     </v-main>
+    <v-sheet class="app-footer" elevation="4">
+      <div class="d-flex align-center">
+        Site created by
+        <v-btn
+          rel="nofollow"
+          variant="text"
+          target="_blank"
+          density="comfortable"
+          size="x-small"
+          slim
+          href="https://boosty.to/fastowldiedie"
+        >
+          FastOwlDieDie
+        </v-btn>
+      </div>
+    </v-sheet>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { lastVersion, versions } from '~/data';
+const nuxtApp = useNuxtApp();
+const loading = ref(false);
+nuxtApp.hook('page:start', () => {
+  loading.value = true;
+});
+nuxtApp.hook('page:finish', () => {
+  loading.value = false;
+});
 
-const [version] = [useRoute().params.version].flat()
-const versionRef = ref(version ?? lastVersion)
-provide('version', versionRef)
+const races = await useRaceIcons('races');
+
+useHead({
+  link: [races].map((href) => ({
+    rel: 'prefetch',
+    as: 'image',
+    href,
+  })),
+});
 </script>
 
 <style scoped>
-  .app {
-    background-image: url('~/assets/background.webp');
-    background-position: center center;
-    background-repeat: repeat;
-    background-size: cover;
-  }
-  main {
-    padding-top: 48px;
-    max-height: 100vh;
-    /* overflow: auto; */
-  }
-  .scroll-offset {
-    scroll-padding-top: 48px;
-  }
+.app {
+  background-image: url('~/assets/background.webp');
+  background-position: center center;
+  background-repeat: repeat;
+  background-size: cover;
+}
+main {
+  padding-top: 48px;
+  max-height: 100vh;
+  /* overflow: auto; */
+}
+.scroll-offset {
+  scroll-padding-top: 48px;
+}
+.loading-overlay {
+  margin-top: 48px;
+}
+.loading-overlay :deep(.v-overlay__scrim) {
+  top: 48px;
+}
+.app-footer {
+  font-size: 0.625rem;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  border-start-end-radius: 20px;
+  padding: 6px;
+}
 </style>

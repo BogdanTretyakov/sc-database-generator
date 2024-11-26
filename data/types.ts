@@ -1,3 +1,11 @@
+export interface IRawPatchData {
+  pickers: Record<string, string[]>;
+  races: IRawRace[];
+  ultimates: IRawUltimates;
+  artifacts: IRawArtifacts;
+  shrines?: string[];
+}
+
 export interface IRawRace {
   name: string;
   key: string;
@@ -21,6 +29,7 @@ export interface IRawRace {
     fort: string;
     barrack: string;
   };
+  towerAbilities: string[];
   units: {
     melee: string;
     range: string;
@@ -29,7 +38,17 @@ export interface IRawRace {
     air: string;
     catapult: string;
   };
-  bonusUpgrades: Record<string, string[]>;
+  bonusUpgrades: Record<string, [id: string, baseLevel: number][]>;
+}
+
+export interface IRawUltimates {
+  pickers: string[];
+  spells: Record<string, string[]>;
+}
+
+export interface IRawArtifacts {
+  combineMap: Record<string, string[]>;
+  list: string[];
 }
 
 export interface IBaseObject {
@@ -44,7 +63,7 @@ export interface IRacePickerObject extends IBaseObject {
 }
 
 export interface IBonusObject extends IBaseObject {
-  buildingName: string;
+  buildingId: string;
 }
 
 export interface IMagicObject extends IUpgradeObject {
@@ -64,11 +83,36 @@ export interface IUnitObject extends IBaseObject {
   cost: number;
   atkType: string;
   defType: string;
+  atk: string;
+  def: string;
 }
 
-export interface IHeroObject extends IBaseObject {
+export interface IHeroObject extends IUnitObject {
   fullName: string;
-  cost: number;
+}
+
+export interface IArtifactObject extends IBaseObject {
+  level: number;
+}
+
+export interface IArtifactData {
+  items: IArtifactObject[];
+  combineMap: Record<string, string[]>;
+}
+
+export interface IBaseUltimateObject extends IBaseObject {
+  requires: Record<string, number>;
+}
+
+export interface IUltimateObject extends IBaseUltimateObject {
+  cooldown: number;
+  manaCost: number;
+}
+
+export interface IUltimatesData {
+  pickers: IBaseUltimateObject[];
+  spells: Record<string, IUltimateObject[]>;
+  requires: Record<string, string>;
 }
 
 export interface IRaceData {
@@ -104,6 +148,7 @@ export interface IRaceData {
   t2spell: IBaseObject;
   heroes: Array<IHeroObject[]>;
   bonusUpgrades: Record<string, IUpgradeObject[]>;
+  bonusBuildings: Record<string, IBaseObject>;
 }
 
 export type IRaceIcons = Record<
@@ -111,7 +156,7 @@ export type IRaceIcons = Record<
   [x: number, y: number, width: number, height: number]
 >;
 
-export interface IRaceDataFile<T = IRaceData> {
+export interface IDataFile<T = IRaceData> {
   data: T;
   icons: IRaceIcons;
 }

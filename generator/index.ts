@@ -1,3 +1,7 @@
-import { raceParser } from "./parser";
+import { SurvivalChaosParser } from './parser';
+import { Sur5alScriptParser } from './script';
 
-raceParser()
+Sur5alScriptParser.create().then((script) => {
+  const parser = new SurvivalChaosParser(script.getPatchData());
+  parser.generate();
+});

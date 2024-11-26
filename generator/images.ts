@@ -1,5 +1,5 @@
 import Spritesmith from 'spritesmith';
-import type { SpritesmithResult } from 'spritesmith'
+import type { SpritesmithResult } from 'spritesmith';
 import { resolve } from 'path';
 import { decodeBLP, getBLPImageData } from 'war3-model';
 import { readFile, writeFile } from 'fs/promises';
@@ -14,16 +14,13 @@ import { decodeImage, parseDDSHeader } from 'dds-ktx-parser';
 
 const webpDir = resolve(process.cwd(), 'node_modules/webp-converter');
 
-grant_permission()
+grant_permission();
 mkdirSync(resolve(webpDir, 'temp'), { recursive: true });
 chmodSync(webpDir, 0o775);
 chmodSync(resolve(webpDir, 'temp'), 0o775);
 
 export class ImageProcessor {
-  constructor(
-    private baseImagesUrl: string,
-    private outputDir = 'dataGenerated'
-  ) {}
+  constructor(private baseImagesUrl: string, private outputDir: string) {}
 
   private async getPngBufferFromPathBlp(path: string) {
     const data = decodeBLP((await readFile(path)).buffer);
@@ -43,10 +40,10 @@ export class ImageProcessor {
   }
 
   private async getPngBufferFromPathDds(path: string) {
-    const imageBuffer = await readFile(path)
-    const imageInfo = parseDDSHeader(imageBuffer)
+    const imageBuffer = await readFile(path);
+    const imageInfo = parseDDSHeader(imageBuffer);
 
-    if (!imageInfo) return
+    if (!imageInfo) return;
 
     const png = new PNG({
       width: imageInfo.shape.width,
@@ -54,7 +51,7 @@ export class ImageProcessor {
       inputHasAlpha: true,
     });
 
-    png.data = decodeImage(imageBuffer, imageInfo.format, imageInfo.layers[0])
+    png.data = decodeImage(imageBuffer, imageInfo.format, imageInfo.layers[0]);
 
     const stream = new PassThrough();
     png.pack().pipe(stream);
@@ -62,21 +59,19 @@ export class ImageProcessor {
     return buffer(stream);
   }
 
-
-
   private async getPngBufferFromPath(path: string) {
     const nonExtensionPath = (() => {
-      const parts = path.split('.')
-      parts.pop()
-      return parts.join('.')
+      const parts = path.split('.');
+      parts.pop();
+      return parts.join('.');
     })();
-    const blpPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.blp`)
+    const blpPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.blp`);
     if (existsSync(blpPath)) {
-      return this.getPngBufferFromPathBlp(blpPath)
+      return this.getPngBufferFromPathBlp(blpPath);
     }
-    const ddsPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.dds`)
+    const ddsPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.dds`);
     if (existsSync(ddsPath)) {
-      return this.getPngBufferFromPathDds(ddsPath)
+      return this.getPngBufferFromPathDds(ddsPath);
     }
   }
 
@@ -85,9 +80,18 @@ export class ImageProcessor {
     /**Without extension */
     outputName: string
   ) {
+    const copies: Record<string, string[]> = {};
     const buffers = await Object.entries(images).reduce(
-      async (acc, [name, path]) => {
+      async (acc, [name, path], idx, arr) => {
+        const [findCopyId] =
+          arr.find(([, iPath], i) => path === iPath && i < idx) ?? [];
+        if (findCopyId) {
+          copies[findCopyId] = [...(copies[findCopyId] ?? []), name];
+          return acc;
+        }
+
         const prevAcc = await acc;
+
         const imageBuffer = await this.getPngBufferFromPath(path);
         if (imageBuffer) {
           prevAcc[name] = imageBuffer;
@@ -114,18 +118,21 @@ export class ImageProcessor {
     });
 
     const webpBuffer = await buffer2webpbuffer(sprite.image, 'png', '-q 75');
-    await writeFile(
-      resolve(process.cwd(), this.outputDir, `${outputName}.webp`),
-      webpBuffer
-    );
+    await writeFile(resolve(this.outputDir, `${outputName}.webp`), webpBuffer);
 
     const shortenCoordinates = Object.entries(sprite.coordinates).reduce(
       (acc, [key, { x, y, width, height }]) => {
         const [id] = key.split('.');
-        acc[id] = [x,y,width,height];
+        copies[id]?.forEach((copyId) => {
+          acc[copyId] = [x, y, width, height];
+        });
+        acc[id] = [x, y, width, height];
         return acc;
       },
-      {} as Record<string, [x: number, y: number, width: number, height: number]>
+      {} as Record<
+        string,
+        [x: number, y: number, width: number, height: number]
+      >
     );
     return shortenCoordinates;
   }
