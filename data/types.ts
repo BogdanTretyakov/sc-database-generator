@@ -20,7 +20,7 @@ export interface IRawRace {
     wall: string;
   };
   auras: string[];
-  ulti: string;
+  ulti?: string;
   t1spell: string;
   t2spell: string;
   heroes: string[][];
@@ -120,7 +120,7 @@ export interface IRaceData {
   key: string;
   id: string;
   description: string;
-  ultimateId: string;
+  ultimateId?: string;
   auras: IBaseObject[];
   bonuses: IBonusObject[];
   towerUpgrades: IUpgradeObject[];

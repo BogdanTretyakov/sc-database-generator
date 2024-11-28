@@ -1,4 +1,4 @@
-import { readFile } from 'fs/promises';
+import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { abilitiesParser, unitsParser } from './objects';
 import type {
@@ -10,6 +10,7 @@ import type {
 import { isNotNil } from '~/utils/guards';
 
 export class Sur5alScriptParser {
+  private script: string;
   private alliances = ['nfh1', 'nfr2', 'nfr1', 'ngnh'];
   private scriptVariables = {
     globals: {
@@ -68,7 +69,10 @@ export class Sur5alScriptParser {
 
   private ultimatePicker = 'A0OA';
   private buildingsMap: Record<string, Record<string, string>>;
-  private constructor(private script: string) {
+  constructor() {
+    this.script = readFileSync(resolve(process.cwd(), 'dataMap', 'war3map.j'), {
+      encoding: 'utf8',
+    }).replace(/(\r\n)|\r/g, '\n');
     this.buildingsMap = this.getBuildingsMap();
   }
 
@@ -126,16 +130,6 @@ export class Sur5alScriptParser {
       acc[varName][varKey] = varValue;
       return acc;
     }, {} as Record<string, Record<string, string>>);
-  }
-
-  static async create() {
-    const content = (
-      await readFile(resolve(process.cwd(), 'dataMap', 'war3map.j'), {
-        encoding: 'utf8',
-      })
-    ).replace(/(\r\n)|\r/g, '\n');
-
-    return new this(content);
   }
 
   public getRaceData(raceID: string) {
@@ -484,6 +478,3 @@ export class Sur5alScriptParser {
     };
   }
 }
-
-const findArtsRegex =
-  /(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part1>\w{3,5})'\)\)\n)(?:(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part2>\w{3,5})'\)\)\n)|(?:^endif$\n){1,7})(?:call RemoveItem\(GetItemOfTypeFromUnitBJ\(GetTriggerUnit\(\),'(?<part3>\w{3,5})'\)\)\n)?^call UnitAddItemByIdSwapped\('(?<result>\w{3,5})',GetTriggerUnit\(\)\)/gim;

@@ -1,13 +1,28 @@
-import { versions, lastVersion } from "~/data"
+import { defaultVersionType, versionIndexes } from '~/data';
 
 export default defineNuxtRouteMiddleware((to) => {
-  const [routeVersion] = [to.params.version].flat()
+  const userVersion = useCookie('defaultVersion', { maxAge: 2147483647 });
+  const [routeVersionType] = [to.params.versionType].flat();
 
-  if (to.path === '/') {
-    return navigateTo({ name: 'RaceSelection', params: { version: lastVersion } })
+  if (userVersion.value && !(userVersion.value in versionIndexes)) {
+    userVersion.value = defaultVersionType;
   }
 
-  if (routeVersion && !(routeVersion in versions)) {
-    return navigateTo({ params: { version: lastVersion } })
+  if (
+    !routeVersionType &&
+    userVersion.value &&
+    userVersion.value !== defaultVersionType
+  ) {
+    return navigateTo({ params: { versionType: userVersion.value } });
   }
-})
+
+  if (routeVersionType && !(routeVersionType in versionIndexes)) {
+    return navigateTo({
+      name: to.name,
+      params: {
+        ...to.params,
+        versionType: userVersion.value || defaultVersionType,
+      },
+    });
+  }
+});

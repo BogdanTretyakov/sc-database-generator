@@ -1,22 +1,18 @@
 import type { IconBoundaries } from '~/components/GameIcon.vue';
-import { versions } from '~/data';
 import type { IRaceData, IDataFile } from '~/data/types';
 
 export const useRaceData = async <T = IRaceData>(raceName?: string) => {
   const [routeRace] = [useRoute().params.race].flat();
+  const versionIndex = useVersionIndex();
+
   const race = raceName ?? routeRace;
-  const version = useVersion();
   const { data } = await useAsyncData(
-    `race-${version.value}-${race}`,
+    `race-${versionIndex.value.version}-${race}`,
     async () => {
-      if (!(version.value in versions)) {
-        throw new Error('No version found');
-      }
-      const { racesData } = await versions[version.value]();
-      if (!(race in racesData)) {
+      if (!(race in versionIndex.value.racesData)) {
         throw new Error('No race found');
       }
-      return racesData[race]() as Promise<IDataFile<T>>;
+      return versionIndex.value.racesData[race]() as Promise<IDataFile<T>>;
     },
     {
       default: () => ({} as IDataFile<T>),
@@ -38,8 +34,6 @@ export const useRaceData = async <T = IRaceData>(raceName?: string) => {
       return { x, y, width, height };
     });
   }
-
-  console.log(data);
 
   return {
     raceData: data.value.data,

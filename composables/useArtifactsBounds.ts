@@ -183,7 +183,7 @@ export const useArtifactsBounds = ({
         }px`;
       }
     }
-  }, 100);
+  }, 200);
 
   onNuxtReady(() => {
     observer.value = new ResizeObserver(() => {
@@ -191,6 +191,7 @@ export const useArtifactsBounds = ({
     });
     if (!container.value) return;
     observer.value.observe(container.value);
+    globalThis.setTimeout(setPath.flush, 2000);
   });
 
   watch(container, (val, oldVal) => {
@@ -199,6 +200,7 @@ export const useArtifactsBounds = ({
     }
     if (val) {
       observer.value?.observe(val);
+      nextTick(() => setPath.flush());
     }
   });
 

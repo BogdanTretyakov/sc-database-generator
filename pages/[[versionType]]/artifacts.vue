@@ -110,8 +110,6 @@ const compare = new Intl.Collator('en').compare;
 const showPath = useStorageValue('artiShowPath', 'false');
 const disabledTooltips = useStorageValue('artiDisabledTooltips', 'false');
 
-const version = useVersion();
-
 const { raceData: artiData, iconProps } = await useRaceData<IArtifactData>(
   'artifacts'
 );
@@ -225,7 +223,7 @@ onNuxtReady(() => {
 });
 
 useSeoMeta({
-  title: `Artifacts ${version.value}`,
+  title: `Artifacts `,
 });
 
 definePageMeta({

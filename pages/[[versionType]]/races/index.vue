@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="text-center">
-      <h1 class="text-h2 font-bold title mb-6">Survival Chaos {{ version }}</h1>
+      <h1 class="text-h2 font-bold title mb-6">Survival Chaos races</h1>
     </div>
     <div class="d-flex flex-wrap justify-space-around align-content-center">
       <div
@@ -18,7 +18,6 @@
 <script setup lang="ts">
 import type { IRacePickerObject } from '~/data/types';
 
-const version = useVersion();
 const { raceData } = await useRaceData<Record<string, IRacePickerObject[]>>(
   'races'
 );
@@ -28,6 +27,6 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: `Races ${version.value}`,
+  title: `Races`,
 });
 </script>

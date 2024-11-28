@@ -25,5 +25,5 @@ logs
 dataGenerated
 dataMap
 !dataGenerated/.gitkeep
-debug/*
-!debug/.gitkeep
+generator/debug/*
+!generator/debug/.gitkeep

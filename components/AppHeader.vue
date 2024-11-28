@@ -4,7 +4,7 @@
       v-for="(text, name) in routes"
       :key="name"
       variant="text"
-      :to="{ name }"
+      :to="{ name, params: $route.params }"
       density="comfortable"
       class="mx-1"
     >
@@ -18,27 +18,52 @@
       :items="versionList"
       density="compact"
       variant="solo"
+      label="Version"
       hide-details
       :list-props="{
-        density: 'compact',
+        density: 'comfortable',
       }"
       bg-color="transparent"
       flat
-      :width="100"
-    />
+      min-width="min-content"
+    >
+      <template #selection="{ item }">
+        {{ item.title }}
+      </template>
+    </v-select>
   </div>
 </template>
 
 <script setup lang="ts">
-import { versions } from '~/data';
-
-const version = useVersion();
-
-const versionList = Object.keys(versions);
+import { defaultVersionType, versionIndexes } from '~/data';
+const route = useRoute();
+const userVersion = useCookie('defaultVersion', { maxAge: 2147483647 });
 
 const routes = {
   RaceSelection: 'Races',
   ArtifactsIndex: 'Artifacts',
   UltimatesIndex: 'Ultimates',
 };
+
+const versionList = [
+  {
+    title: `W3C ${versionIndexes.w3c.version}`,
+    value: 'w3c',
+  },
+  {
+    title: `OZEdition ${versionIndexes.oz.version}`,
+    value: 'oz',
+  },
+];
+
+const version = computed({
+  get() {
+    const [versionType] = [route.params.versionType].flat();
+    return versionType || defaultVersionType;
+  },
+  set(versionType) {
+    userVersion.value = versionType;
+    navigateTo({ name: 'RaceSelection', params: { versionType } });
+  },
+});
 </script>

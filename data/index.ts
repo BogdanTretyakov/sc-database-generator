@@ -1,18 +1,13 @@
 import type { IDataFile } from './types';
+import w3c from './w3c';
+import oz from './oz';
 
 export interface VersionIndexFile {
   racesIcons: Record<string, string>;
   racesData: Record<string, () => Promise<IDataFile>>;
+  version: string;
 }
 
-export const versions = Object.entries(
-  import.meta.glob('./**/index.ts', { import: 'default' })
-).reduce((acc, [key, value]) => {
-  const path = key.split(/\\|\//g);
-  const version = path[path.length - 2];
-  // @ts-expect-error
-  acc[version] = value;
-  return acc;
-}, {} as Record<string, () => Promise<VersionIndexFile>>);
+export const versionIndexes = { w3c, oz };
 
-export const lastVersion = '4.24';
+export const defaultVersionType = 'w3c';

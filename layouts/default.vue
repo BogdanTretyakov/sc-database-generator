@@ -14,12 +14,12 @@
       >
         <v-container fluid>
           <v-fade-transition leave-absolute>
-            <NuxtPage />
+            <NuxtPage :page-key="(route) => route.path" />
           </v-fade-transition>
         </v-container>
         <v-overlay
           absolute
-          :model-value="loading"
+          :model-value="routeLoading"
           content-class="fill-height d-flex align-center justify-center flex-grow-1"
           class="loading-overlay"
           :close-on-content-click="false"
@@ -55,28 +55,19 @@
 
 <script setup lang="ts">
 const nuxtApp = useNuxtApp();
-const loading = ref(false);
+const routeLoading = ref(false);
+
 nuxtApp.hook('page:start', () => {
-  loading.value = true;
+  routeLoading.value = true;
 });
 nuxtApp.hook('page:finish', () => {
-  loading.value = false;
-});
-
-const races = await useRaceIcons('races');
-
-useHead({
-  link: [races].map((href) => ({
-    rel: 'prefetch',
-    as: 'image',
-    href,
-  })),
+  routeLoading.value = false;
 });
 </script>
 
 <style scoped>
 .app {
-  background-image: url('~/assets/background.webp');
+  background-image: url('/background.webp');
   background-position: center center;
   background-repeat: repeat;
   background-size: cover;

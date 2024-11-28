@@ -1,45 +1,43 @@
 <template>
   <div class="race-container">
-    <CCard :title="routes.details" id="details" class="row-span-2">
+    <CCard :title="routes.details" id="details" style="grid-row: span 3">
       <template #title>
-        <h1 :style="{ color: raceComputed.color }">{{ raceData.name }}</h1>
+        <h1 :style="{ color: raceComputed.color }" v-html="raceData.name" />
       </template>
       <div v-html="raceComputed.description" />
     </CCard>
 
-    <CCard :title="routes.buildings" id="buildings">
-      <v-row>
-        <v-col
-          cols="4"
-          v-for="{ name, icon, text } in buildings"
-          :key="name"
-          class="text-center"
-        >
-          <div class="text-h6">{{ name }}</div>
-          <v-tooltip>
-            <template #activator="{ props }">
-              <GameIcon
-                :src="assets"
-                width="48"
-                :coords="icon"
-                v-bind="props"
-                :padding="[0, 8, 8, 0]"
-                class="my-4"
-              />
-            </template>
-            <span v-html="text" />
-          </v-tooltip>
-        </v-col>
-      </v-row>
-    </CCard>
-
     <CCard
-      :title="routes.researches"
-      class="d-flex flex-column align-center justify-center"
+      title="Fortress"
+      class="d-flex flex-column justify-start"
+      style="grid-row: span 2"
       :full-height="false"
-      id="researches"
+      id="fortress"
     >
-      <WarGrid :items="researches" v-slot="{ item }">
+      <template #prependHead>
+        <AttackDefend
+          key="fort-attack"
+          class="ml-1"
+          :type="raceData.buildings.fort.attackType"
+        />
+      </template>
+      <template #appendHead>
+        <CombineCost key="fort-cost" class="mr-1" :items="researches" />
+      </template>
+      <WarGrid class="mx-auto" :items="raceData.auras" v-slot="{ item }">
+        <WarTooltip
+          :description="item.description"
+          :src="icons"
+          :coords="iconProps(item.id)"
+        >
+          <template #tooltip>
+            <div class="text-subtitle-1" v-html="item.name" />
+          </template>
+        </WarTooltip>
+      </WarGrid>
+
+      <v-divider class="my-3 w-100" />
+      <WarGrid class="mx-auto" :items="researches" v-slot="{ item }">
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -55,28 +53,10 @@
           </template>
         </WarTooltip>
       </WarGrid>
-    </CCard>
-    <CCard
-      :title="routes.auras"
-      :full-height="false"
-      class="d-flex flex-column align-center justify-center"
-      id="auras"
-    >
-      <WarGrid :items="raceData.auras" v-slot="{ item }">
-        <WarTooltip
-          :description="item.description"
-          :src="icons"
-          :coords="iconProps(item.id)"
-        >
-          <template #tooltip>
-            <div class="text-subtitle-1" v-html="item.name" />
-          </template>
-        </WarTooltip>
-      </WarGrid>
 
       <v-divider class="my-3 w-100" />
 
-      <WarGrid :items="spells" v-slot="{ item }">
+      <WarGrid class="mx-auto" :items="spells" v-slot="{ item }">
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -88,13 +68,35 @@
         </WarTooltip>
       </WarGrid>
     </CCard>
+
     <CCard
-      :title="routes.units"
+      title="Towers"
       :full-height="false"
-      class="d-flex flex-column align-center justify-center"
-      id="units"
+      class="d-flex flex-column"
+      style="grid-row: span 2"
+      id="upgrades"
     >
-      <WarGrid :items="units" v-slot="{ item }">
+      <template #prependHead>
+        <AttackDefend
+          key="tower-attack"
+          class="ml-1"
+          :type="raceData.buildings.tower.attackType"
+        />
+      </template>
+      <template #appendHead>
+        <CombineCost
+          key="tower-cost"
+          :items="raceData.towerUpgrades"
+          :count="3"
+        >
+          Total cost (Lv3)
+        </CombineCost>
+      </template>
+      <WarGrid
+        class="mx-auto"
+        :items="raceData.towerUpgrades"
+        v-slot="{ item }"
+      >
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -103,52 +105,15 @@
           <template #tooltip>
             <div class="text-subtitle-1" v-html="item.name" />
             <WarCost :cost="item.cost" />
-            <div class="d-flex flex-no-wrap my-1">
-              <div class="d-flex align-center flex-grow-1">
-                <GameIcon
-                  :src="assets"
-                  class="mr-2"
-                  :coords="attackIcons[item.atkType]"
-                  width="24"
-                  :padding="[0, 8, 8, 0]"
-                />
-                {{ item.atk }}
-              </div>
-              <div class="d-flex align-center flex-grow-1">
-                <GameIcon
-                  :src="assets"
-                  class="mr-2"
-                  :coords="defendIcons[item.defType]"
-                  width="24"
-                  :padding="[0, 8, 8, 0]"
-                />
-                {{ item.def }}
-              </div>
-            </div>
-          </template>
-        </WarTooltip>
-      </WarGrid>
-
-      <v-divider class="my-3 w-100" />
-
-      <WarGrid :items="heroes" v-slot="{ item }">
-        <WarTooltip
-          :description="item.description"
-          :src="icons"
-          :coords="iconProps(item.id)"
-        >
-          <template #tooltip>
-            <div class="text-h6" v-html="item.fullName" />
-            <div class="text-subtitle-1" v-html="item.name" />
-            <WarCost :cost="item.cost" />
           </template>
         </WarTooltip>
       </WarGrid>
     </CCard>
     <CCard
-      :title="routes.bonuses"
+      title="Bonuses"
       :full-height="false"
-      class="d-flex flex-column align-center justify-start row-span-2"
+      class="d-flex flex-column align-center justify-start"
+      :style="{ gridRow: `span ${2 + Math.floor(bonusBuildings.length / 4)}` }"
       id="bonuses"
     >
       <WarGrid :items="raceData.bonuses" v-slot="{ item }">
@@ -207,13 +172,22 @@
         </v-btn>
       </div>
     </CCard>
+
     <CCard
-      :title="routes.upgrades"
+      title="Barracks"
       :full-height="false"
-      class="d-flex flex-column align-center justify-center"
-      id="upgrades"
+      class="d-flex flex-column"
+      style="grid-row: span 2"
+      id="units"
     >
-      <WarGrid :items="raceData.towerUpgrades" v-slot="{ item }">
+      <template #prependHead>
+        <AttackDefend
+          key="barrack-attack"
+          class="ml-1"
+          :type="raceData.buildings.barrack.attackType"
+        />
+      </template>
+      <WarGrid class="mx-auto" :items="units" v-slot="{ item }">
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -222,10 +196,42 @@
           <template #tooltip>
             <div class="text-subtitle-1" v-html="item.name" />
             <WarCost :cost="item.cost" />
+            <div class="d-flex flex-no-wrap my-1">
+              <AttackDefend
+                :type="item.atkType"
+                :value="item.atk"
+                :size="24"
+                class="flex-grow-1"
+              />
+              <AttackDefend
+                :type="item.defType"
+                :value="item.def"
+                is-defend
+                :size="24"
+                class="flex-grow-1"
+              />
+            </div>
+          </template>
+        </WarTooltip>
+      </WarGrid>
+
+      <v-divider class="my-3 w-100" />
+
+      <WarGrid class="mx-auto" :items="heroes" v-slot="{ item }">
+        <WarTooltip
+          :description="item.description"
+          :src="icons"
+          :coords="iconProps(item.id)"
+        >
+          <template #tooltip>
+            <div class="text-h6" v-html="item.fullName" />
+            <div class="text-subtitle-1" v-html="item.name" />
+            <WarCost :cost="item.cost" />
           </template>
         </WarTooltip>
       </WarGrid>
     </CCard>
+
     <template v-for="(items, id) in raceData.bonusUpgrades">
       <CCard
         :title="bonuses[id].name"
@@ -233,6 +239,9 @@
         class="d-flex flex-column align-center justify-center"
         :id="`additional-${id}`"
       >
+        <template #appendHead>
+          <CombineCost :items="items" />
+        </template>
         <WarGrid :items="items" v-slot="{ item }">
           <WarTooltip
             :description="item.description"
@@ -251,15 +260,12 @@
 </template>
 
 <script setup lang="ts">
-import type { IconBoundaries } from '~/components/GameIcon.vue';
 import type { IMagicObject, IUpgradeObject } from '~/data/types';
 
 const collator = new Intl.Collator('en').compare;
 
 const hoverBonus = ref();
 const selectedBonus = useHashValue();
-
-const [assets, assetsCoords] = useAssets();
 
 const unitsHotkeys: Record<string, string> = {
   melee: 'A',
@@ -269,8 +275,6 @@ const unitsHotkeys: Record<string, string> = {
   air: 'E',
   catapult: 'R',
 };
-
-const version = useVersion();
 
 const icons = await useRaceIcons();
 const { raceData, iconProps } = await useRaceData();
@@ -284,52 +288,6 @@ const routes = {
   bonuses: 'Bonuses',
   upgrades: 'Upgrades',
 } as const;
-
-const buildNames: Record<string, string> = {
-  fort: 'Fortress',
-  barrack: 'Barracks',
-  tower: 'Tower',
-};
-
-const attackTypes: Record<string, string> = {
-  siege: '<span style="color: #ffbfbf">Siege</span>',
-  chaos: '<span style="color: #2fd43c">Chaos</span>',
-  magic: '<span style="color: #2c67dc">Magic</span>',
-  pierce: '<span style="color: #d4e143">Pierce</span>',
-  normal: '<span style="color: #51ded8">Normal</span>',
-};
-
-const attackIcons: Record<string, IconBoundaries> = {
-  siege: assetsCoords.siege,
-  chaos: assetsCoords.chaos,
-  magic: assetsCoords.magic,
-  pierce: assetsCoords.pierce,
-  normal: assetsCoords.normal,
-  hero: assetsCoords.ahero,
-};
-
-const defendIcons: Record<string, IconBoundaries> = {
-  divine: assetsCoords.divine,
-  none: assetsCoords.unarmored,
-  small: assetsCoords.light,
-  hero: assetsCoords.dhero,
-  large: assetsCoords.heavy,
-  medium: assetsCoords.medium,
-  flesh: assetsCoords.unarmored,
-};
-
-const buildings = computed(() =>
-  Object.entries(raceData.buildings)
-    .map(([key, { attackType }]) => {
-      if (!attackType) return;
-      return {
-        name: buildNames[key],
-        icon: attackIcons[attackType],
-        text: attackTypes[attackType],
-      };
-    })
-    .filter(isNotNil)
-);
 
 const raceComputed = computed(() => {
   const description = raceData.description
@@ -378,14 +336,18 @@ const units = computed(() =>
   }))
 );
 
-const spells = computed(() =>
-  [raceData.t1spell, raceData.t2spell].concat({
-    hotkey: 'V',
-    id: raceData.ultimateId,
-    name: 'Precision UW Icon',
-    description: '',
-  })
-);
+const spells = computed(() => {
+  const spells = [raceData.t1spell, raceData.t2spell];
+  if (raceData.ultimateId) {
+    spells.push({
+      hotkey: 'V',
+      id: raceData.ultimateId,
+      name: 'Precision UW Icon',
+      description: '',
+    });
+  }
+  return spells;
+});
 
 const bonusBuildings = computed(() =>
   Object.values(raceData.bonusBuildings).sort(({ name: n1 }, { name: n2 }) =>
@@ -398,7 +360,7 @@ const bonuses = computed(() =>
 );
 
 useSeoMeta({
-  title: `${raceData.name} ${version.value}`,
+  title: `${raceData.name}`,
 });
 
 useHead({
@@ -413,6 +375,13 @@ useHead({
 
 definePageMeta({
   name: 'RaceIndex',
+  middleware(to) {
+    const versionIndex = useVersionIndex();
+    const [race] = [to.params.race].flat();
+    if (!(race in versionIndex.value.racesData)) {
+      return navigateTo({ name: 'RaceSelection' });
+    }
+  },
 });
 </script>
 <style lang="css" scoped>
@@ -423,7 +392,6 @@ definePageMeta({
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  grid-template-rows: fit-content(50%);
 }
 .row-span-2 {
   grid-row: span 2;

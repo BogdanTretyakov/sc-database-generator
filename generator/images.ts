@@ -11,6 +11,8 @@ import Vinyl from 'vinyl';
 import { buffer2webpbuffer, grant_permission } from 'webp-converter';
 import { chmodSync, existsSync, mkdirSync } from 'fs';
 import { decodeImage, parseDDSHeader } from 'dds-ktx-parser';
+// @ts-expect-error no typings
+import tga2png from 'tga2png';
 
 const webpDir = resolve(process.cwd(), 'node_modules/webp-converter');
 
@@ -72,6 +74,10 @@ export class ImageProcessor {
     const ddsPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.dds`);
     if (existsSync(ddsPath)) {
       return this.getPngBufferFromPathDds(ddsPath);
+    }
+    const tgaPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.tga`);
+    if (existsSync(tgaPath)) {
+      return tga2png(tgaPath);
     }
   }
 

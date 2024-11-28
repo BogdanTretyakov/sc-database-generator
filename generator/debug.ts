@@ -1,22 +1,23 @@
-import { ObjectsTranslator } from 'wc3maptranslator';
 import { resolve } from 'path';
-import { readFile, writeFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
+import {
+  abilitiesParser,
+  itemsParser,
+  unitsParser,
+  upgradesParser,
+} from './objects';
 
 const files = [
-  ['war3map.w3q', 'upgrades'],
-  ['war3map.w3a', 'abilities'],
-  ['war3map.w3u', 'units'],
-  ['war3map.w3t', 'items'],
-];
+  ['w3q', upgradesParser],
+  ['w3a', abilitiesParser],
+  ['w3u', unitsParser],
+  ['w3t', itemsParser],
+] as const;
 
-files.forEach(async ([name, type]) => {
-  const [, newFileName] = name.split('.');
-  const w3Buffer = await readFile(resolve(process.cwd(), 'dataMap', name));
-  const { json } = ObjectsTranslator.warToJson(type, w3Buffer);
-
+files.forEach(async ([newFileName, parser]) => {
   await writeFile(
     resolve(process.cwd(), 'generator', 'debug', `${newFileName}.json`),
-    JSON.stringify(json, null, 4),
+    JSON.stringify(parser.data, null, 4),
     { encoding: 'utf8' }
   );
   await writeFile(
@@ -26,7 +27,7 @@ files.forEach(async ([name, type]) => {
       'debug',
       `${newFileName}.formatted.json`
     ),
-    JSON.stringify(restore(json), null, 4),
+    JSON.stringify(restore(parser.data), null, 4),
     { encoding: 'utf8' }
   );
 });

@@ -4,13 +4,12 @@ import type { IconBoundaries } from '~/components/GameIcon.vue';
 
 const mappedCoords = mapObject(
   coords,
-  ([x, y, width, height]) =>
-    ({
-      x,
-      y,
-      width,
-      height,
-    } as IconBoundaries)
+  ([x, y, width, height]): IconBoundaries => ({
+    x,
+    y,
+    width,
+    height,
+  })
 );
 
 export const useAssets = () => {

@@ -1,11 +1,4 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
-import { readdirSync } from 'fs';
-import { resolve } from 'path';
-const versions = readdirSync(resolve(process.cwd(), 'data'), {
-  withFileTypes: true,
-})
-  .filter((d) => d.isDirectory())
-  .map(({ name }) => name);
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -37,22 +30,33 @@ export default defineNuxtConfig({
     },
     build: {
       cssCodeSplit: false,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            const match = id.match(
+              /data[\/\\](?<version>.+)[\/\\](?<name>[^\\\/]+?)\..+?$/
+            );
+            if (!match) return 'all';
+            // let { version, name } = match.groups ?? {};
+            // if (['race', 'artifacts', 'ultimates'].includes(name)) {
+            //   name = 'common';
+            // }
+            // return `${version}-${name}`;
+          },
+        },
+      },
     },
   },
   pages: true,
   features: {
     inlineStyles: false,
   },
+
   app: {
     head: {
       title: 'Loading',
       link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
       titleTemplate: '%s - Survival Chaos Info',
-      style: [
-        {
-          textContent: 'html { background: #233a61 }',
-        },
-      ],
     },
   },
   generate: {
@@ -76,5 +80,16 @@ export default defineNuxtConfig({
   },
   router: {
     options: {},
+  },
+  hooks: {
+    'build:manifest'(manifest) {
+      for (const key in manifest) {
+        const file = manifest[key];
+
+        if (file.prefetch) {
+          file.prefetch = false;
+        }
+      }
+    },
   },
 });

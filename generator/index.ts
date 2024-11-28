@@ -1,7 +1,35 @@
 import { SurvivalChaosParser } from './parser';
 import { Sur5alScriptParser } from './script';
+import { OZScriptParser } from './ozScript';
+import { abilitiesParser, unitsParser } from './objects';
+import { select } from '@inquirer/prompts';
 
-Sur5alScriptParser.create().then((script) => {
-  const parser = new SurvivalChaosParser(script.getPatchData());
-  parser.generate();
+const type = await select({
+  message: 'Select version to parse',
+  choices: [
+    { value: 'w3c', name: 'Official Sur5al/W3C' },
+    { value: 'oz', name: 'OZGame Edition' },
+  ],
 });
+
+switch (type) {
+  case 'w3c': {
+    const scriptParser = new Sur5alScriptParser();
+    const parser = new SurvivalChaosParser(
+      scriptParser.getPatchData(),
+      unitsParser
+    );
+    parser.generate();
+
+    break;
+  }
+  case 'oz': {
+    const scriptParser = new OZScriptParser();
+    const parser = new SurvivalChaosParser(
+      scriptParser.getPatchData(),
+      abilitiesParser
+    );
+    parser.generate();
+    break;
+  }
+}

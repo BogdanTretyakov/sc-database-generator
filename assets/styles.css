@@ -1,10 +1,17 @@
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   overflow: hidden;
 }
+body {
+  background-color: rgb(33, 33, 33);
+  background-image: url('/background.webp');
+  background-position: center center;
+  background-size: cover;
+}
 .patched-bg {
-  background: rgba(var(--v-theme-surface), .9)!important;
+  background: rgba(var(--v-theme-surface), 0.9) !important;
 }
 .min-h-70-vh {
   min-height: 70vh;
