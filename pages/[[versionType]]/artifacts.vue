@@ -64,7 +64,7 @@
           ]"
         >
           <template
-            v-for="(_, parentId) in artiData.combineMap"
+            v-for="(innerVariants, parentId) in artiData.combineMap"
             :key="`node-${parentId}`"
           >
             <div
@@ -72,27 +72,41 @@
               :data-debug="`${parentId}-connect-inner`"
               :class="{
                 depressed: activePath.length && !activePath.includes(parentId),
+                pathNode: true,
               }"
             />
-            <template v-for="innerId in artiData.combineMap[parentId]">
-              <div
-                :ref="boundRef(parentId, 'connect', innerId)"
-                :data-debug="`${parentId}-connect-${innerId}`"
-                :class="{
-                  depressed:
-                    activePath.length &&
-                    ![parentId, innerId].every((id) => activePath.includes(id)),
-                }"
-              />
-              <div
-                :ref="boundRef(parentId, 'child', innerId)"
-                :data-debug="`${parentId}-${innerId}`"
-                :class="{
-                  depressed:
-                    activePath.length &&
-                    ![parentId, innerId].every((id) => activePath.includes(id)),
-                }"
-              />
+            <template
+              v-for="(childsArr, innerIdx) in innerVariants"
+              :key="`node-${parentId}-${innerIdx}`"
+            >
+              <template v-for="innerId in childsArr">
+                <div
+                  :ref="boundRef(parentId, 'connect', innerId)"
+                  :data-debug="`${parentId}-connect-${innerId}`"
+                  :class="{
+                    depressed:
+                      activePath.length &&
+                      ![parentId, innerId].every((id) =>
+                        activePath.includes(id)
+                      ),
+                    pathNode: true,
+                    optionalNode: innerIdx !== 0,
+                  }"
+                />
+                <div
+                  :ref="boundRef(parentId, 'child', innerId)"
+                  :data-debug="`${parentId}-${innerId}`"
+                  :class="{
+                    depressed:
+                      activePath.length &&
+                      ![parentId, innerId].every((id) =>
+                        activePath.includes(id)
+                      ),
+                    pathNode: true,
+                    optionalNode: innerIdx !== 0,
+                  }"
+                />
+              </template>
             </template>
           </template>
         </div>
@@ -122,7 +136,7 @@ const statsItems = computed(() => {
     .filter(({ level, id }) => level > 1 && !(id in artiData.combineMap))
     .map(({ id }) => id);
   const high = Object.entries(artiData.combineMap)
-    .filter(([, value]) => value.every((id) => low.includes(id)))
+    .filter(([, value]) => value.flat().every((id) => low.includes(id)))
     .map(([id]) => id);
   return low
     .concat(high)
@@ -176,7 +190,7 @@ const renderItems = computed(() => {
     }
     currLevelArr.sort(({ id }) => {
       if (statsItems.value.some((item) => item?.id === id)) return 1;
-      return artiData.combineMap[lastLevelArr[0].id].includes(id) ? -1 : 0;
+      return artiData.combineMap[lastLevelArr[0].id][0].includes(id) ? -1 : 0;
     });
     output.push(currLevelArr);
   } while (copy.length);
@@ -202,11 +216,11 @@ const calcActivePath = (calcId: string) => {
     output.push(id);
     const child = artiData.combineMap[id];
     if (child && !ignoreChild) {
-      child.forEach((i) => addNode(i, true, false));
+      child.forEach((iArr) => iArr.forEach((i) => addNode(i, true, false)));
     }
     if (!ignoreParent) {
       Object.entries(artiData.combineMap)
-        .filter(([, value]) => value.includes(id))
+        .filter(([, values]) => values.some((value) => value.includes(id)))
         .forEach(([key]) => addNode(key, false, true));
     }
   };
@@ -281,5 +295,11 @@ definePageMeta({
 }
 .selected {
   outline: 4px solid #ffd428;
+}
+.pathNode {
+  border-style: solid;
+}
+.pathNode.optionalNode {
+  border-style: dashed;
 }
 </style>

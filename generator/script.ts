@@ -69,11 +69,13 @@ export class Sur5alScriptParser {
 
   private ultimatePicker = 'A0OA';
   private buildingsMap: Record<string, Record<string, string>>;
+  private heroReplaceMap: Record<string, Record<string, string>>;
   constructor() {
     this.script = readFileSync(resolve(process.cwd(), 'dataMap', 'war3map.j'), {
       encoding: 'utf8',
     }).replace(/(\r\n)|\r/g, '\n');
     this.buildingsMap = this.getBuildingsMap();
+    this.heroReplaceMap = this.prepareHeroesItems();
   }
 
   getPatchData(): IRawPatchData {
@@ -86,6 +88,9 @@ export class Sur5alScriptParser {
         .flat()
         .map(this.getRaceData.bind(this))
         .filter(isNotNil),
+      misc: {
+        neutrals: this.getNeutrals(),
+      },
     };
   }
 
@@ -281,8 +286,8 @@ export class Sur5alScriptParser {
         range: rawRaceData[upgrades.key][upgrades.range],
         wall: rawRaceData[upgrades.key][upgrades.wall],
       },
-      heroes: this.scriptVariables.heroes.map((key) =>
-        Object.values(rawRaceData[key])
+      heroes: this.scriptVariables.heroes.map(
+        (key) => Object.values(rawRaceData[key])[0]
       ),
       buildings: {
         fort: fortId,
@@ -314,6 +319,7 @@ export class Sur5alScriptParser {
         siege: rawRaceData[units.siege][units.key],
       },
       bonusUpgrades: {},
+      bonusHeroes: [],
     };
 
     this.enrichRaceData(output);
@@ -348,9 +354,13 @@ export class Sur5alScriptParser {
 
       if (heroReplace) {
         const { heroVar, heroReplaceId } = heroReplace.groups ?? {};
-        const idx = this.scriptVariables.heroes.indexOf(heroVar);
-        if (idx < 0) return;
-        data.heroes[idx].push(heroReplaceId);
+        const slot = this.scriptVariables.heroes.indexOf(heroVar);
+        if (slot < 0) return;
+        data.bonusHeroes.push({
+          id: heroReplaceId,
+          items: this.heroReplaceMap[heroReplaceId] ?? {},
+          slot,
+        });
         return;
       }
 
@@ -382,7 +392,9 @@ export class Sur5alScriptParser {
   }
 
   private getRaceIDs(): Record<string, string[]> {
-    const alliancesRegexString = this.alliances.map((a) => `(${a})`).join('|');
+    const alliancesRegexString = this.alliances
+      .map((a) => `(?:${a})`)
+      .join('|');
 
     const racePickersRegex = new RegExp(
       String.raw`^set (?<varName>.*?)=CreateUnit\(.*?,\s?'(?<unitName>${alliancesRegexString})'.*$`,
@@ -462,19 +474,85 @@ export class Sur5alScriptParser {
         ) ?? []
       );
       if (resultItem && neededItems.length) {
-        acc[resultItem] = neededItems;
+        acc[resultItem] = [neededItems];
       }
 
       return acc;
-    }, {} as Record<string, string[]>);
+    }, {} as Record<string, string[][]>);
 
     const list = Object.entries(combineMap)
-      .flat(2)
+      .flat(3)
       .filter((val, idx, arr) => arr.indexOf(val) === idx);
 
     return {
       combineMap,
       list,
     };
+  }
+
+  private getNeutrals() {
+    const variables = Array.from(
+      this.script.match(
+        /(?<=call SetUnitColor\().+(?=,ConvertPlayerColor\(8\)\))/gm
+      ) ?? []
+    ).map((s) => `(?:${s})`);
+    const regexp = new RegExp(
+      String.raw`(?<=set (?:${variables.join('|')})=CreateUnit\(p,')[\w\d]+`,
+      'gm'
+    );
+    return Array.from(this.script.match(regexp) ?? []);
+  }
+
+  private prepareHeroesItems() {
+    const codeBlocks = Array.from(
+      this.script.match(
+        /if\(.+?\(\)\)\s?then\n(?:call SelectHeroSkill.+?$\n)+(?:^.+$\ncall UnitAddItemByIdSwapped.+\n^.+$\n){1,}/gm
+      ) ?? []
+    );
+
+    return codeBlocks.reduce<Record<string, Record<string, string>>>(
+      (acc, block) => {
+        const checkHeroFnName = block.match(/(?<=if\()\w+/)?.[0];
+        if (!checkHeroFnName) return acc;
+
+        const heroReplaceId = this.script.match(
+          new RegExp(
+            String.raw`(?<=function ${checkHeroFnName}\s.+\nreturn\s?\(GetUnitTypeId\(GetTriggerUnit\(\)\)==')\w+`,
+            'm'
+          )
+        )?.[0];
+        if (!heroReplaceId) return acc;
+
+        const data = Array.from(
+          block.matchAll(
+            /if\((?<fnName>.+)\(.+\ncall UnitAddItemByIdSwapped\('(?<itemName>\w+)/gm
+          )
+        ).reduce<Record<string, string>>((acc, { groups }) => {
+          if (!groups) return acc;
+          const { fnName, itemName } = groups;
+
+          const rawLevel = this.script.match(
+            new RegExp(
+              String.raw`(?<=function ${fnName}\s.+\n.+>=)(?:(?:\d+)|(?:\$\w+))`
+            )
+          )?.[0];
+
+          if (!rawLevel || !itemName) return acc;
+
+          const level = rawLevel.startsWith('$')
+            ? String(Number(`0x${rawLevel.replace('$', '')}`))
+            : String(rawLevel);
+
+          acc[level] = itemName;
+
+          return acc;
+        }, {});
+
+        acc[heroReplaceId] = data;
+
+        return acc;
+      },
+      {}
+    );
   }
 }

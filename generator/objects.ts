@@ -81,7 +81,14 @@ class Units extends W3Parser {
   }
 }
 export class Upgrades extends W3Parser {
-  override skins = getSkinsData('upgradeskin.txt', defaultArts);
+  override skins = {
+    ...getSkinsData('upgradeskin.txt', defaultArts),
+    ...getSkinsData('humanupgradefunc.txt', defaultArts),
+    ...getSkinsData('neutralupgradefunc.txt', defaultArts),
+    ...getSkinsData('nightelfupgradefunc.txt', defaultArts),
+    ...getSkinsData('orcupgradefunc.txt', defaultArts),
+    ...getSkinsData('undeadupgradefunc.txt', defaultArts),
+  };
   override iconID = 'ar1';
   private upgrades = new W3Slk('upgradedata.slk', 'upgradeid');
 
@@ -112,7 +119,7 @@ class Abilities extends W3Parser {
   override iconID = 'art';
 
   override getName(data: W3Object<this>): string {
-    return data.getValueByKey('tp1') || data.getAllValuesByKey('nam');
+    return data.getRawValue('tp1');
   }
 }
 class Items extends W3Parser {
@@ -130,7 +137,7 @@ function getSkinsData<const T extends string[] | readonly string[]>(
   ).replace(/\r\n/g, '\n');
 
   return Array.from(
-    fileContent.matchAll(/^\[(?<id>\w+)\]\s*?$\r?\n(?<content>[\s\S]+?)^$/gm)
+    fileContent.matchAll(/\[(?<id>\w+)\]\s*?$\r?\n(?<content>[\s\S]+?)^$/gm)
   ).reduce((acc, { groups: blockGroups }) => {
     if (!blockGroups) return acc;
     const { id, content } = blockGroups;

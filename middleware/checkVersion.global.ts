@@ -9,6 +9,13 @@ export default defineNuxtRouteMiddleware((to) => {
   }
 
   if (
+    routeVersionType === defaultVersionType &&
+    to.fullPath.includes(`/${defaultVersionType}`)
+  ) {
+    return navigateTo(to.fullPath.replace(`/${defaultVersionType}`, ''));
+  }
+
+  if (
     !routeVersionType &&
     userVersion.value &&
     userVersion.value !== defaultVersionType

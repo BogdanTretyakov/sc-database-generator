@@ -14,12 +14,6 @@ export default defineNuxtConfig({
       nuxt.hooks.hook('vite:extendConfig', (config) => {
         config.plugins?.push(vuetify({ autoImport: true }));
       });
-      nuxt.hook('build:manifest', (manifest) => {
-        for (const key in manifest) {
-          manifest[key].dynamicImports = [];
-          manifest[key].imports = [];
-        }
-      });
     },
   ],
   vite: {
@@ -85,6 +79,8 @@ export default defineNuxtConfig({
     'build:manifest'(manifest) {
       for (const key in manifest) {
         const file = manifest[key];
+        file.dynamicImports = [];
+        file.imports = [];
 
         if (file.prefetch) {
           file.prefetch = false;

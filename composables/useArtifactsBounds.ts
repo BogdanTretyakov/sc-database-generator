@@ -1,7 +1,7 @@
-import throttle from 'lodash/throttle';
+import debounce from 'lodash/debounce';
 
 interface Props {
-  combineMap: MaybeRef<Record<string, string[]>>;
+  combineMap: MaybeRef<Record<string, string[][]>>;
   stroke?: number;
   colorsCount: MaybeRef<number>;
   excludeItems?: MaybeRef<string[]>;
@@ -31,7 +31,7 @@ export const useArtifactsBounds = ({
     )
   );
 
-  const setPath = throttle(() => {
+  const setPath = debounce(() => {
     const pathMap = toValue(combineMap);
     const nodes = toValue(bounds);
     const exclude = toValue(excludeItems);
@@ -118,25 +118,24 @@ export const useArtifactsBounds = ({
       if (!inNode) continue;
 
       const bridgeNodes = Object.fromEntries(
-        pathMap[parentNodeId].map((id) => [
-          id,
-          nodes[`${parentNodeId}-connect-${id}`],
-        ])
+        pathMap[parentNodeId]
+          .flat()
+          .map((id) => [id, nodes[`${parentNodeId}-connect-${id}`]])
       );
       const bridgeNodesArr = Object.values(bridgeNodes).filter(isNotNil);
-      if (bridgeNodesArr.length !== pathMap[parentNodeId].length) continue;
+      if (bridgeNodesArr.length !== pathMap[parentNodeId].flat().length)
+        continue;
 
       const childConnectNodes = Object.fromEntries(
-        pathMap[parentNodeId].map((id) => [
-          id,
-          nodes[`${parentNodeId}-child-${id}`],
-        ])
+        pathMap[parentNodeId]
+          .flat()
+          .map((id) => [id, nodes[`${parentNodeId}-child-${id}`]])
       );
 
       const childConnectNodesArr =
         Object.values(childConnectNodes).filter(isNotNil);
 
-      if (childConnectNodesArr.length !== pathMap[parentNodeId].length)
+      if (childConnectNodesArr.length !== pathMap[parentNodeId].flat().length)
         continue;
 
       const allNodes = childConnectNodesArr
@@ -144,16 +143,13 @@ export const useArtifactsBounds = ({
         .concat(inNode);
 
       allNodes.forEach(({ style }) => {
-        style.background = nodeColor;
+        style.borderWidth = `${stroke / 2}px`;
+        style.borderColor = nodeColor;
         style.zIndex = `${zIndex}`;
       });
       const offsetHeight = py + ph + stroke + getYOffset(py);
 
-      childConnectNodesArr
-        .concat(inNode)
-        .forEach(({ style }) => (style.width = `${stroke}px`));
       bridgeNodesArr.forEach(({ style }) => {
-        style.height = `${stroke}px`;
         style.top = `${offsetHeight}px`;
       });
 
@@ -173,13 +169,13 @@ export const useArtifactsBounds = ({
         const connectX =
           px === cx ? cx + cw / 2 - stroke / 2 : cx + getXOffset(childId);
         node.style.left = `${connectX}px`;
-        node.style.top = `${offsetHeight + stroke}px`;
-        node.style.height = `${cy - offsetHeight - stroke}px`;
+        node.style.top = `${offsetHeight + stroke / 2}px`;
+        node.style.height = `${cy - offsetHeight}px`;
 
         const bridgeX = Math.min(inNodeConnectX, connectX);
         bridgeNode.style.left = `${bridgeX}px`;
         bridgeNode.style.width = `${
-          Math.abs(inNodeConnectX - connectX) + stroke
+          Math.abs(inNodeConnectX - connectX) + stroke * 0.75
         }px`;
       }
     }
@@ -191,7 +187,10 @@ export const useArtifactsBounds = ({
     });
     if (!container.value) return;
     observer.value.observe(container.value);
-    globalThis.setTimeout(setPath.flush, 2000);
+    const item = Object.values(items).filter(isNotNil).at(0);
+    if (item) {
+      observer.value?.observe(item);
+    }
   });
 
   watch(container, (val, oldVal) => {
@@ -200,6 +199,10 @@ export const useArtifactsBounds = ({
     }
     if (val) {
       observer.value?.observe(val);
+      const item = Object.values(items).filter(isNotNil).at(0);
+      if (item) {
+        observer.value?.observe(item);
+      }
       nextTick(() => setPath.flush());
     }
   });

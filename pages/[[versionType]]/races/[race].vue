@@ -1,8 +1,13 @@
 <template>
   <div class="race-container">
-    <CCard :title="routes.details" id="details" style="grid-row: span 3">
+    <RaceSelectRibbon style="grid-column: 1 / -1" />
+    <CCard title="" id="details" style="grid-row: span 3">
       <template #title>
-        <h1 :style="{ color: raceComputed.color }" v-html="raceData.name" />
+        <h1
+          class="text-wrap text-h2"
+          :style="{ color: raceComputed.color }"
+          v-html="raceData.name"
+        />
       </template>
       <div v-html="raceComputed.description" />
     </CCard>
@@ -217,7 +222,11 @@
 
       <v-divider class="my-3 w-100" />
 
-      <WarGrid class="mx-auto" :items="heroes" v-slot="{ item }">
+      <WarGrid
+        class="mx-auto"
+        :items="heroes.concat(raceData.bonusHeroes)"
+        v-slot="{ item }"
+      >
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -231,6 +240,16 @@
         </WarTooltip>
       </WarGrid>
     </CCard>
+
+    <template v-for="hero in raceData.bonusHeroes">
+      <CCard
+        :title="hero.name"
+        :id="`hero-${hero.id}`"
+        v-if="!!hero.items.length"
+      >
+        <HeroReplace :hero="hero" />
+      </CCard>
+    </template>
 
     <template v-for="(items, id) in raceData.bonusUpgrades">
       <CCard
@@ -246,7 +265,7 @@
           <WarTooltip
             :description="item.description"
             :src="icons"
-            :coords="iconProps(item.id)"
+            :coords="iconProps(item.id, item.iconsCount)"
           >
             <template #tooltip>
               <div class="text-subtitle-1" v-html="item.name" />
@@ -260,7 +279,9 @@
 </template>
 
 <script setup lang="ts">
+import { defaultVersionType, versionIndexes } from '~/data';
 import type { IMagicObject, IUpgradeObject } from '~/data/types';
+import HeroReplace from '~/components/racePage/HeroReplace.vue';
 
 const collator = new Intl.Collator('en').compare;
 
@@ -278,16 +299,6 @@ const unitsHotkeys: Record<string, string> = {
 
 const icons = await useRaceIcons();
 const { raceData, iconProps } = await useRaceData();
-
-const routes = {
-  details: 'Details',
-  buildings: 'Buildings',
-  researches: 'Researches',
-  auras: 'Auras & Spells',
-  units: 'Units & Heroes',
-  bonuses: 'Bonuses',
-  upgrades: 'Upgrades',
-} as const;
 
 const raceComputed = computed(() => {
   const description = raceData.description
@@ -318,15 +329,13 @@ const researches = computed<Array<IUpgradeObject | IMagicObject>>(() => {
 });
 
 const heroes = computed(() =>
-  raceData.heroes
-    .map((slotHeroes, idx) => {
-      const hotkey = hotkeys[idx];
-      return slotHeroes.map((hero) => ({
-        ...hero,
-        hotkey,
-      }));
-    })
-    .flat()
+  raceData.heroes.map((hero, idx) => {
+    const hotkey = hotkeys[idx];
+    return {
+      ...hero,
+      hotkey,
+    };
+  })
 );
 
 const units = computed(() =>
@@ -376,9 +385,10 @@ useHead({
 definePageMeta({
   name: 'RaceIndex',
   middleware(to) {
-    const versionIndex = useVersionIndex();
+    const [versionType] = [to.params.versionType].flat();
+    const versionIndex = versionIndexes[versionType || defaultVersionType];
     const [race] = [to.params.race].flat();
-    if (!(race in versionIndex.value.racesData)) {
+    if (!(race in versionIndex.racesData)) {
       return navigateTo({ name: 'RaceSelection' });
     }
   },

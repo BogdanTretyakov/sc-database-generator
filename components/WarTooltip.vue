@@ -4,7 +4,7 @@
       <v-tooltip
         location="right top"
         activator="parent"
-        width="300"
+        max-width="350"
         close-on-content-click
         :transition="{
           component: VFadeTransition,
@@ -18,7 +18,7 @@
         </slot>
       </v-tooltip>
     </ClientOnly>
-    <GameIcon :src="src" :coords="coords" />
+    <GameIcon :src="src" :coords="coords" :padding="padding" v-bind="$attrs" />
     <slot />
   </div>
 </template>
@@ -33,7 +33,7 @@ interface Props extends GameIconProps {
   disabled?: boolean;
 }
 
-const { description, descriptionClass, coords, src, disabled } =
+const { description, descriptionClass, coords, src, disabled, padding } =
   defineProps<Props>();
 
 defineSlots<{

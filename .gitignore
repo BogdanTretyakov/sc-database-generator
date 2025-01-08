@@ -27,3 +27,5 @@ dataMap
 !dataGenerated/.gitkeep
 generator/debug/*
 !generator/debug/.gitkeep
+dataWarcraft/*
+!dataWarcraft/.gitkeep

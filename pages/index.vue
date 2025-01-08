@@ -3,6 +3,6 @@
 </template>
 <script setup lang="ts">
 definePageMeta({
-  redirect: { name: 'RaceSelection' },
+  // redirect: (to) => ({ name: 'RaceSelection', params: to.params }),
 });
 </script>

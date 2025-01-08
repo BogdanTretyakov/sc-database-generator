@@ -5,10 +5,10 @@ import {
   Upgrades,
   upgradesParser,
 } from './objects';
-import { W3Object, W3Parser } from './utils';
+import { getError, W3Object } from './utils';
 import { hotkeys } from '~/utils/constants';
 import { ImageProcessor } from './images';
-import { writeFile, copyFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { resolve } from 'path';
 import type {
   IArtifactData,
@@ -16,7 +16,11 @@ import type {
   IBaseObject,
   IBaseUltimateObject,
   IBuildingObject,
+  IDamageTuple,
   IDataFile,
+  IMiscData,
+  INeutralData,
+  IPatchDamage,
   IRaceData,
   IRacePickerObject,
   IRawPatchData,
@@ -27,7 +31,8 @@ import type {
 } from '~/data/types';
 import { isNotNil } from '~/utils/guards';
 import { mapObject } from '~/utils/object';
-import { v4 as uuid } from 'uuid';
+import { hashFromString } from '~/utils/string';
+import capitalize from 'lodash/capitalize';
 
 const outputDir = resolve(process.cwd(), 'dataGenerated');
 
@@ -37,12 +42,17 @@ const imgProcessor = new ImageProcessor(
 );
 
 export class SurvivalChaosParser {
-  constructor(private data: IRawPatchData, private pickersParser: W3Parser) {}
+  constructor(private data: IRawPatchData, private isOZ = false) {}
 
   async generate() {
     await this.parseRaces();
     await this.parseUltimates();
     await this.parseArtifacts();
+    await this.parseMisc();
+  }
+
+  private get pickersParser() {
+    return this.isOZ ? abilitiesParser : unitsParser;
   }
 
   private async parseRaces() {
@@ -60,8 +70,6 @@ export class SurvivalChaosParser {
         return acc;
       }, {} as Record<string, string>);
 
-    const racesCoords = await imgProcessor.processImages(imagePaths, 'races');
-
     const racesData = await Object.keys(racesMap).reduce(
       async (allianceAcc, allianceID) => {
         const prevAllianceAcc = await allianceAcc;
@@ -73,8 +81,9 @@ export class SurvivalChaosParser {
 
             const raceObj = this.pickersParser.getById(raceId);
 
-            const description =
-              raceObj?.getValueByKey('tub') || raceObj?.getValueByKey('ub1');
+            const description = this.isOZ
+              ? raceObj?.getName() + '<br/>' + raceObj?.getValueByKey('ub1')
+              : raceObj?.getValueByKey('tub');
             const rawRaceData = this.data.races.find(({ id }) => id === raceId);
             if (!rawRaceData) return prevRacesAcc;
             const [raceData, raceIcons] = this.tokenizeRaceData(
@@ -82,16 +91,7 @@ export class SurvivalChaosParser {
               description
             );
 
-            const raceIconsCoords = await imgProcessor.processImages(
-              raceIcons,
-              `${raceData.key}`
-            );
-
-            await writeFile(
-              resolve(outputDir, `${raceData.key}.json`),
-              JSON.stringify({ data: raceData, icons: raceIconsCoords }),
-              { encoding: 'utf8' }
-            );
+            await this.writeData(raceData.key, raceData, raceIcons);
 
             prevRacesAcc.push({
               id: raceId,
@@ -110,11 +110,7 @@ export class SurvivalChaosParser {
       Promise.resolve({}) as Promise<Record<string, IRacePickerObject[]>>
     );
 
-    await writeFile(
-      resolve(process.cwd(), 'dataGenerated', 'races.json'),
-      JSON.stringify({ data: racesData, icons: racesCoords }),
-      { encoding: 'utf8' }
-    );
+    await this.writeData('races', racesData, imagePaths);
   }
 
   private getUpgradeCost(upgrade: W3Object<Upgrades>, skipLast = false) {
@@ -140,20 +136,19 @@ export class SurvivalChaosParser {
     const models: Record<string, IBaseObject> = {};
     const buildingsMap = bonuses.reduce((acc, bonusID) => {
       const instance = unitsParser.getById(bonusID);
-      let model = instance?.parser.getModel(instance);
-      const modelName = model
-        ?.split(/[\\\/\.]/g)
-        .at(-2)
-        ?.toLocaleLowerCase();
-      if (!modelName || !instance) return acc;
-      if (modelName in models) {
-        acc[bonusID] = models[modelName].id;
+      const model = instance?.parser.getModel(instance);
+      if (!model || !instance) return acc;
+
+      const modelId = hashFromString(
+        model // + (instance.getValueByKey('pat') ?? '')
+      );
+      if (modelId in models) {
+        acc[bonusID] = models[modelId].id;
         return acc;
       }
-      const id = uuid();
-      acc[bonusID] = id;
-      models[modelName] = {
-        id,
+      acc[bonusID] = modelId;
+      models[modelId] = {
+        id: modelId,
         name: instance.getName(),
         description: '',
         hotkey: '',
@@ -183,7 +178,7 @@ export class SurvivalChaosParser {
             icons[`${id}-${idx + 1}`] = ico;
           });
         } else {
-          icons[id] = upgradeIcons[0];
+          icons[id] = upgradeIcons[0] ?? instance.getIcon();
         }
 
         return {
@@ -265,26 +260,23 @@ export class SurvivalChaosParser {
             }))!
       ),
       buildings: mapObject(data.buildings, this.getBuilding),
-      heroes: data.heroes.map((slotHeroes, slotIdx) =>
-        slotHeroes
-          .map((heroId) =>
-            unitsParser
-              .getById(heroId)
-              ?.withIcon(icons)
-              .withInstance((instance) => ({
-                id: heroId,
-                name: instance.getName(),
-                fullName: instance.parser.getFullName(instance),
-                hotkey: instance.getValueByKey('hot') ?? hotkeys[slotIdx],
-                description: instance.getValueByKey('tub'),
-                cost: instance.getValueByKey('gol'),
-                atkType: instance.parser.getAttackType(instance),
-                defType: instance.parser.getDefendType(instance),
-                atk: instance.parser.getAttack(instance),
-                def: instance.parser.getDefend(instance),
-              }))
-          )
-          .filter(isNotNil)
+      heroes: data.heroes.map(
+        (heroId, slotIdx) =>
+          unitsParser
+            .getById(heroId)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: heroId,
+              name: instance.getName(),
+              fullName: instance.parser.getFullName(instance),
+              hotkey: hotkeys[slotIdx],
+              description: instance.getValueByKey('tub'),
+              cost: instance.getValueByKey('gol'),
+              atkType: instance.parser.getAttackType(instance),
+              defType: instance.parser.getDefendType(instance),
+              atk: instance.parser.getAttack(instance),
+              def: instance.parser.getDefend(instance),
+            }))!
       ),
       magic: upgradesParser.getById(data.magic)?.withInstance((instance) => {
         // Process icons
@@ -340,7 +332,48 @@ export class SurvivalChaosParser {
               def: instance.parser.getDefend(instance),
             }))!
       ),
+      bonusHeroes: data.bonusHeroes
+        .map((bonusHero) =>
+          unitsParser
+            .getById(bonusHero.id)
+            ?.withIcon(icons)
+            .withInstance((instance) => ({
+              id: bonusHero.id,
+              name: instance.getName(),
+              fullName: instance.parser.getFullName(instance),
+              hotkey: hotkeys[bonusHero.slot],
+              description: instance.getValueByKey('tub'),
+              cost: instance.getValueByKey('gol'),
+              atkType: instance.parser.getAttackType(instance),
+              defType: instance.parser.getDefendType(instance),
+              atk: instance.parser.getAttack(instance),
+              def: instance.parser.getDefend(instance),
+              items: Object.entries(bonusHero.items)
+                .map(([level, itemId]) =>
+                  itemsParser
+                    .getById(itemId)
+                    ?.withIcon(icons)
+                    .withInstance((itemInstance) => ({
+                      id: itemId,
+                      name: itemInstance.getName(),
+                      description: itemInstance.getValueByKey('tub'),
+                      level: Number(level),
+                      hotkey: '',
+                    }))
+                )
+                .filter(isNotNil),
+            }))
+        )
+        .filter(isNotNil),
     };
+
+    if (output.towerUpgrades.length !== data.upgrades.length) {
+      const notFound = data.upgrades.filter(
+        (upgrId) => !output.towerUpgrades.some(({ id }) => id === upgrId)
+      );
+
+      getError(`upgrades ${notFound.join(',')} for race ${data.name}`);
+    }
 
     return [output, icons] as const;
   }
@@ -355,30 +388,30 @@ export class SurvivalChaosParser {
         itemsParser
           .getById(artId)
           ?.withIcon(icons)
-          .withInstance((instance) => ({
-            id: artId,
-            name: instance.getName(),
-            description: instance.getValueByKey('tub'),
-            level:
-              instance.getValueByKey('lvo') ?? instance.getValueByKey('lev'),
-            hotkey: instance.getRawValue('nam'),
-          }))!
+          .withInstance((instance) => {
+            let level =
+              instance.getValueByKey('lvo') ?? instance.getValueByKey('lev');
+            // OZ fix
+            if (instance.id === 'I034') {
+              level = 2;
+            }
+            return {
+              id: artId,
+              name: instance.getName(),
+              description: instance.getValueByKey('tub'),
+              level,
+              hotkey: instance.getRawValue('nam'),
+            };
+          })!
     );
 
-    const coords = await imgProcessor.processImages(icons, 'artifacts');
-
-    const output: IDataFile<IArtifactData> = {
-      data: {
+    await this.writeData<IArtifactData>(
+      'artifacts',
+      {
         items,
         combineMap,
       },
-      icons: coords,
-    };
-
-    await writeFile(
-      resolve(outputDir, `artifacts.json`),
-      JSON.stringify(output),
-      { encoding: 'utf8' }
+      icons
     );
   }
 
@@ -391,15 +424,18 @@ export class SurvivalChaosParser {
     const getItemRequires = (data: W3Object) => {
       const reqIdArr = String(data.getValueByKey('req'))
         .split(',')
-        .map((a) => a.trim());
+        .map((a) => a.trim())
+        .filter(isNotNil);
       const reqValArr = String(data.getValueByKey('rqa'))
         .split(',')
-        .map((a) => Number(a.trim()));
+        .map((a) => Number(a.trim()))
+        .filter(isNotNil);
 
       return reqIdArr.reduce((acc, id, idx) => {
         if (!(id in requires)) {
           const name = String(upgradesParser.getById(id)?.getRawValue('nam', 1))
             .replace(/\(.*?\)/g, '')
+            .replace(/lv\d+/gm, '')
             .trim();
           requires[id] = name;
         }
@@ -442,19 +478,125 @@ export class SurvivalChaosParser {
         )
     );
 
-    const iconsCoors = await imgProcessor.processImages(icons, 'ultimates');
-
-    const output: IDataFile<IUltimatesData> = {
-      data: {
+    await this.writeData<IUltimatesData>(
+      'ultimates',
+      {
         pickers,
         spells,
         requires,
       },
+      icons
+    );
+  }
+
+  async parseMisc() {
+    const [shrines, shrineIcons] = this.parseShrines();
+    const [neutrals, neutralIcons] = this.parseNeutrals();
+
+    const data: IMiscData = {
+      damage: await this.getDamage(),
+      shrines,
+      neutrals,
+    };
+
+    await this.writeData('misc', data, {
+      ...shrineIcons,
+      ...neutralIcons,
+    });
+  }
+
+  private parseNeutrals(): [INeutralData[], Record<string, string>] {
+    const icons: Record<string, string> = {};
+    const neutrals: INeutralData[] = this.data.misc.neutrals
+      .map((neutralId) =>
+        unitsParser.getById(neutralId)?.withInstance((neutralInstance) => ({
+          id: neutralInstance.id,
+          name: neutralInstance.getName(),
+          skills: String(neutralInstance.getValueByKey('abi') ?? '')
+            .split(',')
+            .map((id) => abilitiesParser.getById(id))
+            .filter(isNotNil)
+            .map((instance) => {
+              instance.withIcon(icons);
+              return {
+                id: instance.id,
+                name: instance.getName(),
+                description: instance.getValueByKey('ub1'),
+                hotkey: instance.getValueByKey('hky'),
+              };
+            }),
+        }))
+      )
+      .filter(isNotNil);
+
+    return [neutrals, icons];
+  }
+
+  private parseShrines() {
+    const icons: Record<string, string> = {};
+    const shrines = this.data.misc.shrines
+      ?.map((shrineSkillId) =>
+        abilitiesParser
+          .getById(shrineSkillId)
+          ?.withIcon(icons)
+          .withInstance((instance) => ({
+            id: instance.id,
+            name: instance.getName(),
+            hotkey: instance.getValueByKey('hky'),
+            description: instance.getValueByKey('ub1'),
+          }))
+      )
+      .filter(isNotNil);
+
+    return [shrines, icons] as const;
+  }
+
+  private async getDamage(): Promise<IPatchDamage> {
+    const miscData: Record<string, string> = Object.fromEntries(
+      (
+        await readFile(
+          resolve(process.cwd(), 'dataMap', 'war3mapMisc.txt'),
+          'utf8'
+        )
+      )
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .filter((s) => s.includes('='))
+        .map((s) => s.split('='))
+    );
+
+    return (
+      ['chaos', 'hero', 'magic', 'normal', 'pierce', 'siege'] as Array<
+        keyof IPatchDamage
+      >
+    ).reduce((acc, key) => {
+      const rawDamage = (miscData[`DamageBonus${capitalize(key)}`] ?? '').split(
+        ','
+      );
+      rawDamage.length = 8;
+      acc[key] = rawDamage.map((val) => {
+        const numberValue = Number(val ?? '1.00');
+        if (isNaN(numberValue)) return 100;
+        return Number(((numberValue || 1) * 100).toFixed());
+      }) as IDamageTuple;
+      return acc;
+    }, {} as IPatchDamage);
+  }
+
+  private async writeData<T>(
+    name: string,
+    data: T,
+    icons: Record<string, string>
+  ) {
+    const iconsCoors = await imgProcessor.processImages(icons, name);
+
+    const output: IDataFile<T> = {
+      data,
       icons: iconsCoors,
     };
 
     await writeFile(
-      resolve(outputDir, `ultimates.json`),
+      resolve(outputDir, `${name}.json`),
       JSON.stringify(output),
       { encoding: 'utf8' }
     );

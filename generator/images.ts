@@ -9,10 +9,11 @@ import { PassThrough } from 'stream';
 import Vinyl from 'vinyl';
 // @ts-expect-error no typings
 import { buffer2webpbuffer, grant_permission } from 'webp-converter';
-import { chmodSync, existsSync, mkdirSync } from 'fs';
+import { chmodSync, mkdirSync } from 'fs';
 import { decodeImage, parseDDSHeader } from 'dds-ktx-parser';
 // @ts-expect-error no typings
 import tga2png from 'tga2png';
+import { W3File } from './utils';
 
 const webpDir = resolve(process.cwd(), 'node_modules/webp-converter');
 
@@ -62,22 +63,14 @@ export class ImageProcessor {
   }
 
   private async getPngBufferFromPath(path: string) {
-    const nonExtensionPath = (() => {
-      const parts = path.split('.');
-      parts.pop();
-      return parts.join('.');
-    })();
-    const blpPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.blp`);
-    if (existsSync(blpPath)) {
-      return this.getPngBufferFromPathBlp(blpPath);
-    }
-    const ddsPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.dds`);
-    if (existsSync(ddsPath)) {
-      return this.getPngBufferFromPathDds(ddsPath);
-    }
-    const tgaPath = resolve(this.baseImagesUrl, `${nonExtensionPath}.tga`);
-    if (existsSync(tgaPath)) {
-      return tga2png(tgaPath);
+    const file = new W3File(path, ['blp', 'dds', 'tga'], this.baseImagesUrl);
+    switch (file.extension) {
+      case 'blp':
+        return this.getPngBufferFromPathBlp(file.path);
+      case 'dds':
+        return this.getPngBufferFromPathDds(file.path);
+      case 'tga':
+        return tga2png(file.path);
     }
   }
 
@@ -86,60 +79,70 @@ export class ImageProcessor {
     /**Without extension */
     outputName: string
   ) {
-    const copies: Record<string, string[]> = {};
-    const buffers = await Object.entries(images).reduce(
-      async (acc, [name, path], idx, arr) => {
-        const [findCopyId] =
-          arr.find(([, iPath], i) => path === iPath && i < idx) ?? [];
-        if (findCopyId) {
-          copies[findCopyId] = [...(copies[findCopyId] ?? []), name];
-          return acc;
-        }
+    try {
+      const copies: Record<string, string[]> = {};
+      const buffers = await Object.entries(images).reduce(
+        async (acc, [name, path], idx, arr) => {
+          const [findCopyId] =
+            arr.find(([, iPath], i) => path === iPath && i < idx) ?? [];
+          if (findCopyId) {
+            copies[findCopyId] = [...(copies[findCopyId] ?? []), name];
+            return acc;
+          }
 
-        const prevAcc = await acc;
+          const prevAcc = await acc;
 
-        const imageBuffer = await this.getPngBufferFromPath(path);
-        if (imageBuffer) {
-          prevAcc[name] = imageBuffer;
-        }
-        return prevAcc;
-      },
-      Promise.resolve({} as Record<string, Buffer>)
-    );
-
-    const sprite = await new Promise<SpritesmithResult<Buffer>>((res, rej) => {
-      Spritesmith.run(
-        {
-          padding: 2,
-          src: Object.entries(buffers).map(
-            ([name, buffer]) =>
-              new Vinyl({
-                path: `${name}.png`,
-                contents: buffer,
-              })
-          ),
+          const imageBuffer = await this.getPngBufferFromPath(path);
+          if (imageBuffer) {
+            prevAcc[name] = imageBuffer;
+          }
+          return prevAcc;
         },
-        (err, data) => (err ? rej(err) : res(data))
+        Promise.resolve({} as Record<string, Buffer>)
       );
-    });
 
-    const webpBuffer = await buffer2webpbuffer(sprite.image, 'png', '-q 75');
-    await writeFile(resolve(this.outputDir, `${outputName}.webp`), webpBuffer);
+      const sprite = await new Promise<SpritesmithResult<Buffer>>(
+        (res, rej) => {
+          Spritesmith.run(
+            {
+              padding: 2,
+              src: Object.entries(buffers).map(
+                ([name, buffer]) =>
+                  new Vinyl({
+                    path: `${name}.png`,
+                    contents: buffer,
+                  })
+              ),
+            },
+            (err, data) => (err ? rej(err) : res(data))
+          );
+        }
+      );
 
-    const shortenCoordinates = Object.entries(sprite.coordinates).reduce(
-      (acc, [key, { x, y, width, height }]) => {
-        const [id] = key.split('.');
-        copies[id]?.forEach((copyId) => {
-          acc[copyId] = [x, y, width, height];
-        });
-        acc[id] = [x, y, width, height];
-        return acc;
-      },
-      {} as Record<
-        string,
-        [x: number, y: number, width: number, height: number]
-      >
-    );
-    return shortenCoordinates;
+      const webpBuffer = await buffer2webpbuffer(sprite.image, 'png', '-q 75');
+      await writeFile(
+        resolve(this.outputDir, `${outputName}.webp`),
+        webpBuffer
+      );
+
+      const shortenCoordinates = Object.entries(sprite.coordinates).reduce(
+        (acc, [key, { x, y, width, height }]) => {
+          const [id] = key.split('.');
+          copies[id]?.forEach((copyId) => {
+            acc[copyId] = [x, y, width, height];
+          });
+          acc[id] = [x, y, width, height];
+          return acc;
+        },
+        {} as Record<
+          string,
+          [x: number, y: number, width: number, height: number]
+        >
+      );
+      return shortenCoordinates;
+    } catch (e) {
+      console.log({ images, outputName });
+      throw e;
+    }
   }
 }

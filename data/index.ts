@@ -8,6 +8,6 @@ export interface VersionIndexFile {
   version: string;
 }
 
-export const versionIndexes = { w3c, oz };
+export const versionIndexes: Record<string, VersionIndexFile> = { w3c, oz };
 
 export const defaultVersionType = 'w3c';

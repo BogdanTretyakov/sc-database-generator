@@ -3,7 +3,7 @@ export interface IRawPatchData {
   races: IRawRace[];
   ultimates: IRawUltimates;
   artifacts: IRawArtifacts;
-  shrines?: string[];
+  misc: IRawMiscData;
 }
 
 export interface IRawRace {
@@ -23,7 +23,7 @@ export interface IRawRace {
   ulti?: string;
   t1spell: string;
   t2spell: string;
-  heroes: string[][];
+  heroes: string[];
   buildings: {
     tower: string;
     fort: string;
@@ -39,6 +39,14 @@ export interface IRawRace {
     catapult: string;
   };
   bonusUpgrades: Record<string, [id: string, baseLevel: number][]>;
+  bonusHeroes: IRawBonusHero[];
+}
+
+export interface IRawBonusHero {
+  slot: number;
+  id: string;
+  // Level <obtain, id>
+  items: Record<string, string>;
 }
 
 export interface IRawUltimates {
@@ -47,13 +55,16 @@ export interface IRawUltimates {
 }
 
 export interface IRawArtifacts {
-  combineMap: Record<string, string[]>;
+  combineMap: Record<string, string[][]>;
   list: string[];
 }
 
-export interface IBaseObject {
+interface IEmptyObject {
   id: string;
   name: string;
+}
+
+export interface IBaseObject extends IEmptyObject {
   hotkey: string;
   description: string;
 }
@@ -97,7 +108,7 @@ export interface IArtifactObject extends IBaseObject {
 
 export interface IArtifactData {
   items: IArtifactObject[];
-  combineMap: Record<string, string[]>;
+  combineMap: Record<string, string[][]>;
 }
 
 export interface IBaseUltimateObject extends IBaseObject {
@@ -113,6 +124,14 @@ export interface IUltimatesData {
   pickers: IBaseUltimateObject[];
   spells: Record<string, IUltimateObject[]>;
   requires: Record<string, string>;
+}
+
+interface IBonusHeroItem extends IBaseObject {
+  level: number;
+}
+
+export interface IBonusHero extends IHeroObject {
+  items: IBonusHeroItem[];
 }
 
 export interface IRaceData {
@@ -146,9 +165,10 @@ export interface IRaceData {
   };
   t1spell: IBaseObject;
   t2spell: IBaseObject;
-  heroes: Array<IHeroObject[]>;
+  heroes: Array<IHeroObject>;
   bonusUpgrades: Record<string, IUpgradeObject[]>;
   bonusBuildings: Record<string, IBaseObject>;
+  bonusHeroes: IBonusHero[];
 }
 
 export type IRaceIcons = Record<
@@ -159,4 +179,39 @@ export type IRaceIcons = Record<
 export interface IDataFile<T = IRaceData> {
   data: T;
   icons: IRaceIcons;
+}
+
+export type IDamageTuple = [
+  light: number,
+  medium: number,
+  heavy: number,
+  fortified: number,
+  normal: number,
+  hero: number,
+  divine: number,
+  unarmored: number
+];
+
+export interface IPatchDamage {
+  chaos: IDamageTuple;
+  hero: IDamageTuple;
+  magic: IDamageTuple;
+  normal: IDamageTuple;
+  pierce: IDamageTuple;
+  siege: IDamageTuple;
+}
+
+export interface IRawMiscData {
+  neutrals: string[];
+  shrines?: string[];
+}
+
+export interface INeutralData extends IEmptyObject {
+  skills: IBaseObject[];
+}
+
+export interface IMiscData {
+  neutrals: INeutralData[];
+  damage: IPatchDamage;
+  shrines?: IBaseObject[];
 }

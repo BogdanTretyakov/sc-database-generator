@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import { ObjectsTranslator, StringsTranslator } from 'wc3maptranslator';
 import type { JsonResult } from 'wc3maptranslator/dist/CommonInterfaces';
 import XLSX from 'xlsx';
+import { isNotNil } from '../utils/guards';
 
 interface W3RawObject {
   id: string;
@@ -92,16 +93,21 @@ export abstract class W3Parser {
     return this.data[id] ? W3Object.create(this.data[id], this, id) : void 0;
   }
 
-  getIcon(data: W3Object<typeof this>, level?: number): string | undefined {
+  getIcon(data: W3Object<typeof this>, level?: number): string {
     let icon = data.getRawValue(this.iconID, level);
     if (icon) return icon;
     const skin = this.skins[data.id] ?? this.skins[data.wc3id];
-    if (!skin) return;
-    return skin.art ?? skin['art:sd'] ?? skin['art:hd'];
+    if (!skin) return getError(`getting icon of ${data.id}`);
+    const art =
+      skin.art ??
+      skin['art:sd'] ??
+      skin['art:hd'] ??
+      getError(`get icon of ${data.id}`);
+    return art.split(',')[level ?? 0] ?? art.split(',')[0];
   }
 
   getName(data: W3Object<typeof this>): string {
-    return data.getValueByKey('nam');
+    return data.getRawValue('nam');
   }
 
   protected getWithSlkFallback(
@@ -150,7 +156,7 @@ export class W3Object<T extends W3Parser = W3Parser> {
   private prepareTrigStr(value: string) {
     if (value.startsWith('TRIGSTR_')) {
       const [key] = value.match(/(?<=TRIGSTR_.*?)[1-9]\d*/) ?? [''];
-      return w3strings[key];
+      return w3strings[key] ?? '';
     }
     return value;
   }
@@ -177,6 +183,12 @@ export class W3Object<T extends W3Parser = W3Parser> {
     );
 
     return this.formatValue(obj?.value);
+  }
+
+  getArrayValue(key: string, level: number | void) {
+    return String(this.getRawValue(key, level) ?? '')
+      .split(',')
+      .map((a) => a.trim());
   }
 
   getRawValue(key: string, level?: number | void) {
@@ -230,4 +242,37 @@ export class W3Slk {
 
     this.data = Object.fromEntries(parsed.map((item) => [item[itemId], item]));
   }
+}
+
+export class W3File<const E extends String> {
+  public path!: string;
+  public extension!: E;
+
+  constructor(path: string, extensions: E[], customPath?: string) {
+    const nonExtPath = path.replace(/(?=.+)\.[^\.]*$/, '');
+    [
+      customPath,
+      resolve(process.cwd(), 'dataMap'),
+      resolve(process.cwd(), 'dataWarcraft'),
+    ]
+      .filter(isNotNil)
+      .forEach((basePath) => {
+        for (let i = 0; i < extensions.length; i++) {
+          const ext = extensions[i];
+          const tmpPath = resolve(basePath, `${nonExtPath}.${ext}`);
+          if (existsSync(tmpPath)) {
+            this.path = tmpPath;
+            this.extension = ext;
+            return;
+          }
+        }
+      });
+    if (!this.path) {
+      getError(`getting file ${path}`);
+    }
+  }
+}
+
+export function getError(reason?: string): never {
+  throw new Error(`Error while ${reason ?? 'unknown reason'}`);
 }

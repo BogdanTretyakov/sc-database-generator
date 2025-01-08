@@ -19,6 +19,6 @@ const racesIcons = Object.entries(
   return acc;
 }, {} as Record<string, string>);
 
-const version = '4.24';
+const version = '4.25';
 
 export default { racesData, racesIcons, version } as VersionIndexFile;

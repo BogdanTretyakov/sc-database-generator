@@ -1,7 +1,6 @@
 import { SurvivalChaosParser } from './parser';
 import { Sur5alScriptParser } from './script';
 import { OZScriptParser } from './ozScript';
-import { abilitiesParser, unitsParser } from './objects';
 import { select } from '@inquirer/prompts';
 
 const type = await select({
@@ -15,20 +14,14 @@ const type = await select({
 switch (type) {
   case 'w3c': {
     const scriptParser = new Sur5alScriptParser();
-    const parser = new SurvivalChaosParser(
-      scriptParser.getPatchData(),
-      unitsParser
-    );
+    const parser = new SurvivalChaosParser(scriptParser.getPatchData());
     parser.generate();
 
     break;
   }
   case 'oz': {
     const scriptParser = new OZScriptParser();
-    const parser = new SurvivalChaosParser(
-      scriptParser.getPatchData(),
-      abilitiesParser
-    );
+    const parser = new SurvivalChaosParser(scriptParser.getPatchData(), true);
     parser.generate();
     break;
   }

@@ -43,6 +43,7 @@ const routes = {
   RaceSelection: 'Races',
   ArtifactsIndex: 'Artifacts',
   UltimatesIndex: 'Ultimates',
+  MiscIndex: 'Misc',
 };
 
 const versionList = [
@@ -63,7 +64,10 @@ const version = computed({
   },
   set(versionType) {
     userVersion.value = versionType;
-    navigateTo({ name: 'RaceSelection', params: { versionType } });
+    navigateTo(
+      { name: 'RaceSelection', params: { versionType } },
+      { replace: true }
+    );
   },
 });
 </script>

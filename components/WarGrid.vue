@@ -11,7 +11,6 @@
 </template>
 
 <script setup lang="ts" generic="T extends IBaseObject">
-import { xor } from 'lodash';
 import type { StyleValue } from 'vue';
 import type { IBaseObject } from '~/data/types';
 import { hotkeys } from '~/utils/constants';
@@ -19,11 +18,15 @@ import { hotkeys } from '~/utils/constants';
 interface Props {
   items: MaybeRef<T[]>;
   size?: MaybeRef<number>;
+  skipHotkey?: boolean;
 }
 
-const { items, size = 64 } = defineProps<Props>();
+const { items, size = 64, skipHotkey = false } = defineProps<Props>();
 
 const sortedItems = computed(() => {
+  if (skipHotkey) {
+    return toValue(items);
+  }
   const itemsCopy = toValue(items).slice();
   const output = Array<T | undefined>(hotkeys.length).fill(undefined);
   const unkeyed = Array<T>();

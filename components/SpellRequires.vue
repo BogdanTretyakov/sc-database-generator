@@ -1,4 +1,4 @@
-<template>
+<template v-if="isShow">
   <div class="text-subtitle-1">Requires:</div>
   <template v-for="(value, id) in requires">
     <div v-if="id in requiresNames" class="require-string">
@@ -15,6 +15,8 @@ interface Props {
 }
 
 const { requires, requiresNames } = defineProps<Props>();
+
+const isShow = computed(() => !!Object.keys(requires).length);
 </script>
 
 <style lang="css" scoped>
