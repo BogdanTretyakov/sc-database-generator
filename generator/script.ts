@@ -329,6 +329,22 @@ export class Sur5alScriptParser {
 
   private enrichRaceData(data: IRawRace) {
     data.bonuses.forEach((bonusID) => {
+      if (bonusID === 'n02Q') {
+        data.bonusHeroes.push({
+          id: 'U00N',
+          slot: 4,
+          items: this.heroReplaceMap.U00N,
+        });
+      }
+      if (bonusID === 'n00W') {
+        data.bonusHeroes.push({
+          id: 'N00T',
+          slot: 4,
+          items: this.heroReplaceMap.N00T,
+        });
+        return;
+      }
+
       const conditionFnNameRegex = new RegExp(
         String.raw`\w+(?= takes nothing returns boolean$\n^return\(GetUnitTypeId\(GetTriggerUnit\(\)\)=='${bonusID}'\)$)`,
         'gmi'
@@ -500,7 +516,9 @@ export class Sur5alScriptParser {
       String.raw`(?<=set (?:${variables.join('|')})=CreateUnit\(p,')[\w\d]+`,
       'gm'
     );
-    return Array.from(this.script.match(regexp) ?? []);
+    return Array.from(this.script.match(regexp) ?? []).filter(
+      (id) => !['A097'].includes(id)
+    );
   }
 
   private prepareHeroesItems() {
@@ -552,7 +570,25 @@ export class Sur5alScriptParser {
 
         return acc;
       },
-      {}
+      {
+        // Monkey patch for trollings
+        U00N: {
+          '2': 'mlst',
+          '3': 'sbch',
+          '4': 'I000',
+          '5': 'gvsm',
+          '6': 'shhn',
+          '7': 'esaz',
+        },
+        N00T: {
+          '2': 'I000',
+          '3': 'stwa',
+          '4': 'axas',
+          '5': 'shen',
+          '6': 'mlst',
+          '7': 'esaz',
+        },
+      }
     );
   }
 }

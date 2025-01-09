@@ -34,22 +34,6 @@
         </v-overlay>
       </div>
     </v-main>
-    <v-sheet class="app-footer" elevation="4">
-      <div class="d-flex align-center">
-        Site created by
-        <v-btn
-          rel="nofollow"
-          variant="text"
-          target="_blank"
-          density="comfortable"
-          size="x-small"
-          slim
-          href="https://boosty.to/fastowldiedie"
-        >
-          FastOwlDieDie
-        </v-btn>
-      </div>
-    </v-sheet>
   </v-app>
 </template>
 
@@ -85,13 +69,5 @@ main {
 }
 .loading-overlay :deep(.v-overlay__scrim) {
   top: 48px;
-}
-.app-footer {
-  font-size: 0.625rem;
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  border-start-end-radius: 20px;
-  padding: 6px;
 }
 </style>

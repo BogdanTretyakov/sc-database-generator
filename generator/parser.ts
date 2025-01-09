@@ -15,6 +15,7 @@ import type {
   IArtifactObject,
   IBaseObject,
   IBaseUltimateObject,
+  IBounty,
   IBuildingObject,
   IDamageTuple,
   IDataFile,
@@ -497,6 +498,7 @@ export class SurvivalChaosParser {
       damage: await this.getDamage(),
       shrines,
       neutrals,
+      bounty: this.getBounty(),
     };
 
     await this.writeData('misc', data, {
@@ -581,6 +583,49 @@ export class SurvivalChaosParser {
       }) as IDamageTuple;
       return acc;
     }, {} as IPatchDamage);
+  }
+
+  private getBounty(): IBounty {
+    const raceData = this.data.races.find(({ name }) =>
+      name.toLocaleLowerCase().includes('orc')
+    );
+    if (!raceData) getError('find race data for bounty');
+
+    const getPointById = (id: string) => {
+      const value =
+        unitsParser
+          .getById(id)
+          ?.withInstance((instance) => instance.parser.getPoints(instance)) ??
+        '0';
+      return this.isOZ ? value : ((Number(value) * 5) / 4).toFixed();
+    };
+
+    const barracksIDs = [raceData.buildings.barrack];
+
+    let lowerBarrack = unitsParser.findIDByKey(
+      'upt',
+      raceData.buildings.barrack
+    );
+    while (!!lowerBarrack) {
+      barracksIDs.unshift(lowerBarrack);
+      lowerBarrack = unitsParser.findIDByKey('upt', lowerBarrack);
+    }
+    let nextBarrack = unitsParser
+      .getById(raceData.buildings.barrack)
+      ?.getValueByKey('upt');
+    while (!!nextBarrack) {
+      barracksIDs.push(nextBarrack);
+      nextBarrack = unitsParser.getById(nextBarrack)?.getValueByKey('upt');
+    }
+
+    return {
+      ...mapObject(raceData.units, (id) => getPointById(id)),
+      hero: getPointById(raceData.heroes[0]),
+      su: getPointById(raceData.heroes[3]),
+      tower: getPointById(raceData.buildings.tower),
+      fort: getPointById(raceData.buildings.fort),
+      barracks: barracksIDs.map((id) => getPointById(id)),
+    };
   }
 
   private async writeData<T>(

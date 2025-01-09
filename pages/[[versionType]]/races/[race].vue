@@ -222,11 +222,7 @@
 
       <v-divider class="my-3 w-100" />
 
-      <WarGrid
-        class="mx-auto"
-        :items="heroes.concat(raceData.bonusHeroes)"
-        v-slot="{ item }"
-      >
+      <WarGrid class="mx-auto" :items="heroes" v-slot="{ item }">
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -329,13 +325,19 @@ const researches = computed<Array<IUpgradeObject | IMagicObject>>(() => {
 });
 
 const heroes = computed(() =>
-  raceData.heroes.map((hero, idx) => {
-    const hotkey = hotkeys[idx];
-    return {
-      ...hero,
-      hotkey,
-    };
-  })
+  raceData.heroes
+    .map((hero, idx) => {
+      const hotkey = hotkeys[idx];
+      return {
+        ...hero,
+        hotkey,
+      };
+    })
+    .concat(
+      raceData.bonusHeroes.filter(({ hotkey }) =>
+        ['Q', 'W', 'E', 'R'].includes(hotkey.toLocaleUpperCase())
+      )
+    )
 );
 
 const units = computed(() =>

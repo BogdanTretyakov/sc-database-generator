@@ -15,7 +15,13 @@
     "deploy": "surge --domain sc-helper.surge.sh ./.output/public"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.7.2",
+    "@fortawesome/free-brands-svg-icons": "^6.7.2",
+    "@fortawesome/free-regular-svg-icons": "^6.7.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
     "@mdi/font": "^7.4.47",
+    "@mdi/js": "^7.4.47",
     "@nuxt/eslint": "^0.6.1",
     "@pinia/nuxt": "^0.7.0",
     "lodash": "^4.17.21",

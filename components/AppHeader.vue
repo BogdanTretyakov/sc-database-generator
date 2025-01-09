@@ -4,7 +4,7 @@
       v-for="(text, name) in routes"
       :key="name"
       variant="text"
-      :to="{ name, params: $route.params }"
+      :to="{ name, params: { versionType: userVersion } }"
       density="comfortable"
       class="mx-1"
     >
@@ -12,6 +12,14 @@
     </v-btn>
   </div>
   <v-spacer />
+  <v-btn
+    variant="text"
+    density="comfortable"
+    class="mx-1"
+    :to="{ name: 'CreditsPage' }"
+  >
+    Credits
+  </v-btn>
   <div>
     <v-select
       v-model="version"
@@ -35,9 +43,9 @@
 </template>
 
 <script setup lang="ts">
-import { defaultVersionType, versionIndexes } from '~/data';
+import { versionIndexes } from '~/data';
 const route = useRoute();
-const userVersion = useCookie('defaultVersion', { maxAge: 2147483647 });
+const userVersion = useVersionType();
 
 const routes = {
   RaceSelection: 'Races',
@@ -57,15 +65,23 @@ const versionList = [
   },
 ];
 
+const navigateName = computed(() => {
+  switch (route.name) {
+    case 'RaceIndex':
+      return 'RaceSelection';
+    default:
+      return route.name;
+  }
+});
+
 const version = computed({
   get() {
-    const [versionType] = [route.params.versionType].flat();
-    return versionType || defaultVersionType;
+    return userVersion.value;
   },
   set(versionType) {
     userVersion.value = versionType;
     navigateTo(
-      { name: 'RaceSelection', params: { versionType } },
+      { name: navigateName.value, params: { versionType } },
       { replace: true }
     );
   },

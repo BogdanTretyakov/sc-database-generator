@@ -15,6 +15,7 @@ class Units extends W3Parser {
   override iconID = 'ico';
   private ballance = new W3Slk('unitbalance.slk', 'unitBalanceID');
   private weapons = new W3Slk('unitweapons.slk', 'unitWeapID');
+  private unitData = new W3Slk('unitdata.slk', 'unitID');
   private strings = {
     ...getSkinsData('neutralunitstrings.txt', ['name', 'propernames']),
     ...getSkinsData('humanunitstrings.txt', ['name', 'propernames']),
@@ -78,6 +79,13 @@ class Units extends W3Parser {
     }
     const origSkin = this.skins[data.wc3id];
     return origSkin.file ?? origSkin['file:sd'] ?? origSkin['file:hd'];
+  }
+
+  getPoints(data: W3Object<Units>): string {
+    const points = data.getValueByKey('poi');
+    if (points) return Number(points).toFixed();
+    return (this.unitData.data[data.id] ?? this.unitData.data[data.wc3id])
+      .points;
   }
 }
 export class Upgrades extends W3Parser {

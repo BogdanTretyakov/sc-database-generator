@@ -30,7 +30,7 @@ import type { IMiscData } from '~/data/types';
 const icons = await useRaceIcons('misc');
 const {
   iconProps,
-  raceData: { damage, neutrals, shrines },
+  raceData: { damage, neutrals, shrines, bounty },
 } = await useRaceData<IMiscData>('misc');
 
 useSeoMeta({

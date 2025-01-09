@@ -210,8 +210,23 @@ export interface INeutralData extends IEmptyObject {
   skills: IBaseObject[];
 }
 
+export interface IBounty {
+  melee: string;
+  range: string;
+  mage: string;
+  siege: string;
+  air: string;
+  catapult: string;
+  hero: string;
+  su: string;
+  tower: string;
+  fort: string;
+  barracks: string[];
+}
+
 export interface IMiscData {
   neutrals: INeutralData[];
   damage: IPatchDamage;
   shrines?: IBaseObject[];
+  bounty: IBounty;
 }
