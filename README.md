@@ -1,75 +1,82 @@
-# Nuxt Minimal Starter
+# Survival Chaos Database Generator
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Generator of static site for Survival Chaos advanced players
 
-## Setup
+There is no any guides and/or basic info. If you wanna add some materials for beginners - please, contact me
 
-Make sure to install dependencies:
+## Where to see it?
 
-```bash
-# npm
-npm install
+Repository may be found [here](https://github.com/BogdanTretyakov/sc-database-generator)
 
-# pnpm
-pnpm install
+Deployed generated site may be found [here](https://sc-helper.github.io/)
 
-# yarn
-yarn install
+## How to use/develop
 
-# bun
-bun install
+Because of OS/FS file path spec this repo will only works correct on **Windows** platform
+
+### Instal & prepare
+
+#### Default JS project things
+
+```
+git clone git@github.com:BogdanTretyakov/sc-database-generator.git
+cd sc-database-generator
+yarn
 ```
 
-## Development Server
+#### Prepare Warcraft III data (only once per large patch)
 
-Start the development server on `http://localhost:3000`:
+Some data from wc3 needed for generating static content
+Use [CascView](http://www.zezula.net/en/casc/main.html) with installed last version of Warcraft III from Battle.net. Extract those folders from original game to `dataWarcraft`:
 
-```bash
-# npm
-npm run dev
+- replaceableTextures
 
-# pnpm
-pnpm dev
+#### Prepare Survival Chaos map
 
-# yarn
+For **original/w3champions** version use any deprotection tool you want. We are recommend [WC3MapDeprotector](https://github.com/speige/WC3MapDeprotector). For **OZ** version of it's doesn't needs.
+
+Then use [MPQ Editor](http://www.zezula.net/en/mpq/download.html) or any other MPQ file extractor and extract all map data to folder `dataMap`
+
+#### Generate data & developing
+
+_(Unnecessary)_ Generate debug data
+
+```
+yarn data:debug
+```
+
+Then generate unpacked map's raw data
+
+```
+yarn data:generate
+# Choose type of unpacked version
+yarn data:pack
+# Enter version of the map
+```
+
+Generate database site
+
+```
+# Developer version
 yarn dev
-
-# bun
-bun run dev
+# or build production
+yarn generate
 ```
 
-## Production
+For developer build open [http://localhost:3000](http://localhost:3000)
 
-Build the application for production:
+For production build deploy `dist/` to any static hosting you want
 
-```bash
-# npm
-npm run build
+## Contribution
 
-# pnpm
-pnpm build
+### Map data
 
-# yarn
-yarn build
+Send me PR with new `data/` (just after `yarn data:pack` step)
 
-# bun
-bun run build
-```
+### Features
 
-Locally preview production build:
+Looking for help with:
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- Generate buildings images (parsing 3D models)
+- Guides section
+- Any additional data for view
