@@ -34,6 +34,7 @@
         </v-overlay>
       </div>
     </v-main>
+    <BrowserDialog />
   </v-app>
 </template>
 
