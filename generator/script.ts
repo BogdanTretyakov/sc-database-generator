@@ -517,7 +517,7 @@ export class Sur5alScriptParser {
       'gm'
     );
     return Array.from(this.script.match(regexp) ?? []).filter(
-      (id) => !['A097'].includes(id)
+      (id) => !['nmoo'].includes(id)
     );
   }
 
