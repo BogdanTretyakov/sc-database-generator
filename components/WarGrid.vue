@@ -19,16 +19,30 @@ interface Props {
   items: MaybeRef<T[]>;
   size?: MaybeRef<number>;
   skipHotkey?: boolean;
+  restrictedSlots?: string[];
 }
 
-const { items, size = 64, skipHotkey = false } = defineProps<Props>();
+const {
+  items,
+  size = 64,
+  skipHotkey = false,
+  restrictedSlots = [],
+} = defineProps<Props>();
 
 const sortedItems = computed(() => {
   if (skipHotkey) {
     return toValue(items);
   }
   const itemsCopy = toValue(items).slice();
-  const output = Array<T | undefined>(hotkeys.length).fill(undefined);
+  const output = Array<T | undefined | null>(hotkeys.length).fill(undefined);
+
+  restrictedSlots
+    .map((s) => s.toLocaleUpperCase())
+    .forEach((key) => {
+      const idx = hotkeys.indexOf(key);
+      if (idx >= 0) output[idx] = null;
+    });
+
   const unkeyed = Array<T>();
   const competitors = Array<T>();
   while (itemsCopy.length) {
@@ -43,7 +57,7 @@ const sortedItems = computed(() => {
       unkeyed.push(item);
       continue;
     }
-    if (!!output[idx]) {
+    if (output[idx] === undefined) {
       competitors.push(item);
       continue;
     }

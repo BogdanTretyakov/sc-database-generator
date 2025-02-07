@@ -100,6 +100,7 @@
       <WarGrid
         class="mx-auto"
         :items="raceData.towerUpgrades"
+        :restrictedSlots="['Q', 'W']"
         v-slot="{ item }"
       >
         <WarTooltip
