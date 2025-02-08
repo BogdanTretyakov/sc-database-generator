@@ -52,12 +52,12 @@ const sortedItems = computed(() => {
       unkeyed.push(item);
       continue;
     }
-    let idx = hotkeys.indexOf(item.hotkey);
+    let idx = hotkeys.indexOf(item.hotkey.toLocaleUpperCase());
     if (idx < 0) {
       unkeyed.push(item);
       continue;
     }
-    if (output[idx] === undefined) {
+    if (output[idx] !== undefined) {
       competitors.push(item);
       continue;
     }
@@ -65,13 +65,13 @@ const sortedItems = computed(() => {
   }
   competitors.forEach((item) => {
     let idx = hotkeys.indexOf(item.hotkey) % 4;
-    while (!!output[idx]) {
+    while (output[idx] !== undefined) {
       idx += 4;
     }
     output[idx] = item;
   });
   unkeyed.forEach((item) => {
-    const idx = output.findIndex((v) => !v);
+    const idx = output.findIndex((v) => v === undefined);
     if (idx < 0) {
       output.push(item);
     } else {

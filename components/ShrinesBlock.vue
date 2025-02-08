@@ -6,20 +6,20 @@
           <span class="text-green">Tier 1 [Q]</span>: 00:00
         </div>
         <div class="text-h5 my-2">
-          <span class="text-yellow">Tier 2 [W]</span>: 20:00
+          <span class="text-yellow">Tier 2 [E]</span>: 20:00
         </div>
         <div class="text-h5 my-2">
-          <span class="text-red">Tier 3 [E]</span>: 40:00
+          <span class="text-red">Tier 3 [W]</span>: 40:00
         </div>
       </div>
     </CCard>
     <CCard
-      v-for="(items, hotkey) in shrines"
+      v-for="hotkey in shrinesOrder"
       :key="hotkey"
       :title="`Shrine abilities [${hotkey}]`"
       class="d-flex align-center flex-column"
     >
-      <WarGrid :items="items" skip-hotkey v-slot="{ item }">
+      <WarGrid :items="shrines[hotkey]" skip-hotkey v-slot="{ item }">
         <WarTooltip
           :description="item.description"
           :src="icons"
@@ -61,6 +61,10 @@ const shrines = computed(() =>
     }
     return acc;
   }, {})
+);
+
+const shrinesOrder = computed(() =>
+  ['Q', 'E', 'W', 'R', 'Other'].filter((key) => key in shrines.value)
 );
 </script>
 

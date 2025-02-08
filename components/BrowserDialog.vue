@@ -5,8 +5,8 @@
       <v-card-text>
         <p>
           We are support only last version of Chrome browser (or same engine,
-          like Opera/Brave/Yandex/e.t.c.). There will be picture view issues in
-          your browser.
+          like Edge/Opera/Brave/Yandex/e.t.c.). There will be picture view
+          issues in your browser.
         </p>
         <p>
           We are don't care about non-Chrome users, but you may

@@ -4,7 +4,7 @@
     <CCard title="" id="details" style="grid-row: span 3">
       <template #title>
         <h1
-          class="text-wrap text-h2"
+          class="text-wrap text-h3"
           :style="{ color: raceComputed.color }"
           v-html="raceData.name"
         />
