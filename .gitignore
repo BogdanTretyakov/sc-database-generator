@@ -24,6 +24,7 @@ logs
 !.env.example
 dataGenerated
 dataMap
+!dataMap/.gitkeep
 !dataGenerated/.gitkeep
 generator/debug/*
 !generator/debug/.gitkeep

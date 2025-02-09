@@ -27,6 +27,7 @@ yarn
 #### Prepare Warcraft III data (only once per large patch)
 
 Some data from wc3 needed for generating static content
+
 Use [CascView](http://www.zezula.net/en/casc/main.html) with installed last version of Warcraft III from Battle.net. Extract those folders from original game to `dataWarcraft`:
 
 - replaceableTextures
@@ -35,7 +36,7 @@ Use [CascView](http://www.zezula.net/en/casc/main.html) with installed last vers
 
 For **original/w3champions** version use any deprotection tool you want. We are recommend [WC3MapDeprotector](https://github.com/speige/WC3MapDeprotector). For **OZ** version of it's doesn't needs.
 
-Then use [MPQ Editor](http://www.zezula.net/en/mpq/download.html) or any other MPQ file extractor and extract all map data to folder `dataMap`
+Then use [MPQ Editor](http://www.zezula.net/en/mpq/download.html) or any other MPQ file extractor and extract all map data to subfolder `dataMap`. Create subfolder `oz` or `w3c` (depends on need version)
 
 #### Generate data & developing
 

@@ -1,5 +1,5 @@
 export const useStorageValue = (storageKey: string, defaultValue?: string) => {
-  const value = ref(defaultValue);
+  const value = useState(storageKey, () => defaultValue);
 
   onNuxtReady(() => {
     value.value = storage.get(storageKey) ?? defaultValue;

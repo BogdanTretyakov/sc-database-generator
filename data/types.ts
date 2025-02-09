@@ -84,6 +84,13 @@ export interface IMagicObject extends IUpgradeObject {
 export interface IUpgradeObject extends IBaseObject {
   cost: number[];
   iconsCount?: number;
+  relatedUpgrades?: string[];
+}
+
+export interface ISpellObject extends IBaseObject {
+  cooldown?: number[];
+  manaCost?: number[];
+  duration?: number[];
 }
 
 export interface IBuildingObject {
@@ -199,6 +206,7 @@ export interface IPatchDamage {
   normal: IDamageTuple;
   pierce: IDamageTuple;
   siege: IDamageTuple;
+  spells: IDamageTuple;
 }
 
 export interface IRawMiscData {
@@ -228,5 +236,6 @@ export interface IMiscData {
   neutrals: INeutralData[];
   damage: IPatchDamage;
   shrines?: IBaseObject[];
-  bounty: IBounty;
+  bounty: Record<string, IBounty>;
+  commonBonuses?: Array<Array<IUpgradeObject | ISpellObject>>;
 }

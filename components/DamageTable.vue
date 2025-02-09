@@ -24,6 +24,13 @@
     <template #item.type="{ value }">
       <div style="width: 32px">
         <WarTooltip
+          v-if="value === 'spells'"
+          :description="capitalize(value ?? '')"
+          :src="icons"
+          :coords="iconsCoords.mana"
+        />
+        <WarTooltip
+          v-else
           :description="capitalize(value ?? '')"
           :src="icons"
           :coords="iconsCoords[value] ?? iconsCoords[`a${value}`]"

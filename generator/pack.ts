@@ -14,6 +14,8 @@ const version = await input({
   message: 'Version of packing map',
   transformer: (val) => val.trim(),
 });
+globalThis.mapVersion = version;
+
 const inputDir = resolve(process.cwd(), 'dataGenerated');
 const outputDir = resolve(process.cwd(), 'data', type);
 

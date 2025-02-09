@@ -1,11 +1,19 @@
 import { resolve } from 'path';
 import { writeFile } from 'fs/promises';
-import {
-  abilitiesParser,
-  itemsParser,
-  unitsParser,
-  upgradesParser,
-} from './objects';
+import { select } from '@inquirer/prompts';
+
+const type = await select({
+  message: 'Select version to parse',
+  choices: [
+    { value: 'w3c', name: 'Official Sur5al/W3C' },
+    { value: 'oz', name: 'OZGame Edition' },
+  ],
+});
+
+globalThis.mapVersion = type;
+
+const { abilitiesParser, itemsParser, unitsParser, upgradesParser } =
+  await import('./objects');
 
 const files = [
   ['w3q', upgradesParser],

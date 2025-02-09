@@ -26,14 +26,15 @@ import type {
   IRacePickerObject,
   IRawPatchData,
   IRawRace,
+  ISpellObject,
   IUltimateObject,
   IUltimatesData,
   IUpgradeObject,
 } from '~/data/types';
 import { isNotNil } from '~/utils/guards';
 import { mapObject } from '~/utils/object';
-import { hashFromString } from '~/utils/string';
 import capitalize from 'lodash/capitalize';
+import { W3Model } from './model';
 
 const outputDir = resolve(process.cwd(), 'dataGenerated');
 
@@ -137,12 +138,9 @@ export class SurvivalChaosParser {
     const models: Record<string, IBaseObject> = {};
     const buildingsMap = bonuses.reduce((acc, bonusID) => {
       const instance = unitsParser.getById(bonusID);
-      const model = instance?.parser.getModel(instance);
-      if (!model || !instance) return acc;
+      if (!instance) return acc;
 
-      const modelId = hashFromString(
-        model // + (instance.getValueByKey('pat') ?? '')
-      );
+      const modelId = new W3Model(instance).modelHash;
       if (modelId in models) {
         acc[bonusID] = models[modelId].id;
         return acc;
@@ -165,6 +163,13 @@ export class SurvivalChaosParser {
 
   private tokenizeRaceData(data: IRawRace, description: string) {
     const icons: Record<string, string> = {};
+
+    const towerUpgradesRecs = Object.fromEntries(
+      data.upgrades
+        .map((id) => [id, upgradesParser.getById(id)] as const)
+        .filter(([, u]) => isNotNil(u))
+        .map(([id, upgrade]) => [id, upgrade?.getAllValuesByKey('req') ?? []])
+    );
 
     const getUpgrade = (id: string): IUpgradeObject => {
       return upgradesParser.getById(id)?.withInstance((instance) => {
@@ -244,6 +249,9 @@ export class SurvivalChaosParser {
               name: instance.getName(),
               description: instance.getValueByKey('ub1'),
               cost: this.getUpgradeCost(instance, true),
+              relatedUpgrades: Object.entries(towerUpgradesRecs)
+                .filter(([, reqs]) => reqs.includes(upgradeID))
+                .map(([id]) => id),
             }))
         )
         .filter(isNotNil),
@@ -423,14 +431,8 @@ export class SurvivalChaosParser {
     const requires: Record<string, string> = {};
 
     const getItemRequires = (data: W3Object) => {
-      const reqIdArr = String(data.getValueByKey('req'))
-        .split(',')
-        .map((a) => a.trim())
-        .filter(isNotNil);
-      const reqValArr = String(data.getValueByKey('rqa'))
-        .split(',')
-        .map((a) => Number(a.trim()))
-        .filter(isNotNil);
+      const reqIdArr = data.getArrayValue('req');
+      const reqValArr = data.getArrayValue('rqa').map(Number);
 
       return reqIdArr.reduce((acc, id, idx) => {
         if (!(id in requires)) {
@@ -493,17 +495,20 @@ export class SurvivalChaosParser {
   async parseMisc() {
     const [shrines, shrineIcons] = this.parseShrines();
     const [neutrals, neutralIcons] = this.parseNeutrals();
+    const [commonBonuses, commonBonusesIcons] = this.getCommonBonuses();
 
     const data: IMiscData = {
       damage: await this.getDamage(),
       shrines,
       neutrals,
       bounty: this.getBounty(),
+      commonBonuses,
     };
 
     await this.writeData('misc', data, {
       ...shrineIcons,
       ...neutralIcons,
+      ...commonBonusesIcons,
     });
   }
 
@@ -514,16 +519,22 @@ export class SurvivalChaosParser {
         unitsParser.getById(neutralId)?.withInstance((neutralInstance) => ({
           id: neutralInstance.id,
           name: neutralInstance.getName(),
-          skills: String(neutralInstance.getValueByKey('abi') ?? '')
-            .split(',')
+          skills: neutralInstance
+            .getArrayValue('abi')
             .map((id) => abilitiesParser.getById(id))
             .filter(isNotNil)
             .map((instance) => {
               instance.withIcon(icons);
               return {
                 id: instance.id,
-                name: instance.getName(),
-                description: instance.getValueByKey('ub1'),
+                name: instance.getName().replace(/\(\w+\)$/, ''),
+                description: instance
+                  .getAllValuesByKey(
+                    'ub1',
+                    ({ level }) => level > 0 && level <= 3
+                  )
+                  .map(String)
+                  .join('<hr/>'),
                 hotkey: instance.getValueByKey('hky'),
               };
             }),
@@ -557,7 +568,12 @@ export class SurvivalChaosParser {
     const miscData: Record<string, string> = Object.fromEntries(
       (
         await readFile(
-          resolve(process.cwd(), 'dataMap', 'war3mapMisc.txt'),
+          resolve(
+            process.cwd(),
+            'dataMap',
+            globalThis.mapVersion ?? 'w3c',
+            'war3mapMisc.txt'
+          ),
           'utf8'
         )
       )
@@ -568,9 +584,15 @@ export class SurvivalChaosParser {
     );
 
     return (
-      ['chaos', 'hero', 'magic', 'normal', 'pierce', 'siege'] as Array<
-        keyof IPatchDamage
-      >
+      [
+        'chaos',
+        'hero',
+        'magic',
+        'normal',
+        'pierce',
+        'siege',
+        'spells',
+      ] as Array<keyof IPatchDamage>
     ).reduce((acc, key) => {
       const rawDamage = (miscData[`DamageBonus${capitalize(key)}`] ?? '').split(
         ','
@@ -585,47 +607,132 @@ export class SurvivalChaosParser {
     }, {} as IPatchDamage);
   }
 
-  private getBounty(): IBounty {
-    const raceData = this.data.races.find(({ name }) =>
-      name.toLocaleLowerCase().includes('orc')
-    );
-    if (!raceData) getError('find race data for bounty');
-
+  private getBounty(): Record<string, IBounty> {
     const getPointById = (id: string) => {
       const value =
         unitsParser
           .getById(id)
           ?.withInstance((instance) => instance.parser.getPoints(instance)) ??
         '0';
-      return this.isOZ ? value : ((Number(value) * 5) / 4).toFixed();
+      return value;
     };
 
-    const barracksIDs = [raceData.buildings.barrack];
+    return Object.fromEntries(
+      this.data.races.map((raceData) => {
+        const barracksIDs = [raceData.buildings.barrack];
 
-    let lowerBarrack = unitsParser.findIDByKey(
-      'upt',
-      raceData.buildings.barrack
+        let [lowerBarrack] = unitsParser.findIDByKey(
+          'upt',
+          raceData.buildings.barrack
+        );
+        while (!!lowerBarrack) {
+          barracksIDs.unshift(lowerBarrack);
+          [lowerBarrack] = unitsParser.findIDByKey('upt', lowerBarrack);
+        }
+        let nextBarrack = unitsParser
+          .getById(raceData.buildings.barrack)
+          ?.getValueByKey('upt');
+        while (!!nextBarrack) {
+          barracksIDs.push(nextBarrack);
+          nextBarrack = unitsParser.getById(nextBarrack)?.getValueByKey('upt');
+        }
+
+        return [
+          raceData.id,
+          {
+            ...mapObject(raceData.units, (id) => getPointById(id)),
+            hero: getPointById(raceData.heroes[0]),
+            su: getPointById(raceData.heroes[3]),
+            tower: getPointById(raceData.buildings.tower),
+            fort: getPointById(raceData.buildings.fort),
+            barracks: barracksIDs.map((id) => getPointById(id)),
+          },
+        ] as const;
+      })
     );
-    while (!!lowerBarrack) {
-      barracksIDs.unshift(lowerBarrack);
-      lowerBarrack = unitsParser.findIDByKey('upt', lowerBarrack);
-    }
-    let nextBarrack = unitsParser
-      .getById(raceData.buildings.barrack)
-      ?.getValueByKey('upt');
-    while (!!nextBarrack) {
-      barracksIDs.push(nextBarrack);
-      nextBarrack = unitsParser.getById(nextBarrack)?.getValueByKey('upt');
+  }
+
+  private getCommonBonuses() {
+    const tempDisable = true;
+    if (this.isOZ || tempDisable) return [undefined, {}] as const;
+
+    const raceData = Object.fromEntries(
+      this.data.races.map(({ id: raceId, bonuses }) => {
+        const bonusData = Object.fromEntries(
+          bonuses
+            .map((id) => unitsParser.getById(id))
+            .filter(isNotNil)
+            .map((instance) => [instance.id, instance.getArrayValue('abi')])
+        );
+
+        return [raceId, bonusData];
+      })
+    );
+
+    const abilityMap = new Map<string, { bonusID: string; raceID: string }[]>();
+
+    for (const [raceID, bonuses] of Object.entries(raceData)) {
+      for (const [bonusID, abilityIDs] of Object.entries(bonuses)) {
+        const key = JSON.stringify(abilityIDs);
+        if (!abilityMap.has(key)) {
+          abilityMap.set(key, []);
+        }
+        abilityMap.get(key)!.push({ bonusID, raceID });
+      }
     }
 
-    return {
-      ...mapObject(raceData.units, (id) => getPointById(id)),
-      hero: getPointById(raceData.heroes[0]),
-      su: getPointById(raceData.heroes[3]),
-      tower: getPointById(raceData.buildings.tower),
-      fort: getPointById(raceData.buildings.fort),
-      barracks: barracksIDs.map((id) => getPointById(id)),
-    };
+    const result: string[] = [];
+
+    for (const [key, entries] of abilityMap.entries()) {
+      const uniqueRaceIDs = new Set(entries.map((entry) => entry.raceID));
+
+      if (uniqueRaceIDs.size > 1) {
+        result.push(entries[0].bonusID);
+      }
+    }
+
+    const icons: Record<string, string> = {};
+
+    const data: Array<Array<ISpellObject | IUpgradeObject>> = result
+      .map((id) => unitsParser.getById(id))
+      .filter(isNotNil)
+      .map((bonusInstance) => {
+        const abilities: ISpellObject[] = bonusInstance
+          .getArrayValue('abi')
+          .map((abilityId) =>
+            abilitiesParser
+              .getById(abilityId)
+              ?.withIcon(icons)
+              .withInstance((instance) => ({
+                id: abilityId,
+                name: instance.getName(),
+                description: instance.getValueByKey('ub1'),
+                hotkey: instance.getValueByKey('hky'),
+                cooldown: instance.getValueByKey('cdn'),
+              }))
+          )
+          .filter(isNotNil);
+
+        const upgrades: IUpgradeObject[] = bonusInstance
+          .getArrayValue('upt')
+          .map((upgradeId) =>
+            upgradesParser
+              .getById(upgradeId)
+              ?.withIcon(icons)
+              .withInstance((instance) => ({
+                id: upgradeId,
+                name: instance.getName(),
+                hotkey: instance.getValueByKey('hk1'),
+                description: instance.getValueByKey('ub1'),
+                cost: this.getUpgradeCost(instance),
+              }))
+          )
+          .filter(isNotNil);
+
+        return abilities.concat(upgrades);
+      });
+
+    return [data, icons] as const;
   }
 
   private async writeData<T>(

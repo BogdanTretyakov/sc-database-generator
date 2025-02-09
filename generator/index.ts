@@ -1,6 +1,3 @@
-import { SurvivalChaosParser } from './parser';
-import { Sur5alScriptParser } from './script';
-import { OZScriptParser } from './ozScript';
 import { select } from '@inquirer/prompts';
 
 const type = await select({
@@ -11,18 +8,21 @@ const type = await select({
   ],
 });
 
-switch (type) {
-  case 'w3c': {
-    const scriptParser = new Sur5alScriptParser();
-    const parser = new SurvivalChaosParser(scriptParser.getPatchData());
-    parser.generate();
+globalThis.mapVersion = type;
 
-    break;
-  }
-  case 'oz': {
-    const scriptParser = new OZScriptParser();
-    const parser = new SurvivalChaosParser(scriptParser.getPatchData(), true);
-    parser.generate();
-    break;
-  }
-}
+const ScriptParser = await (async () => {
+  if (type === 'oz')
+    return import('./ozScript').then(({ OZScriptParser }) => OZScriptParser);
+  return import('./script').then(
+    ({ Sur5alScriptParser }) => Sur5alScriptParser
+  );
+})();
+
+import('./parser').then(({ SurvivalChaosParser }) => {
+  const scriptParser = new ScriptParser();
+  const parser = new SurvivalChaosParser(
+    scriptParser.getPatchData(),
+    type === 'oz'
+  );
+  parser.generate();
+});

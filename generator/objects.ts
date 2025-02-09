@@ -5,7 +5,7 @@ import { isNotNil } from '~/utils/guards';
 
 const defaultArts = ['art', 'art:sd', 'art:hd'] as const;
 
-class Units extends W3Parser {
+export class Units extends W3Parser {
   override skins = getSkinsData('unitskin.txt', [
     ...defaultArts,
     'file',
@@ -82,10 +82,9 @@ class Units extends W3Parser {
   }
 
   getPoints(data: W3Object<Units>): string {
-    const points = data.getValueByKey('poi');
-    if (points) return Number(points).toFixed();
-    return (this.unitData.data[data.id] ?? this.unitData.data[data.wc3id])
-      .points;
+    return Number(
+      this.getWithSlkFallback(data, 'poi', this.unitData, 'points')
+    ).toFixed();
   }
 }
 export class Upgrades extends W3Parser {

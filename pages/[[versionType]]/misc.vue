@@ -1,11 +1,16 @@
 <template>
   <v-row>
-    <v-col cols="12" sm="4">
+    <v-col cols="12" sm="6" md="4">
       <CCard title="Damage types">
         <DamageTable :damage="damage" />
       </CCard>
     </v-col>
-    <v-col cols="12" sm="8">
+    <v-col cols="12" sm="6" md="4">
+      <CCard title="Units bounty">
+        <BountyTable :bounty="bounty" />
+      </CCard>
+    </v-col>
+    <v-col cols="12">
       <CCard title="Neutral buildings">
         <div class="d-flex flex-wrap justify-space-between">
           <NeutralItem
@@ -30,7 +35,7 @@ import type { IMiscData } from '~/data/types';
 const icons = await useRaceIcons('misc');
 const {
   iconProps,
-  raceData: { damage, neutrals, shrines, bounty },
+  raceData: { damage, neutrals, shrines, bounty, commonBonuses },
 } = await useRaceData<IMiscData>('misc');
 
 useSeoMeta({

@@ -4,6 +4,7 @@ import { ObjectsTranslator, StringsTranslator } from 'wc3maptranslator';
 import type { JsonResult } from 'wc3maptranslator/dist/CommonInterfaces';
 import XLSX from 'xlsx';
 import { isNotNil } from '../utils/guards';
+import { ozPatch, sur5alPatch } from './patches';
 
 interface W3RawObject {
   id: string;
@@ -13,9 +14,23 @@ interface W3RawObject {
   value: any;
 }
 
-const { json: w3strings } = StringsTranslator.warToJson(
-  readFileSync(resolve(process.cwd(), 'dataMap', 'war3map.wts'))
-) as JsonResult<Record<string, string>>;
+const w3strings = (() => {
+  try {
+    const { json } = StringsTranslator.warToJson(
+      readFileSync(
+        resolve(
+          process.cwd(),
+          'dataMap',
+          globalThis.mapVersion ?? 'w3c',
+          'war3map.wts'
+        )
+      )
+    ) as JsonResult<Record<string, string>>;
+    return json;
+  } catch (e) {
+    return {};
+  }
+})();
 
 export abstract class W3Parser {
   public data: Record<string, W3RawObject[]>;
@@ -50,13 +65,19 @@ export abstract class W3Parser {
 
   private initData() {
     const w3Buffer = readFileSync(
-      resolve(process.cwd(), 'dataMap', `war3map.${this.fileType}`)
+      resolve(
+        process.cwd(),
+        'dataMap',
+        globalThis.mapVersion || 'w3c',
+        `war3map.${this.fileType}`
+      )
     );
     const { json } = ObjectsTranslator.warToJson(this.type, w3Buffer);
 
     const skinsPath = resolve(
       process.cwd(),
       'dataMap',
+      globalThis.mapVersion || 'w3c',
       `war3mapSkin.${this.fileType}`
     );
 
@@ -81,11 +102,17 @@ export abstract class W3Parser {
     this.data = this.initData();
   }
 
-  findIDByKey(key: string, findValue: any) {
-    const result = Object.entries(this.data).find(([id, items]) =>
-      items.some(({ id, value }) => id === key && value === findValue)
-    );
-    return result?.[0];
+  findIDByKey(key: string, findValue: ((val: any) => boolean) | any) {
+    const result = Object.entries(this.data)
+      .filter(([id, items]) =>
+        items.some(({ id, value }) =>
+          id === key && typeof findValue === 'function'
+            ? findValue(value)
+            : value === findValue
+        )
+      )
+      .map(([id]) => id);
+    return result;
   }
 
   getById(id: string): W3Object<typeof this> | undefined {
@@ -138,7 +165,14 @@ export class W3Object<T extends W3Parser = W3Parser> {
   }
 
   withInstance<T>(cb: (instance: this) => T): T {
-    return cb(this);
+    const output = cb(this);
+    if (typeof output === 'object' && output !== null && 'id' in output) {
+      return {
+        ...output,
+        ...(this.patches[this.id] ?? {}),
+      };
+    }
+    return output;
   }
 
   /**
@@ -188,7 +222,8 @@ export class W3Object<T extends W3Parser = W3Parser> {
   getArrayValue(key: string, level: number | void) {
     return String(this.getRawValue(key, level) ?? '')
       .split(',')
-      .map((a) => a.trim());
+      .map((a) => a.trim())
+      .filter(isNotNil);
   }
 
   getRawValue(key: string, level?: number | void) {
@@ -205,8 +240,8 @@ export class W3Object<T extends W3Parser = W3Parser> {
   getAllValuesByKey(key: string, filter?: (val: W3RawObject) => boolean) {
     return this.data
       .slice()
-      .sort(({ level: l1 }, { level: l2 }) => l1 - l2)
       .filter(({ id }) => id === key)
+      .sort(({ level: l1 }, { level: l2 }) => l1 - l2)
       .filter((value) => (filter ? filter(value) : true))
       .map(({ value }) => value)
       .map(this.formatValue.bind(this));
@@ -214,10 +249,8 @@ export class W3Object<T extends W3Parser = W3Parser> {
 
   getMaxLevel() {
     const value = this.getValueByKey('lvl');
-    if (typeof value === 'number') return value;
-    const levels = this.data
-      .filter(({ id }) => id === 'nam')
-      .map(({ level }) => level);
+    if (typeof value === 'number' && !!value) return value;
+    const levels = this.data.map(({ level }) => level);
     return Math.max(...levels);
   }
 
@@ -227,6 +260,17 @@ export class W3Object<T extends W3Parser = W3Parser> {
 
   getIcon(level?: number) {
     return this.parser.getIcon(this, level);
+  }
+
+  private get patches() {
+    switch (globalThis.mapVersion) {
+      case 'w3c':
+        return sur5alPatch;
+      case 'oz':
+        return ozPatch;
+      default:
+        return {};
+    }
   }
 }
 
@@ -252,11 +296,12 @@ export class W3File<const E extends String> {
     const nonExtPath = path.replace(/(?=.+)\.[^\.]*$/, '');
     [
       customPath,
-      resolve(process.cwd(), 'dataMap'),
+      resolve(process.cwd(), 'dataMap', globalThis.mapVersion || 'w3c'),
       resolve(process.cwd(), 'dataWarcraft'),
     ]
       .filter(isNotNil)
       .forEach((basePath) => {
+        if (!!this.path) return;
         for (let i = 0; i < extensions.length; i++) {
           const ext = extensions[i];
           const tmpPath = resolve(basePath, `${nonExtPath}.${ext}`);

@@ -71,9 +71,12 @@ export class Sur5alScriptParser {
   private buildingsMap: Record<string, Record<string, string>>;
   private heroReplaceMap: Record<string, Record<string, string>>;
   constructor() {
-    this.script = readFileSync(resolve(process.cwd(), 'dataMap', 'war3map.j'), {
-      encoding: 'utf8',
-    }).replace(/(\r\n)|\r/g, '\n');
+    this.script = readFileSync(
+      resolve(process.cwd(), 'dataMap', 'w3c', 'war3map.j'),
+      {
+        encoding: 'utf8',
+      }
+    ).replace(/(\r\n)|\r/g, '\n');
     this.buildingsMap = this.getBuildingsMap();
     this.heroReplaceMap = this.prepareHeroesItems();
   }
