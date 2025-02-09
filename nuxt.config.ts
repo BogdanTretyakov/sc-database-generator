@@ -72,6 +72,9 @@ export default defineNuxtConfig({
   },
   css: ['vuetify/styles', '~/assets/styles.css'],
   experimental: {
+    renderJsonPayloads: false,
+    payloadExtraction: false,
+
     defaults: {
       nuxtLink: {
         prefetch: false,
