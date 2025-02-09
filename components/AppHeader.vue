@@ -4,7 +4,13 @@
       v-for="(text, name) in routes"
       :key="name"
       variant="text"
-      :to="{ name, params: { versionType: userVersion } }"
+      :to="{
+        name,
+        params: {
+          versionType:
+            userVersion === defaultVersionType ? undefined : userVersion,
+        },
+      }"
       density="comfortable"
       class="mx-1"
     >
@@ -43,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { versionIndexes } from '~/data';
+import { defaultVersionType, versionIndexes } from '~/data';
 const route = useRoute();
 const userVersion = useVersionType();
 

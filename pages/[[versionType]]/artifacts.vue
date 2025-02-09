@@ -124,6 +124,8 @@ const compare = new Intl.Collator('en').compare;
 const showPath = useStorageValue('artiShowPath', 'false');
 const disabledTooltips = useStorageValue('artiDisabledTooltips', 'false');
 
+const version = useVersionIndex();
+
 const { raceData: artiData, iconProps } = await useRaceData<IArtifactData>(
   'artifacts'
 );
@@ -237,7 +239,8 @@ onNuxtReady(() => {
 });
 
 useSeoMeta({
-  title: `Artifacts `,
+  title: `Artifacts v${version.value.version}`,
+  description: 'Artifacts of Survival Chaos: all heroes combined artifacts',
 });
 
 definePageMeta({

@@ -286,8 +286,11 @@ const makers: ContentMaker[] = [
 ];
 
 useSeoMeta({
-  title: `Survival Chaos database credits`,
+  title: `Survival Chaos Database Credits`,
   titleTemplate: '',
+  description:
+    'Survival Chaos database credits. We are appreciate these people',
+  ogDescription: 'Survival Chaos database site. We are appreciate these people',
 });
 definePageMeta({
   name: 'CreditsPage',

@@ -32,6 +32,8 @@
 <script setup lang="ts">
 import type { IMiscData } from '~/data/types';
 
+const version = useVersionIndex();
+
 const icons = await useRaceIcons('misc');
 const {
   iconProps,
@@ -39,7 +41,11 @@ const {
 } = await useRaceData<IMiscData>('misc');
 
 useSeoMeta({
-  title: `Misc data`,
+  title: `Misc data v${version.value.version}`,
+  description:
+    'Additional information in Survival Chaos: damage types, units bounty, shrines',
+  ogDescription:
+    'Additional information in Survival Chaos: damage types, units bounty, shrines',
 });
 definePageMeta({
   name: 'MiscIndex',

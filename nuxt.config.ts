@@ -15,6 +15,7 @@ export default defineNuxtConfig({
         config.plugins?.push(vuetify({ autoImport: true }));
       });
     },
+    '@nuxtjs/sitemap',
   ],
   vite: {
     vue: {
@@ -49,19 +50,28 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Loading',
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
-      titleTemplate: '%s - Survival Chaos Info',
+      link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
+      titleTemplate: '%s - Survival Chaos',
     },
   },
   generate: {
-    // routes: versions.map(v => `/${v}/races`),
+    routes: [
+      '/',
+      ...['w3c', 'oz']
+        .map((key) => {
+          const routes = ['races', 'artifacts', 'ultimates', 'misc'];
+          if (key === 'w3c') {
+            key = '';
+          } else {
+            key = '/' + key;
+          }
+          return routes.map((route) => [key, route].join('/'));
+        })
+        .flat(),
+    ],
   },
   css: ['vuetify/styles', '~/assets/styles.css'],
   experimental: {
-    treeshakeClientOnly: false,
-    renderJsonPayloads: false,
-    payloadExtraction: false,
-
     defaults: {
       nuxtLink: {
         prefetch: false,
@@ -87,5 +97,11 @@ export default defineNuxtConfig({
         }
       }
     },
+  },
+
+  site: {
+    url: 'https://sc-helper.github.io',
+    name: 'Survival Chaos Database',
+    indexable: true,
   },
 });

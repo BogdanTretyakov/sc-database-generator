@@ -4,7 +4,7 @@ export const useRaceIcons = async (raceName?: string) => {
   const race = raceName ?? routeRace;
 
   const { data } = await useAsyncData(
-    `icons-${versionIndex.value}-${race}`,
+    `icons-${versionIndex.value.version}-${race}`,
     async () => {
       if (!(race in versionIndex.value.racesIcons)) {
         throw new Error('No race found');

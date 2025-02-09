@@ -48,6 +48,11 @@ nuxtApp.hook('page:start', () => {
 nuxtApp.hook('page:finish', () => {
   routeLoading.value = false;
 });
+
+useSeoMeta({
+  keywords: 'survival chaos, ozgame, w3champions, warcraft 3, surv, sc',
+  ogImageUrl: '/favicon.png',
+});
 </script>
 
 <style scoped>

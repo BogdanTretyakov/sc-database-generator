@@ -11,8 +11,7 @@
     "assets:generate": "tsx generator/assets.ts",
     "data:debug": "tsx generator/debug.ts",
     "data:generate": "tsx generator/index.ts",
-    "data:pack": "tsx generator/pack.ts",
-    "deploy": "surge --domain sc-helper.surge.sh ./.output/public"
+    "data:pack": "tsx generator/pack.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
@@ -22,11 +21,8 @@
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
-    "@nuxt/eslint": "^0.6.1",
-    "@pinia/nuxt": "^0.7.0",
     "lodash": "^4.17.21",
-    "nuxt": "^3.14.159",
-    "uuid": "^11.0.3",
+    "nuxt": "^3",
     "vue": "latest",
     "vue-router": "latest",
     "vuetify": "^3.7.4"
@@ -37,6 +33,8 @@
     "@types/lodash": "^4.17.13",
     "@types/pngjs": "^6.0.5",
     "@types/spritesmith": "^3.4.5",
+    "@nuxt/eslint": "^0.6.1",
+    "@nuxtjs/sitemap": "^7.2.4",
     "dds-ktx-parser": "^1.0.1",
     "eslint": "^9.14.0",
     "eslint-plugin-vue": "^9.31.0",

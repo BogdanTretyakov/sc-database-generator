@@ -72,6 +72,8 @@
 <script setup lang="ts">
 import type { IUltimatesData } from '~/data/types';
 
+const version = useVersionIndex();
+
 const [assetsIcons, { mana }] = useAssets();
 
 const icons = await useRaceIcons('ultimates');
@@ -87,7 +89,11 @@ const selectedSpells = computed(
 );
 
 useSeoMeta({
-  title: `Ultimates`,
+  title: `Ultimates v${version.value.version}`,
+  description:
+    'Ultimate skills in Survival Chaos you may research in your fortress',
+  ogDescription:
+    'Ultimate skills in Survival Chaos you may research in your fortress',
 });
 definePageMeta({
   name: 'UltimatesIndex',

@@ -18,6 +18,8 @@
 <script setup lang="ts">
 import type { IRacePickerObject } from '~/data/types';
 
+const version = useVersionIndex();
+
 const { raceData } = await useRaceData<Record<string, IRacePickerObject[]>>(
   'races'
 );
@@ -27,6 +29,8 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: `Races`,
+  title: `Races v${version.value.version}`,
+  description: `Survival Chaos races list in version ${version.value.version}`,
+  ogDescription: `Survival Chaos races list in version ${version.value.version}`,
 });
 </script>

@@ -280,6 +280,8 @@ import { defaultVersionType, versionIndexes } from '~/data';
 import type { IMagicObject, IUpgradeObject } from '~/data/types';
 import HeroReplace from '~/components/racePage/HeroReplace.vue';
 
+const version = useVersionIndex();
+
 const collator = new Intl.Collator('en').compare;
 
 const hoverBonus = ref();
@@ -372,7 +374,9 @@ const bonuses = computed(() =>
 );
 
 useSeoMeta({
-  title: `${raceData.name}`,
+  title: `${raceData.name} v${version.value.version}`,
+  description: `${raceData.name} of Survival Chaos v${version.value.version}: race info, bonuses, upgrades, units and heroes`,
+  ogDescription: `${raceData.name} of Survival Chaos v${version.value.version}: race info, bonuses, upgrades, units and heroes`,
 });
 
 useHead({

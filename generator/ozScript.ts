@@ -208,7 +208,7 @@ export class OZScriptParser {
 
         const replaceMatch = this.script.match(
           new RegExp(
-            String.raw`(?:else)?if .{2,6}==${replaceHero} then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
+            String.raw`(?:else)?if .*?.{2,6}==${replaceHero} (?:or .{2,6}==\d+)*then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
             'mi'
           )
         );
@@ -219,11 +219,13 @@ export class OZScriptParser {
             replaceCodeBlock.matchAll(
               /if .{2,6}\s?>=(?<level>\d{1,2})\s.+\n(?:^.+$\n){0,20}?(?:call UnitAddItemById\(.{2,6},\s?(?<value>\d+))/gim
             )
-          ).forEach(({ groups }) => {
-            if (!groups) return;
-            const { level, value } = groups;
-            output.items[level] = this.intToStr(value);
-          });
+          )
+            .filter(({ groups }) => groups && !!groups.level)
+            .forEach(({ groups }) => {
+              if (!groups) return;
+              const { level, value } = groups;
+              output.items[level] = this.intToStr(value);
+            });
         }
         data.bonusHeroes.push(output);
       });
