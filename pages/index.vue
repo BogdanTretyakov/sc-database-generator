@@ -11,8 +11,18 @@
   </CCard>
 </template>
 <script setup lang="ts">
+import { defaultVersionType } from '~/data';
+
+const versionType = useVersionType();
 useHead({
-  meta: [{ 'http-equiv': 'refresh', content: '0; url=/races' }],
+  meta: [
+    {
+      'http-equiv': 'refresh',
+      content: `0; url=/${
+        versionType.value === defaultVersionType ? '' : `${versionType.value}/`
+      }races`,
+    },
+  ],
 });
 useSeoMeta({
   title: 'Survival Chaos Database',
