@@ -20,9 +20,6 @@ const ScriptParser = await (async () => {
 
 import('./parser').then(({ SurvivalChaosParser }) => {
   const scriptParser = new ScriptParser();
-  const parser = new SurvivalChaosParser(
-    scriptParser.getPatchData(),
-    type === 'oz'
-  );
+  const parser = new SurvivalChaosParser(scriptParser, type === 'oz');
   parser.generate();
 });

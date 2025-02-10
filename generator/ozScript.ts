@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 import type {
   IRawArtifacts,
   IRawBonusHero,
@@ -12,9 +10,9 @@ import { mapObject } from '~/utils/object';
 import { isNotNil } from '~/utils/guards';
 import { uniq } from '~/utils/array';
 import { getError } from './utils';
+import { BaseScriptParser } from './baseScriptParser';
 
-export class OZScriptParser {
-  private script: string;
+export class OZScriptParser extends BaseScriptParser {
   private pickers = [
     1346978609, 1346978610, 1346978611, 1346978612, 1346978613,
   ];
@@ -45,15 +43,6 @@ export class OZScriptParser {
     },
     towerUpgrades: ['N', 'M', 'ww', 'uw', 'rw', 'sw', 'tw', 'iw', 'Sw'],
   };
-
-  constructor() {
-    this.script = readFileSync(
-      resolve(process.cwd(), 'dataMap', 'oz', 'war3map.j'),
-      {
-        encoding: 'utf8',
-      }
-    );
-  }
 
   public getPatchData(): IRawPatchData {
     const pickers = this.getPickers();
@@ -107,7 +96,7 @@ export class OZScriptParser {
         ?.withInstance((data) => {
           return data
             .getArrayValue('abi')
-            .filter(
+            ?.filter(
               (id) =>
                 ![
                   raceVariables[this.scriptVariables.aura],
@@ -153,7 +142,7 @@ export class OZScriptParser {
         unitsParser
           .getById(raceVariables[this.scriptVariables.buildings.tower])
           ?.withInstance((instance) =>
-            instance.getArrayValue('abi').filter((id) =>
+            instance.getArrayValue('abi')?.filter((id) =>
               abilitiesParser.getById(id)?.withInstance((abiInstance) => {
                 return (
                   !!abiInstance.getValueByKey('art') &&
@@ -203,30 +192,8 @@ export class OZScriptParser {
         const output: IRawBonusHero = {
           id: this.intToStr(replaceHero),
           slot,
-          items: {},
         };
 
-        const replaceMatch = this.script.match(
-          new RegExp(
-            String.raw`(?:else)?if .*?.{2,6}==${replaceHero} (?:or .{2,6}==\d+)*then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
-            'mi'
-          )
-        );
-        if (replaceMatch && replaceMatch.index) {
-          const replaceCodeBlock = this.getIfBlockByIndex(replaceMatch.index);
-
-          Array.from(
-            replaceCodeBlock.matchAll(
-              /if .{2,6}\s?>=(?<level>\d{1,2})\s.+\n(?:^.+$\n){0,20}?(?:call UnitAddItemById\(.{2,6},\s?(?<value>\d+))/gim
-            )
-          )
-            .filter(({ groups }) => groups && !!groups.level)
-            .forEach(({ groups }) => {
-              if (!groups) return;
-              const { level, value } = groups;
-              output.items[level] = this.intToStr(value);
-            });
-        }
         data.bonusHeroes.push(output);
       });
 
@@ -384,42 +351,6 @@ export class OZScriptParser {
     return output;
   }
 
-  private getIfBlockByIndex(cursorPosition: number) {
-    const isIf = this.script.startsWith('if', cursorPosition);
-    const isElseif = this.script.startsWith('elseif', cursorPosition);
-
-    if (!isIf && !isElseif) {
-      throw new Error('Start position not ar if/elseif block');
-    }
-
-    let depth = 0;
-    let i = cursorPosition + (isIf ? 2 : isElseif ? 6 : 4);
-
-    while (i < this.script.length) {
-      if (this.script.startsWith('if', i)) {
-        depth++;
-        i += 2;
-      } else if (this.script.startsWith('else', i)) {
-        if (depth === 0) {
-          return this.script.slice(cursorPosition, i);
-        }
-        i += this.script.startsWith('elseif', i) ? 6 : 4;
-      } else if (this.script.startsWith('endif', i)) {
-        if (depth === 0) {
-          return this.script.slice(cursorPosition, i + 5);
-        }
-        depth--;
-        i += 5;
-      } else if (this.script.startsWith('endfunction', i)) {
-        return this.script.slice(cursorPosition, i);
-      } else {
-        i++;
-      }
-    }
-
-    return this.script.slice(cursorPosition);
-  }
-
   private strToInt(string: string) {
     return Number(
       BigInt(string.charCodeAt(3)) |
@@ -427,5 +358,51 @@ export class OZScriptParser {
         (BigInt(string.charCodeAt(1)) << 16n) |
         (BigInt(string.charCodeAt(0)) << 24n)
     );
+  }
+
+  override getHeroItems(heroID: string): Record<string, string> | undefined {
+    const replaceMatch = this.script.match(
+      new RegExp(
+        String.raw`(?:else)?if .*?.{2,6}==${this.strToInt(
+          heroID
+        )} (?:or .{2,6}==\d+)*then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
+        'mi'
+      )
+    );
+    if (!replaceMatch?.index) return;
+
+    const output: Record<string, string> = {};
+    const replaceCodeBlock = this.getIfBlockByIndex(replaceMatch.index);
+
+    Array.from(
+      replaceCodeBlock.matchAll(
+        /if .{2,6}\s?>=(?<level>\d{1,2})\s.+\n(?:^.+$\n){0,20}?(?:call UnitAddItemById\(.{2,6},\s?(?<value>\d+))/gim
+      )
+    )
+      .filter(({ groups }) => groups && !!groups.level)
+      .forEach(({ groups }) => {
+        if (!groups) return;
+        const { level, value } = groups;
+        output[level] = this.intToStr(value);
+      });
+    return output;
+  }
+
+  override getBonusUnit(bonusID: string): string | undefined {
+    const findBlockIndex = this.script.match(
+      new RegExp(String.raw`(?:else)?if {2,6}==${this.strToInt(bonusID)}`, 'mi')
+    )?.index;
+    if (!findBlockIndex) return;
+    const codeBlock = this.getIfBlockByIndex(findBlockIndex);
+    const preparedVars = Object.values(this.scriptVariables.units)
+      .map((s) => `(?:${s})`)
+      .join('|');
+    const found = codeBlock.match(
+      new RegExp(
+        String.raw`(?<=set (?:${preparedVars})(?:\[w+\])?\s?=\s?)\d+`,
+        'mi'
+      )
+    )?.[0];
+    return found ? this.intToStr(found) : undefined;
   }
 }

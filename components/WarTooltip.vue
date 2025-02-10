@@ -9,7 +9,7 @@
         :transition="{
           component: VFadeTransition,
         }"
-        :disabled="disabled"
+        :disabled="disabled && !!globalDisabled"
         class="tooltip-opacity"
       >
         <slot name="tooltip:body">
@@ -35,6 +35,8 @@ interface Props extends GameIconProps {
 
 const { description, descriptionClass, coords, src, disabled, padding } =
   defineProps<Props>();
+
+const globalDisabled = useStorageValue('tooltipsDisabled');
 
 defineSlots<{
   default?(): any;

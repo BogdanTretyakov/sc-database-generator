@@ -24,10 +24,16 @@ interface Props {
 
 const {
   items,
-  size = 64,
+  size = 1,
   skipHotkey = false,
   restrictedSlots = [],
 } = defineProps<Props>();
+
+const iconSizeData = useStorageValue('iconSize', '56');
+const iconSize = computed(() => {
+  const numSize = Number(iconSizeData.value);
+  return (isNaN(numSize) ? 56 : numSize) * toValue(size);
+});
 
 const sortedItems = computed(() => {
   if (skipHotkey) {
@@ -95,8 +101,8 @@ const sortedItems = computed(() => {
 });
 
 const containerStyles = computed<StyleValue>(() => ({
-  gridTemplateColumns: `repeat(4, ${toValue(size)}px)`,
-  gridTemplateRows: `repeat(auto-fill, ${toValue(size)}px)`,
+  gridTemplateColumns: `repeat(4, ${toValue(iconSize.value)}px)`,
+  gridTemplateRows: `repeat(auto-fill, ${toValue(iconSize.value)}px)`,
 }));
 
 defineSlots<{

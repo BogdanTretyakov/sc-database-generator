@@ -14,12 +14,12 @@
       </WarTooltip>
     </div>
     <div class="flex-shrink-1 ml-n6">
-      <WarGrid :items="items" :size="32">
+      <WarGrid :items="items" :size="0.5">
         <template #default="{ item }">
           <WarTooltip
             :src="icons"
             :coords="iconProps(item.id)"
-            :description="item.description"
+            :description="item.description ?? ''"
           >
             <template #tooltip>
               <div class="text-subtitle-1" v-html="item.name" />

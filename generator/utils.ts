@@ -5,6 +5,8 @@ import type { JsonResult } from 'wc3maptranslator/dist/CommonInterfaces';
 import XLSX from 'xlsx';
 import { isNotNil } from '../utils/guards';
 import { ozPatch, sur5alPatch } from './patches';
+import clone from 'lodash/clone';
+import { Upgrades } from './objects';
 
 interface W3RawObject {
   id: string;
@@ -121,7 +123,8 @@ export abstract class W3Parser {
   }
 
   getIcon(data: W3Object<typeof this>, level?: number): string {
-    let icon = data.getRawValue(this.iconID, level);
+    let icon =
+      data.getRawValue(this.iconID, level) ?? data.getRawValue(this.iconID);
     if (icon) return icon;
     const skin = this.skins[data.id] ?? this.skins[data.wc3id];
     if (!skin) return getError(`getting icon of ${data.id}`);
@@ -133,8 +136,21 @@ export abstract class W3Parser {
     return art.split(',')[level ?? 0] ?? art.split(',')[0];
   }
 
-  getName(data: W3Object<typeof this>): string {
-    return data.getRawValue('nam');
+  getName(data: W3Object<typeof this>, level?: number): string {
+    return data.getRawValue('nam', level);
+  }
+
+  getIdsByValue(key: string, searchValue: any, includes = false) {
+    return Object.entries(this.data)
+      .filter(([_, data]) =>
+        data.some(({ id, value }) =>
+          id === key && includes
+            ? String(value).includes(searchValue)
+            : value === searchValue
+        )
+      )
+      .map(([id]) => id)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
   }
 
   protected getWithSlkFallback(
@@ -150,6 +166,8 @@ export abstract class W3Parser {
 }
 
 export class W3Object<T extends W3Parser = W3Parser> {
+  public level?: number;
+
   private constructor(
     private data: W3RawObject[],
     public parser: T,
@@ -180,11 +198,38 @@ export class W3Object<T extends W3Parser = W3Parser> {
    * @returns
    */
   withIcon(icons: Record<string, string>): this {
+    if (this.parser instanceof Upgrades) {
+      const upgradeIcons = this.getIcons();
+      if (upgradeIcons.length > 1) {
+        upgradeIcons.forEach((val, i) => {
+          icons[`${this.id}-${i + 1}`] = val;
+        });
+        return this;
+      }
+    }
+
     const icon = this.getIcon();
     if (icon) {
       icons[this.id] = icon;
     }
     return this;
+  }
+
+  withIconSilent(icons: Record<string, string>) {
+    try {
+      return this.withIcon(icons);
+    } catch (e) {
+      //
+    } finally {
+      return this;
+    }
+  }
+
+  getIcons() {
+    const maxLevel = this.getMaxLevel();
+    return Array.from({ length: maxLevel }, (_, i) =>
+      this.getIcon(i + 1)
+    ).filter((v, i, arr) => arr.indexOf(v) === i);
   }
 
   private prepareTrigStr(value: string) {
@@ -220,10 +265,11 @@ export class W3Object<T extends W3Parser = W3Parser> {
   }
 
   getArrayValue(key: string, level: number | void) {
-    return String(this.getRawValue(key, level) ?? '')
+    const data = String(this.getRawValue(key, level) ?? '')
       .split(',')
       .map((a) => a.trim())
       .filter(isNotNil);
+    return data.length ? data : undefined;
   }
 
   getRawValue(key: string, level?: number | void) {
@@ -254,8 +300,8 @@ export class W3Object<T extends W3Parser = W3Parser> {
     return Math.max(...levels);
   }
 
-  getName() {
-    return this.parser.getName(this);
+  getName(level?: number) {
+    return this.parser.getName(this, level);
   }
 
   getIcon(level?: number) {

@@ -27,7 +27,7 @@ import type { IconBoundaries } from './GameIcon.vue';
 interface Props {
   isDefend?: boolean;
   type: string;
-  value?: string;
+  value?: number | string;
   size?: number;
 }
 

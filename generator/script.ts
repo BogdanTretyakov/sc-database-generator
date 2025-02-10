@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
 import { abilitiesParser, unitsParser } from './objects';
 import type {
   IRawArtifacts,
@@ -8,9 +6,9 @@ import type {
   IRawUltimates,
 } from '~/data/types';
 import { isNotNil } from '~/utils/guards';
+import { BaseScriptParser } from './baseScriptParser';
 
-export class Sur5alScriptParser {
-  private script: string;
+export class Sur5alScriptParser extends BaseScriptParser {
   private alliances = ['nfh1', 'nfr2', 'nfr1', 'ngnh'];
   private scriptVariables = {
     globals: {
@@ -71,12 +69,7 @@ export class Sur5alScriptParser {
   private buildingsMap: Record<string, Record<string, string>>;
   private heroReplaceMap: Record<string, Record<string, string>>;
   constructor() {
-    this.script = readFileSync(
-      resolve(process.cwd(), 'dataMap', 'w3c', 'war3map.j'),
-      {
-        encoding: 'utf8',
-      }
-    ).replace(/(\r\n)|\r/g, '\n');
+    super();
     this.buildingsMap = this.getBuildingsMap();
     this.heroReplaceMap = this.prepareHeroesItems();
   }
@@ -95,27 +88,6 @@ export class Sur5alScriptParser {
         neutrals: this.getNeutrals(),
       },
     };
-  }
-
-  private getIfBlockByCondition(condition: string | RegExp, endCondition = 0) {
-    const match = this.script.match(condition);
-    if (!match) return '';
-    let pos = match[0].length + (match?.index ?? 0);
-    const startPos = pos;
-    if (pos < 0) return '';
-    let codeBlock = 1;
-    let word = '';
-    while (pos < this.script.length && codeBlock !== endCondition) {
-      const char = this.script[pos++];
-      word += char;
-      if (char !== ' ' && char !== '\n') continue;
-      if (word.startsWith('if(')) codeBlock += 1;
-      if (word.startsWith('endif') || word.startsWith('else')) {
-        codeBlock -= 1;
-      }
-      word = '';
-    }
-    return this.script.slice(startPos, pos);
   }
 
   private getBuildingsMap() {
@@ -336,14 +308,12 @@ export class Sur5alScriptParser {
         data.bonusHeroes.push({
           id: 'U00N',
           slot: 4,
-          items: this.heroReplaceMap.U00N,
         });
       }
       if (bonusID === 'n00W') {
         data.bonusHeroes.push({
           id: 'N00T',
           slot: 4,
-          items: this.heroReplaceMap.N00T,
         });
         return;
       }
@@ -356,9 +326,12 @@ export class Sur5alScriptParser {
       const conditionFnName = this.script.match(conditionFnNameRegex)?.[0];
       if (!conditionFnName) return;
 
-      const codeBlock = this.getIfBlockByCondition(
+      const codeBlockIndex = this.script.match(
         new RegExp(String.raw`^if\(${conditionFnName}\(\)\)`, 'mi')
-      );
+      )?.index;
+      if (!codeBlockIndex) return;
+
+      const codeBlock = this.getIfBlockByIndex(codeBlockIndex);
 
       const heroesPrepared = this.scriptVariables.heroes
         .map((k) => `(?:${k})`)
@@ -377,7 +350,6 @@ export class Sur5alScriptParser {
         if (slot < 0) return;
         data.bonusHeroes.push({
           id: heroReplaceId,
-          items: this.heroReplaceMap[heroReplaceId] ?? {},
           slot,
         });
         return;
@@ -456,9 +428,11 @@ export class Sur5alScriptParser {
           )
         ) ?? [];
       if (!funcId) return acc;
-      const setUltiBlock = this.getIfBlockByCondition(
+      const ultBlockIndex = this.script.match(
         new RegExp(String.raw`if\(${funcId}\(\)\)then`, 'mi')
-      );
+      )?.index;
+      if (!ultBlockIndex) return acc;
+      const setUltiBlock = this.getIfBlockByIndex(ultBlockIndex);
       const ultimates = Array.from(
         setUltiBlock.match(
           /(?<=(?:call UnitAddAbilityBJ\(')|(?:call BlzUnitHideAbility\(GetTriggerUnit\(\),'))\w+(?=')/gm
@@ -593,5 +567,37 @@ export class Sur5alScriptParser {
         },
       }
     );
+  }
+
+  override getHeroItems(heroID: string): Record<string, string> | undefined {
+    return this.heroReplaceMap[heroID];
+  }
+
+  override getBonusUnit(bonusID: string): string | undefined {
+    const triggerFuncName = this.script.match(
+      new RegExp(
+        String.raw`(?<=function )\w+(?=.+\n.+GetTriggerUnit.+${bonusID}.{1,10}\nendfunction)`,
+        'mi'
+      )
+    )?.[0];
+    if (!triggerFuncName) return;
+
+    const replaceBlockIndex = this.script.match(
+      new RegExp(String.raw`if\(${triggerFuncName}\(\)\)`, 'mi')
+    )?.index;
+    if (!replaceBlockIndex) return;
+
+    const codeblock = this.getIfBlockByIndex(replaceBlockIndex);
+
+    const preparedUnits = Object.values(this.scriptVariables.units)
+      .map((s) => `(?:${s})`)
+      .join('|');
+
+    return codeblock.match(
+      new RegExp(
+        String.raw`(?<=set (?:${preparedUnits})\[\d\]\s?=\s?['"])\w+`,
+        'mi'
+      )
+    )?.[0];
   }
 }

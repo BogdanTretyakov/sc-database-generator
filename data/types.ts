@@ -1,3 +1,80 @@
+export interface IBaseObject {
+  id: string;
+  name: string;
+  hotkey: string;
+  description?: string;
+  type: string;
+}
+
+export interface IRacePickerObject extends IBaseObject {
+  type: 'race';
+  key: string;
+}
+
+export interface IArtifactObject extends IBaseObject {
+  type: 'artifact';
+  level: number;
+}
+
+export interface IUnitObject extends IBaseObject {
+  type: 'unit';
+  cost: number;
+  def: number;
+  defType: string;
+  hp: number;
+  hpReg: number;
+  atk: string;
+  atkType: string;
+  atkRange: number;
+  atkSpeed: number;
+  skills?: ISpellObject[];
+  upgrades: string[];
+  tags: string[];
+  bounty: number;
+}
+
+export interface IHeroObject extends Omit<IUnitObject, 'type' | 'upgrades'> {
+  type: 'hero';
+  skills: ISpellObject[];
+  items?: IArtifactObject[];
+  fullName: string;
+  stat: 'str' | 'int' | 'agi';
+  str: number;
+  int: number;
+  agi: number;
+  strLvl: number;
+  intLvl: number;
+  agiLvl: number;
+}
+
+export interface IUpgradeObject extends IBaseObject {
+  type: 'upgrade';
+  cost: number[];
+  iconsCount?: number;
+  timers?: number[];
+  spells?: ISpellObject[];
+  level?: number;
+}
+
+export interface ISpellObject extends IBaseObject {
+  type: 'spell';
+  cost?: number[];
+  cooldown?: number[];
+  duration?: number[];
+  summonUnit?: IUnitObject[];
+  area?: number[];
+  targets?: string[];
+}
+
+export interface IBonusObject extends IBaseObject {
+  type: 'bonus';
+  buildingId: string;
+  relatedID: string[];
+  units?: IUnitObject[];
+  spells?: ISpellObject[];
+  upgrades?: IUpgradeObject[];
+}
+
 export interface IRawPatchData {
   pickers: Record<string, string[]>;
   races: IRawRace[];
@@ -45,8 +122,6 @@ export interface IRawRace {
 export interface IRawBonusHero {
   slot: number;
   id: string;
-  // Level <obtain, id>
-  items: Record<string, string>;
 }
 
 export interface IRawUltimates {
@@ -59,60 +134,6 @@ export interface IRawArtifacts {
   list: string[];
 }
 
-interface IEmptyObject {
-  id: string;
-  name: string;
-}
-
-export interface IBaseObject extends IEmptyObject {
-  hotkey: string;
-  description: string;
-}
-
-export interface IRacePickerObject extends IBaseObject {
-  key: string;
-}
-
-export interface IBonusObject extends IBaseObject {
-  buildingId: string;
-}
-
-export interface IMagicObject extends IUpgradeObject {
-  level: number;
-}
-
-export interface IUpgradeObject extends IBaseObject {
-  cost: number[];
-  iconsCount?: number;
-  relatedUpgrades?: string[];
-}
-
-export interface ISpellObject extends IBaseObject {
-  cooldown?: number[];
-  manaCost?: number[];
-  duration?: number[];
-}
-
-export interface IBuildingObject {
-  attackType: string;
-}
-
-export interface IUnitObject extends IBaseObject {
-  cost: number;
-  atkType: string;
-  defType: string;
-  atk: string;
-  def: string;
-}
-
-export interface IHeroObject extends IUnitObject {
-  fullName: string;
-}
-
-export interface IArtifactObject extends IBaseObject {
-  level: number;
-}
-
 export interface IArtifactData {
   items: IArtifactObject[];
   combineMap: Record<string, string[][]>;
@@ -122,23 +143,10 @@ export interface IBaseUltimateObject extends IBaseObject {
   requires: Record<string, number>;
 }
 
-export interface IUltimateObject extends IBaseUltimateObject {
-  cooldown: number;
-  manaCost: number;
-}
-
 export interface IUltimatesData {
   pickers: IBaseUltimateObject[];
-  spells: Record<string, IUltimateObject[]>;
+  spells: Record<string, ISpellObject[]>;
   requires: Record<string, string>;
-}
-
-interface IBonusHeroItem extends IBaseObject {
-  level: number;
-}
-
-export interface IBonusHero extends IHeroObject {
-  items: IBonusHeroItem[];
 }
 
 export interface IRaceData {
@@ -150,7 +158,7 @@ export interface IRaceData {
   auras: IBaseObject[];
   bonuses: IBonusObject[];
   towerUpgrades: IUpgradeObject[];
-  magic: IMagicObject[];
+  magic: IUpgradeObject[];
   baseUpgrades: {
     melee: IUpgradeObject;
     armor: IUpgradeObject;
@@ -166,16 +174,14 @@ export interface IRaceData {
     catapult: IUnitObject;
   };
   buildings: {
-    fort: IBuildingObject;
-    tower: IBuildingObject;
-    barrack: IBuildingObject;
+    fort: IUnitObject;
+    tower: IUnitObject;
+    barrack: IUnitObject;
   };
-  t1spell: IBaseObject;
-  t2spell: IBaseObject;
+  t1spell: ISpellObject;
+  t2spell: ISpellObject;
   heroes: Array<IHeroObject>;
-  bonusUpgrades: Record<string, IUpgradeObject[]>;
-  bonusBuildings: Record<string, IBaseObject>;
-  bonusHeroes: IBonusHero[];
+  bonusBuildings: IBaseObject[];
 }
 
 export type IRaceIcons = Record<
@@ -214,28 +220,31 @@ export interface IRawMiscData {
   shrines?: string[];
 }
 
-export interface INeutralData extends IEmptyObject {
+export interface INeutralData extends IBaseObject {
   skills: IBaseObject[];
 }
 
 export interface IBounty {
-  melee: string;
-  range: string;
-  mage: string;
-  siege: string;
-  air: string;
-  catapult: string;
-  hero: string;
-  su: string;
-  tower: string;
-  fort: string;
-  barracks: string[];
+  melee: number;
+  range: number;
+  mage: number;
+  siege: number;
+  air: number;
+  catapult: number;
+  hero: number;
+  su: number;
+  tower: number;
+  fort: number;
+  barracks: number[];
+  // additional: number[];
+  // summon: number[];
+  // fortSummon: number[];
 }
 
 export interface IMiscData {
   neutrals: INeutralData[];
   damage: IPatchDamage;
-  shrines?: IBaseObject[];
+  shrines?: ISpellObject[];
   bounty: Record<string, IBounty>;
-  commonBonuses?: Array<Array<IUpgradeObject | ISpellObject>>;
+  commonBonuses?: IBonusObject[];
 }

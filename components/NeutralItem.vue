@@ -1,9 +1,9 @@
 <template>
   <div class="d-flex flex-column align-center my-4">
     <div class="text-h6">{{ neutral.name }}</div>
-    <WarGrid :items="neutral.skills" skip-hotkey v-slot="{ item }" :size="48">
+    <WarGrid :items="neutral.skills" skip-hotkey v-slot="{ item }" :size="0.75">
       <WarTooltip
-        :description="item.description"
+        :description="item.description ?? ''"
         :src="icons"
         :coords="iconProps(item.id)"
       >
