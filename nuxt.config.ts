@@ -16,6 +16,7 @@ export default defineNuxtConfig({
       });
     },
     '@nuxtjs/sitemap',
+    '@zadigetvoltaire/nuxt-gtm',
   ],
   vite: {
     vue: {
@@ -106,5 +107,11 @@ export default defineNuxtConfig({
     url: 'https://sc-helper.github.io',
     name: 'Survival Chaos Database',
     indexable: true,
+  },
+
+  gtm: {
+    id: 'GTM-83J73GNQHC',
+    trackOnNextTick: true,
+    devtools: false,
   },
 });
