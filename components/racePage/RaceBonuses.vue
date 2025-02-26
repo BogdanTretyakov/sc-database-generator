@@ -17,7 +17,7 @@
             depressed: hover && !hover.includes(item.id),
           },
         ]"
-        @mouseover="() => setHover(item)"
+        @mouseenter="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
       >
         <template #tooltip>
@@ -46,10 +46,6 @@
 import type { IBaseObject, IBonusObject, IRaceData } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 
-function isBonus(item: IBaseObject): item is IBonusObject {
-  return item.type === 'bonus';
-}
-
 interface Props {
   race: IRaceData;
   icons: string;
@@ -67,7 +63,7 @@ const bonusBuildings = computed(() =>
 );
 
 const setHover = (item: IBaseObject | IBonusObject) => {
-  if (!isBonus(item)) {
+  if (!isBonusObject(item)) {
     hover.value = [
       item.id,
       ...race.bonuses
@@ -76,6 +72,9 @@ const setHover = (item: IBaseObject | IBonusObject) => {
     ].filter(isNotNil);
     return;
   }
-  hover.value = [item.id, item.buildingId, ...item.relatedID];
+  const unitsReplace = Object.values(race.units)
+    .filter(({ hotkey }) => item.units?.some((unit) => unit.hotkey === hotkey))
+    .map(({ id }) => id);
+  hover.value = [item.id, item.buildingId, ...item.relatedID, ...unitsReplace];
 };
 </script>

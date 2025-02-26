@@ -42,7 +42,7 @@
             @click="
               () => (selected = selected === item.id ? undefined : item.id)
             "
-            @mouseover="() => !selected && calcActivePath(item.id)"
+            @mouseenter="() => !selected && calcActivePath(item.id)"
             @mouseout="() => !selected && (activePath = [])"
           >
             <WarTooltip

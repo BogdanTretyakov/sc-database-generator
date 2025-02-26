@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { IRawPatchData } from '~/data/types';
+import type { IRawPatchData, IUnitObject } from '~/data/types';
 
 export abstract class BaseScriptParser {
   protected script: string;
@@ -22,7 +22,7 @@ export abstract class BaseScriptParser {
   abstract getPatchData(): IRawPatchData;
 
   abstract getBonusUnit(bonusID: string): string | undefined;
-
+  abstract enrichUnitRequires(item: IUnitObject): IUnitObject;
   abstract getHeroItems(heroID: string): Record<string, string> | undefined;
 
   protected getIfBlockByIndex(cursorPosition: number) {

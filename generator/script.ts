@@ -4,8 +4,10 @@ import type {
   IRawPatchData,
   IRawRace,
   IRawUltimates,
+  IUnitObject,
 } from '~/data/types';
 import { isNotNil } from '~/utils/guards';
+import { uniq } from '~/utils/array';
 import { BaseScriptParser } from './baseScriptParser';
 
 export class Sur5alScriptParser extends BaseScriptParser {
@@ -599,5 +601,33 @@ export class Sur5alScriptParser extends BaseScriptParser {
         'mi'
       )
     )?.[0];
+  }
+
+  override enrichUnitRequires(item: IUnitObject): IUnitObject {
+    const conditionFunctions = Array.from(
+      this.script.match(
+        new RegExp(
+          String.raw`(?<=function )\w+(?=.+$\n.*?GetUnitTypeId\(GetEnteringUnit\(\)\)==['"]${item.id})`,
+          'gmi'
+        )
+      ) ?? []
+    )
+      .filter(isNotNil)
+      .filter(uniq);
+
+    conditionFunctions.forEach((fnName) => {
+      Array.from(
+        this.script.match(
+          new RegExp(
+            String.raw`(?:(?<=GetPlayerTechCountSimple\(['"])\w+(?=.*?${fnName}\(\)))|(?:(?<=${fnName}\(\).*GetPlayerTechCountSimple\('))\w+`,
+            'gi'
+          )
+        ) ?? []
+      ).forEach((upgrade) => (item.upgrades ?? []).push(upgrade));
+    });
+
+    item.upgrades = item.upgrades?.filter(uniq);
+
+    return item;
   }
 }

@@ -18,6 +18,14 @@
         :description="item.description ?? ''"
         :src="icons"
         :coords="iconProps(item.id)"
+        :class="[
+          'selectable-item',
+          {
+            depressed: hover && !hover.includes(item.id),
+          },
+        ]"
+        @mouseenter="() => setHover(item)"
+        @mouseout="() => (hover = undefined)"
       >
         <template #tooltip>
           <div class="text-subtitle-1" v-html="item.name" />
@@ -48,6 +56,12 @@
         :description="item.description ?? ''"
         :src="icons"
         :coords="iconProps(item.id)"
+        :class="[
+          'selectable-item',
+          {
+            depressed: hover && !hover.includes(item.id),
+          },
+        ]"
       >
         <template #tooltip>
           <div class="text-h6" v-html="item.fullName" />
@@ -60,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IRaceData } from '~/data/types';
+import type { IRaceData, IUnitObject } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 
 interface Props {
@@ -69,6 +83,8 @@ interface Props {
   iconProps(id: string, count?: number): IconBoundaries | IconBoundaries[];
 }
 const { race, icons, iconProps } = defineProps<Props>();
+
+const hover = inject<Ref<undefined | string[]>>('hover', ref());
 
 const unitsHotkeys: Record<string, string> = {
   melee: 'A',
@@ -85,4 +101,8 @@ const units = computed(() =>
     hotkey: unitsHotkeys[key],
   }))
 );
+
+const setHover = (item: IUnitObject) => {
+  hover.value = [item.id, ...(item.upgrades ?? [])];
+};
 </script>

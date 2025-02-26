@@ -23,17 +23,20 @@ export interface IUnitObject extends IBaseObject {
   defType: string;
   hp: number;
   hpReg: number;
+  mp: number;
+  mpReg: number;
   atk: string;
   atkType: string;
   atkRange: number;
   atkSpeed: number;
+  weaponType: string;
   skills?: ISpellObject[];
-  upgrades: string[];
+  upgrades?: string[];
   tags: string[];
   bounty: number;
 }
 
-export interface IHeroObject extends Omit<IUnitObject, 'type' | 'upgrades'> {
+export interface IHeroObject extends Omit<IUnitObject, 'type'> {
   type: 'hero';
   skills: ISpellObject[];
   items?: IArtifactObject[];
@@ -73,6 +76,7 @@ export interface IBonusObject extends IBaseObject {
   units?: IUnitObject[];
   spells?: ISpellObject[];
   upgrades?: IUpgradeObject[];
+  heroes?: IHeroObject[];
 }
 
 export interface IRawPatchData {
@@ -248,3 +252,16 @@ export interface IMiscData {
   bounty: Record<string, IBounty>;
   commonBonuses?: IBonusObject[];
 }
+
+interface ObjectsTypeMap {
+  spell: ISpellObject;
+  hero: IHeroObject;
+  unit: IUnitObject;
+  upgrade: IUpgradeObject;
+  bonus: IBonusObject;
+}
+
+export type GetObjectFunction = <T extends keyof ObjectsTypeMap>(
+  key: T,
+  id: string
+) => ObjectsTypeMap[T] | undefined;

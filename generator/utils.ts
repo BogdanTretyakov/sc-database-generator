@@ -3,10 +3,21 @@ import { resolve } from 'path';
 import { ObjectsTranslator, StringsTranslator } from 'wc3maptranslator';
 import type { JsonResult } from 'wc3maptranslator/dist/CommonInterfaces';
 import XLSX from 'xlsx';
-import { isNotNil } from '../utils/guards';
+import { isNotNil, isBaseObject } from '../utils/guards';
 import { ozPatch, sur5alPatch } from './patches';
-import clone from 'lodash/clone';
 import { Upgrades } from './objects';
+import type { IBaseObject } from '~/data/types';
+
+const patches = (() => {
+  switch (globalThis.mapVersion) {
+    case 'w3c':
+      return sur5alPatch;
+    case 'oz':
+      return ozPatch;
+    default:
+      return {};
+  }
+})();
 
 interface W3RawObject {
   id: string;
@@ -163,6 +174,13 @@ export abstract class W3Parser {
     if (value !== undefined) return value;
     return slk.data[data.id]?.[slkKey] ?? slk.data[data.wc3id]?.[slkKey];
   }
+
+  protected applyPatch<T extends IBaseObject>(obj: T): T {
+    return {
+      ...obj,
+      ...(patches[obj.id] ?? {}),
+    };
+  }
 }
 
 export class W3Object<T extends W3Parser = W3Parser> {
@@ -182,13 +200,17 @@ export class W3Object<T extends W3Parser = W3Parser> {
     return new this(data, parser, id);
   }
 
+  protected applyPatch<T extends IBaseObject>(obj: T): T {
+    return {
+      ...obj,
+      ...(patches[obj.id] ?? {}),
+    };
+  }
+
   withInstance<T>(cb: (instance: this) => T): T {
     const output = cb(this);
-    if (typeof output === 'object' && output !== null && 'id' in output) {
-      return {
-        ...output,
-        ...(this.patches[this.id] ?? {}),
-      };
+    if (typeof output === 'object' && output !== null && isBaseObject(output)) {
+      return this.applyPatch(output);
     }
     return output;
   }
@@ -307,17 +329,6 @@ export class W3Object<T extends W3Parser = W3Parser> {
   getIcon(level?: number) {
     return this.parser.getIcon(this, level);
   }
-
-  private get patches() {
-    switch (globalThis.mapVersion) {
-      case 'w3c':
-        return sur5alPatch;
-      case 'oz':
-        return ozPatch;
-      default:
-        return {};
-    }
-  }
 }
 
 export class W3Slk {
@@ -331,36 +342,6 @@ export class W3Slk {
     const parsed = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
     this.data = Object.fromEntries(parsed.map((item) => [item[itemId], item]));
-  }
-}
-
-export class W3File<const E extends String> {
-  public path!: string;
-  public extension!: E;
-
-  constructor(path: string, extensions: E[], customPath?: string) {
-    const nonExtPath = path.replace(/(?=.+)\.[^\.]*$/, '');
-    [
-      customPath,
-      resolve(process.cwd(), 'dataMap', globalThis.mapVersion || 'w3c'),
-      resolve(process.cwd(), 'dataWarcraft'),
-    ]
-      .filter(isNotNil)
-      .forEach((basePath) => {
-        if (!!this.path) return;
-        for (let i = 0; i < extensions.length; i++) {
-          const ext = extensions[i];
-          const tmpPath = resolve(basePath, `${nonExtPath}.${ext}`);
-          if (existsSync(tmpPath)) {
-            this.path = tmpPath;
-            this.extension = ext;
-            return;
-          }
-        }
-      });
-    if (!this.path) {
-      getError(`getting file ${path}`);
-    }
   }
 }
 

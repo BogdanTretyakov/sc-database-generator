@@ -21,6 +21,12 @@
         :description="item.description ?? ''"
         :src="icons"
         :coords="iconProps(item.id)"
+        :class="[
+          'selectable-item',
+          {
+            depressed: hover && !hover.includes(item.id),
+          },
+        ]"
       >
         <template #tooltip>
           <div class="text-subtitle-1" v-html="item.name" />
@@ -38,6 +44,14 @@
             ? iconProps(item.id, item.iconsCount)
             : iconProps(`${item.id}-${item.level}`)
         "
+        :class="[
+          'selectable-item',
+          {
+            depressed: hover && !hover.includes(item.id),
+          },
+        ]"
+        @mouseenter="() => setHover(item)"
+        @mouseout="() => (hover = undefined)"
       >
         <template #tooltip>
           <div class="text-subtitle-1" v-html="item.name" />
@@ -53,6 +67,12 @@
         :description="item.description ?? ''"
         :src="icons"
         :coords="iconProps(item.id)"
+        :class="[
+          'selectable-item',
+          {
+            depressed: hover && !hover.includes(item.id),
+          },
+        ]"
       >
         <template #tooltip>
           <div class="text-subtitle-1" v-html="item.name" />
@@ -72,6 +92,8 @@ interface Props {
   iconProps(id: string, count?: number): IconBoundaries | IconBoundaries[];
 }
 const { race, icons, iconProps } = defineProps<Props>();
+
+const hover = inject<Ref<undefined | string[]>>('hover', ref());
 
 const spells = computed(() => {
   const spells = [race.t1spell, race.t2spell];
@@ -95,4 +117,11 @@ const researches = computed<Array<IUpgradeObject>>(() => {
     }))
     .concat(...Object.values(race.baseUpgrades));
 });
+
+const setHover = (item: IUpgradeObject) => {
+  const units = Object.values(race.units)
+    .filter(({ upgrades }) => upgrades?.includes(item.id))
+    .map(({ id }) => id);
+  hover.value = [item.id, ...units];
+};
 </script>

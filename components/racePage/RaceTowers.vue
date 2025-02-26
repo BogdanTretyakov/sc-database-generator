@@ -34,7 +34,7 @@
             depressed: hover && !hover.includes(item.id),
           },
         ]"
-        @mouseover="() => setHover(item)"
+        @mouseenter="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
       >
         <template #tooltip>
@@ -72,6 +72,9 @@ const relatedBonuses = computed(() =>
 );
 
 const setHover = (item: IUpgradeObject) => {
-  hover.value = [item.id, relatedBonuses.value[item.id]];
+  const units = Object.values(race.units)
+    .filter(({ upgrades }) => upgrades?.includes(item.id))
+    .map(({ id }) => id);
+  hover.value = [item.id, relatedBonuses.value[item.id], ...units];
 };
 </script>

@@ -38,7 +38,11 @@ export class Units extends W3Parser {
     if (name) {
       return name;
     }
-    return this.strings[data.id]?.name ?? this.strings[data.wc3id]?.name ?? '';
+    return (
+      this.strings[data.id]?.name ||
+      this.strings[data.wc3id]?.name ||
+      data.getValueByKey('tip')
+    );
   }
 
   getFullName(data: W3Object<Units>): string {
@@ -82,7 +86,15 @@ export class Units extends W3Parser {
   }
 
   getUnitObject(data: W3Object<Units>): IUnitObject {
-    return {
+    const customTags = Array<string>();
+
+    if (
+      this.getWithSlkFallback(data, 'mvt', this.unitData, 'movetp') === 'fly'
+    ) {
+      customTags.push('air');
+    }
+
+    return this.applyPatch({
       type: 'unit',
       id: data.id,
       name: data.getName(),
@@ -91,28 +103,35 @@ export class Units extends W3Parser {
       cost: data.getValueByKey('gol'),
       hp: this.getWithSlkFallback(data, 'hpm', this.ballance, 'HP'),
       hpReg: this.getWithSlkFallback(data, 'hpr', this.ballance, 'regenHP'),
+      mp: this.getWithSlkFallback(data, 'mpm', this.ballance, 'realM'),
+      mpReg: this.getWithSlkFallback(data, 'mpr', this.ballance, 'regenMana'),
       def: this.getWithSlkFallback(data, 'def', this.ballance, 'def'),
       defType: this.getWithSlkFallback(data, 'dty', this.ballance, 'defType'),
       atk: this.getAttack(data),
       atkType: this.getWithSlkFallback(data, 'a1t', this.weapons, 'atkType1'),
-      atkRange: this.getWithSlkFallback(data, 'a1r', this.weapons, 'acquire'),
+      atkRange: this.getWithSlkFallback(data, 'a1r', this.weapons, 'rangeN1'),
       atkSpeed: this.getWithSlkFallback(data, 'a1c', this.weapons, 'cool1'),
+      weaponType: this.getWithSlkFallback(data, 'a1w', this.weapons, 'weapTp1'),
       upgrades: data.getArrayValue('pgr') ?? [],
-      tags: String(this.getWithSlkFallback(data, 'typ', this.ballance, 'Type'))
+      tags: String(
+        this.getWithSlkFallback(data, 'typ', this.ballance, 'type') ?? ''
+      )
         .replace(/_/g, '')
         .split(',')
-        .map((s) => s.trim().toLocaleLowerCase()),
+        .concat(customTags)
+        .map((s) => s.trim().toLocaleLowerCase())
+        .filter(isNotNil),
       skills: (data.getArrayValue('hab') ?? data.getArrayValue('abi'))
         ?.map((id) => abilitiesParser.getById(id))
         .filter(isNotNil)
-        .map((i) => i.parser.getSpellObject(i))
-        .filter(Abilities.filterEmptySpells),
+        .map((i) => i.parser.getSpellObject(i)),
+      // .filter(Abilities.filterEmptySpells),
       bounty: this.getPoints(data),
-    };
+    });
   }
 
   getHeroObject(data: W3Object<Units>): IHeroObject {
-    return {
+    return this.applyPatch({
       ...this.getUnitObject(data),
       type: 'hero',
       fullName: this.getFullName(data),
@@ -131,7 +150,7 @@ export class Units extends W3Parser {
       agiLvl: this.getWithSlkFallback(data, 'agp', this.ballance, 'AGIplus'),
       strLvl: this.getWithSlkFallback(data, 'stp', this.ballance, 'STRplus'),
       intLvl: this.getWithSlkFallback(data, 'inp', this.ballance, 'INTplus'),
-    };
+    });
   }
 }
 export class Upgrades extends W3Parser {
@@ -179,25 +198,61 @@ export class Upgrades extends W3Parser {
     );
   }
 
+  private getTimersArray(data: W3Object<Upgrades>): number[] {
+    const baseTimer = this.getWithSlkFallback(
+      data,
+      'tib',
+      this.upgrades,
+      'timebase'
+    );
+    const modTimer = this.getWithSlkFallback(
+      data,
+      'tim',
+      this.upgrades,
+      'timemod'
+    );
+    return Array.from(
+      {
+        length: data.getMaxLevel(),
+      },
+      (_, idx) => baseTimer + idx * modTimer
+    );
+  }
+
   getUpgradeObject(
     data: W3Object<Upgrades>,
     { level, skipLast }: { level?: number; skipLast?: boolean } = {}
   ): IUpgradeObject {
     const icons = data.getIcons();
-    return {
+
+    const spells = abilitiesParser
+      .getIdsByValue('req', data.id)
+      .map((id) => abilitiesParser.getById(id))
+      .filter(isNotNil)
+      .map((s) => s.parser.getSpellObject(s));
+
+    return this.applyPatch({
       type: 'upgrade',
       id: data.id,
       hotkey: data.getValueByKey('hk1', level),
       name: data.getName(level),
       iconsCount: icons.length > 1 ? icons.length : undefined,
       description: data.getValueByKey('ub1', level),
+      spells,
       cost: level
         ? [this.getBaseCost(data) + (level - 1) * this.getModifierCost(data)]
         : this.getCostArray(data, skipLast),
-    };
+      timers: level
+        ? [
+            this.getWithSlkFallback(data, 'tib', this.upgrades, 'timebase') +
+              (level - 1) *
+                this.getWithSlkFallback(data, 'tim', this.upgrades, 'timemod'),
+          ]
+        : this.getTimersArray(data),
+    });
   }
 }
-class Abilities extends W3Parser {
+export class Abilities extends W3Parser {
   override skins = getSkinsData('abilityskin.txt', defaultArts);
   override iconID = 'art';
 
@@ -214,7 +269,7 @@ class Abilities extends W3Parser {
       'cost',
       'duration',
     ];
-    return keys.every((key) => !(key in item));
+    return item.name && keys.every((key) => !(key in item));
   }
 
   getSummons(data: W3Object<Abilities>) {
@@ -232,7 +287,7 @@ class Abilities extends W3Parser {
     data: W3Object<Abilities>,
     icons?: Record<string, string>
   ): ISpellObject {
-    return {
+    return this.applyPatch({
       type: 'spell',
       id: data.id,
       name: data.getName(),
@@ -247,7 +302,7 @@ class Abilities extends W3Parser {
         .map((id) => unitsParser.getById(id))
         .filter(isNotNil)
         .map((s) => s.withIconSilent(icons ?? {}).parser.getUnitObject(s)),
-    };
+    });
   }
 }
 class Items extends W3Parser {
@@ -255,13 +310,13 @@ class Items extends W3Parser {
   override iconID = 'ico';
 
   getArtifactObject(data: W3Object<this>): Omit<IArtifactObject, 'level'> {
-    return {
+    return this.applyPatch({
       type: 'artifact',
       id: data.id,
       name: data.getName(),
       description: data.getValueByKey('tub'),
       hotkey: data.getRawValue('nam'),
-    };
+    });
   }
 }
 

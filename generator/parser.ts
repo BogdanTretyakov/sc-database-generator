@@ -1,4 +1,5 @@
 import {
+  Abilities,
   abilitiesParser,
   itemsParser,
   unitsParser,
@@ -162,7 +163,13 @@ export class SurvivalChaosParser {
       towerUpgrades: data.upgrades
         .map((upgradeID) => upgradesParser.getById(upgradeID))
         .filter(isNotNil)
-        .map((i) => i.withIcon(icons).parser.getUpgradeObject(i)),
+        .map((i) => i.withIcon(icons).parser.getUpgradeObject(i))
+        .map((item) => {
+          // Remove last grade
+          item.cost.splice(-1, 1);
+          item.timers?.splice(-1, 1);
+          return item;
+        }),
       ...mapObject(
         { t1spell: data.t1spell, t2spell: data.t2spell },
         (id) =>
@@ -177,7 +184,9 @@ export class SurvivalChaosParser {
         unitsParser
           .getById(id)!
           .withIcon(icons)
-          .withInstance((i) => i.parser.getUnitObject(i))
+          .withInstance((i) =>
+            this.parser.enrichUnitRequires(i.parser.getUnitObject(i))
+          )
       ),
       heroes: data.heroes
         .map((heroId) => unitsParser.getById(heroId))
@@ -253,7 +262,9 @@ export class SurvivalChaosParser {
           unitsParser
             .getById(unitID)
             ?.withIcon(icons)
-            .withInstance((i) => i.parser.getUnitObject(i))!
+            .withInstance((i) =>
+              this.parser.enrichUnitRequires(i.parser.getUnitObject(i))
+            )!
       ),
     };
 
@@ -576,15 +587,17 @@ export class SurvivalChaosParser {
     const unitReplace = unitsParser
       .getById(this.parser.getBonusUnit(bonusID) ?? '')
       ?.withIcon(icons ?? {})
-      .withInstance((s) => s.parser.getUnitObject(s));
+      .withInstance((s) =>
+        this.parser.enrichUnitRequires(s.parser.getUnitObject(s))
+      );
 
     const rawSpells = instance
       .getArrayValue('abi')
       ?.map((id) => abilitiesParser.getById(id))
       .filter(isNotNil);
 
-    return {
-      type: 'bonus',
+    const output = {
+      type: 'bonus' as const,
       id: bonusID,
       name: instance.getValueByKey('tip'),
       hotkey: instance.getValueByKey('hot'),
@@ -594,9 +607,11 @@ export class SurvivalChaosParser {
       units: unitReplace ? [unitReplace] : undefined,
       spells:
         rawSpells && rawSpells.length > 1
-          ? rawSpells.map((s) =>
-              s.withIconSilent(icons ?? {}).parser.getSpellObject(s)
-            )
+          ? rawSpells
+              .map((s) =>
+                s.withIconSilent(icons ?? {}).parser.getSpellObject(s)
+              )
+              .filter(Abilities.filterEmptySpells)
           : undefined,
       upgrades: instance
         .getArrayValue('res')
@@ -604,6 +619,8 @@ export class SurvivalChaosParser {
         .filter(isNotNil)
         .map((i) => i.withIcon(icons ?? {}).parser.getUpgradeObject(i)),
     };
+
+    return output;
   }
 
   private async writeData<T>(

@@ -4,8 +4,16 @@
       class="grid-item"
       v-for="(item, index) in sortedItems"
       :key="item?.id ?? index"
+      :class="{
+        'empty-item': showEmpty && !item,
+      }"
     >
-      <slot v-if="item" :item="item" />
+      <template v-if="item">
+        <DetailsWrapper v-if="!disableDetails" :item="item">
+          <slot :item="item" />
+        </DetailsWrapper>
+        <slot v-else :item="item" />
+      </template>
     </div>
   </div>
 </template>
@@ -20,6 +28,8 @@ interface Props {
   size?: MaybeRef<number>;
   skipHotkey?: boolean;
   restrictedSlots?: string[];
+  disableDetails?: boolean;
+  showEmpty?: boolean;
 }
 
 const {
@@ -27,6 +37,8 @@ const {
   size = 1,
   skipHotkey = false,
   restrictedSlots = [],
+  disableDetails = false,
+  showEmpty = false,
 } = defineProps<Props>();
 
 const iconSizeData = useStorageValue('iconSize', '56');
@@ -117,5 +129,8 @@ defineSlots<{
 
 .grid-item {
   aspect-ratio: 1;
+}
+.empty-item {
+  background-color: rgba(0, 0, 0, 0.3);
 }
 </style>

@@ -1,27 +1,52 @@
 <template>
   <div class="race-container">
-    <RaceSelectRibbon style="grid-column: 1 / -1" />
-    <RaceDescription :race="raceData" />
-    <RaceFortress :race="raceData" :icons="icons" :icon-props="iconProps" />
-    <RaceTowers :race="raceData" :icons="icons" :icon-props="iconProps" />
-    <RaceBonuses :race="raceData" :icons="icons" :icon-props="iconProps" />
-    <RaceBarracks :race="raceData" :icons="icons" :icon-props="iconProps" />
+    <DetailsProvider :obj-finder="objFinder">
+      <RaceSelectRibbon style="grid-column: 1 / -1" />
+      <RaceDescription :race="raceData" />
+      <RaceFortress :race="raceData" :icons="icons" :icon-props="iconProps" />
+      <RaceTowers :race="raceData" :icons="icons" :icon-props="iconProps" />
+      <RaceBonuses :race="raceData" :icons="icons" :icon-props="iconProps" />
+      <RaceBarracks :race="raceData" :icons="icons" :icon-props="iconProps" />
+    </DetailsProvider>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defaultVersionType, versionIndexes } from '~/data';
-import HeroReplace from '~/components/racePage/HeroReplace.vue';
 import RaceDescription from '~/components/racePage/RaceDescription.vue';
 import RaceFortress from '~/components/racePage/RaceFortress.vue';
 import RaceTowers from '~/components/racePage/RaceTowers.vue';
 import RaceBonuses from '~/components/racePage/RaceBonuses.vue';
 import RaceBarracks from '~/components/racePage/RaceBarracks.vue';
+import type { GetObjectFunction } from '~/data/types';
 
 const version = useVersionIndex();
 
 const icons = await useRaceIcons();
 const { raceData, iconProps } = await useRaceData();
+
+// @ts-expect-error
+const objFinder: GetObjectFunction = (type, id) => {
+  switch (type) {
+    case 'upgrade':
+      return Object.values(raceData.baseUpgrades)
+        .concat(raceData.magic)
+        .concat(raceData.towerUpgrades)
+        .find((item) => item.id === id);
+    case 'unit':
+      return Object.values(raceData.units).find((item) => item.id === id);
+    case 'bonus':
+      return Object.values(raceData.bonuses).find((item) => item.id === id);
+    case 'hero':
+      return raceData.heroes.find((item) => item.id === id);
+    case 'spell':
+      return [raceData.t1spell, raceData.t2spell].find(
+        (item) => item.id === id
+      );
+    default:
+      return undefined;
+  }
+};
 
 provide('hover', ref<undefined | string[]>());
 
@@ -75,6 +100,6 @@ definePageMeta({
   opacity: 0.4;
 }
 .selectable-item {
-  transition: 150ms opacity linear;
+  transition: 200ms opacity ease-in-out;
 }
 </style>
