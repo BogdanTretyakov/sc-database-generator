@@ -1,5 +1,5 @@
 <template>
-  <v-row>
+  <v-row class="misc-page">
     <v-col cols="12" sm="6" md="4">
       <CCard title="Damage types">
         <DamageTable :damage="damage" />
@@ -8,6 +8,11 @@
     <v-col cols="12" sm="6" md="4">
       <CCard title="Units bounty">
         <BountyTable :bounty="bounty" />
+      </CCard>
+    </v-col>
+    <v-col cols="12" sm="6" md="4">
+      <CCard title="Triggers">
+        <TriggerContent :type="versionType" :version="version.version" />
       </CCard>
     </v-col>
     <v-col cols="12">
@@ -30,8 +35,12 @@
 </template>
 
 <script setup lang="ts">
+import TriggerContent from '~/components/triggers/TriggerContent';
 import type { IMiscData } from '~/data/types';
 
+const route = useRoute();
+
+const versionType = useVersionType();
 const version = useVersionIndex();
 
 const icons = await useRaceIcons('misc');
@@ -53,14 +62,7 @@ definePageMeta({
 </script>
 
 <style lang="css" scoped>
-.misc-container {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-around;
-}
-.misc-container > * {
-  flex-shrink: 0;
-  flex-grow: 0;
-  margin: 8px 16px;
+.misc-page:deep(.v-table) {
+  background-color: transparent;
 }
 </style>

@@ -52,7 +52,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Loading',
       link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
-      titleTemplate: '%s - Survival Chaos',
+      titleTemplate: '%s | Survival Chaos Wiki',
     },
   },
   generate: {
@@ -83,6 +83,7 @@ export default defineNuxtConfig({
           visibility: false,
           interaction: true,
         },
+        trailingSlash: 'append',
       },
     },
   },

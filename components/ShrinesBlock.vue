@@ -64,7 +64,7 @@ const shrines = computed(() =>
 );
 
 const shrinesOrder = computed(() =>
-  ['Q', 'E', 'W', 'R', 'Other'].filter((key) => key in shrines.value)
+  ['Q', 'W', 'E', 'R', 'Other'].filter((key) => key in shrines.value)
 );
 </script>
 
