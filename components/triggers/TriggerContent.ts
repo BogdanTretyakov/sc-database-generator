@@ -1,10 +1,10 @@
-import OzMainTrigger from './OzMainTrigger.vue';
-import SurMinusArmor from './SurMinusArmor.vue';
-
 interface Props {
   type: string;
   version: string;
 }
+
+const SurMinusArmor = defineAsyncComponent(() => import('./SurMinusArmor.vue'));
+const OzMainTrigger = defineAsyncComponent(() => import('./OzMainTrigger.vue'));
 
 export default ({ type, version }: Props) => {
   const Component = (() => {

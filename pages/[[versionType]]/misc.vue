@@ -40,7 +40,11 @@ import type { IMiscData } from '~/data/types';
 
 const route = useRoute();
 
-const versionType = useVersionType();
+const versionType = computed(() => {
+  const type = [route.params.versionType].flat()[0];
+  return type === 'oz' ? 'oz' : 'w3c';
+});
+
 const version = useVersionIndex();
 
 const icons = await useRaceIcons('misc');
