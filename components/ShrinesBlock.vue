@@ -11,12 +11,15 @@
         <div class="text-h5 my-2">
           <span class="text-red">Tier 3 [W]</span>: 40:00
         </div>
+        <div class="text-h5 my-2 d-none">
+          <span class="text-purple">Ultimate</span>: 60:00
+        </div>
       </div>
     </CCard>
     <CCard
       v-for="hotkey in shrinesOrder"
       :key="hotkey"
-      :title="`Shrine abilities [${hotkey}]`"
+      :title="shrinesTitles[hotkey] || shrinesTitles.Other"
       class="d-flex align-center flex-column"
     >
       <WarGrid :items="shrines[hotkey]" skip-hotkey v-slot="{ item }">
@@ -63,8 +66,16 @@ const shrines = computed(() =>
   }, {})
 );
 
+const shrinesTitles: Record<string, string> = {
+  Q: 'Tier 1 [Q]',
+  E: 'Tier 2 [E]',
+  W: 'Tier 3 [W]',
+  R: 'Ultimate [R]',
+  Other: 'Unknown tier',
+};
+
 const shrinesOrder = computed(() =>
-  ['Q', 'W', 'E', 'R', 'Other'].filter((key) => key in shrines.value)
+  ['Q', 'E', 'W', 'R', 'Other'].filter((key) => key in shrines.value)
 );
 </script>
 
