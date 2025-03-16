@@ -540,7 +540,7 @@ export class Sur5alScriptParser extends BaseScriptParser {
             ? String(Number(`0x${rawLevel.replace('$', '')}`))
             : String(rawLevel);
 
-          acc[level] = itemName;
+          acc[itemName] = level;
 
           return acc;
         }, {});
@@ -552,20 +552,20 @@ export class Sur5alScriptParser extends BaseScriptParser {
       {
         // Monkey patch for trollings
         U00N: {
-          '2': 'mlst',
-          '3': 'sbch',
-          '4': 'I000',
-          '5': 'gvsm',
-          '6': 'shhn',
-          '7': 'esaz',
+          mlst: '2',
+          sbch: '3',
+          I000: '4',
+          gvsm: '5',
+          shhn: '6',
+          esaz: '7',
         },
         N00T: {
-          '2': 'I000',
-          '3': 'stwa',
-          '4': 'axas',
-          '5': 'shen',
-          '6': 'mlst',
-          '7': 'esaz',
+          I000: '2',
+          stwa: '3',
+          axas: '4',
+          shen: '5',
+          mlst: '6',
+          esaz: '7',
         },
       }
     );

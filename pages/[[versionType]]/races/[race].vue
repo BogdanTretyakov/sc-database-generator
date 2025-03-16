@@ -1,12 +1,14 @@
 <template>
-  <div class="race-container">
+  <div>
+    <RaceSelectRibbon style="grid-column: 1 / -1" />
     <DetailsProvider :obj-finder="objFinder">
-      <RaceSelectRibbon style="grid-column: 1 / -1" />
-      <RaceDescription :race="raceData" />
-      <RaceFortress :race="raceData" :icons="icons" :icon-props="iconProps" />
-      <RaceTowers :race="raceData" :icons="icons" :icon-props="iconProps" />
-      <RaceBonuses :race="raceData" :icons="icons" :icon-props="iconProps" />
-      <RaceBarracks :race="raceData" :icons="icons" :icon-props="iconProps" />
+      <div class="race-container" :style="containerColumnWidth">
+        <RaceDescription :race="raceData" style="flex-basis: 300px" />
+        <RaceFortress :race="raceData" :icons="icons" :icon-props="iconProps" />
+        <RaceTowers :race="raceData" :icons="icons" :icon-props="iconProps" />
+        <RaceBonuses :race="raceData" :icons="icons" :icon-props="iconProps" />
+        <RaceBarracks :race="raceData" :icons="icons" :icon-props="iconProps" />
+      </div>
     </DetailsProvider>
   </div>
 </template>
@@ -19,6 +21,7 @@ import RaceTowers from '~/components/racePage/RaceTowers.vue';
 import RaceBonuses from '~/components/racePage/RaceBonuses.vue';
 import RaceBarracks from '~/components/racePage/RaceBarracks.vue';
 import type { GetObjectFunction } from '~/data/types';
+import { DEFAULT_ICON_SIZE } from '~/consts';
 
 const version = useVersionIndex();
 
@@ -47,6 +50,13 @@ const objFinder: GetObjectFunction = (type, id) => {
       return undefined;
   }
 };
+
+const iconSize = useStorageValue('iconSize', DEFAULT_ICON_SIZE);
+const containerColumnWidth = computed(() => ({
+  gridTemplateColumns: `minmax(300px, 1fr) repeat(auto-fill, minmax(${
+    +iconSize.value * 5
+  }px, 1fr))`,
+}));
 
 provide('hover', ref<undefined | string[]>());
 
@@ -87,6 +97,7 @@ definePageMeta({
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
 }
+
 .row-span-2 {
   grid-row: span 2;
 }

@@ -20,6 +20,7 @@
 
 <script setup lang="ts" generic="T extends IBaseObject">
 import type { StyleValue } from 'vue';
+import { DEFAULT_ICON_SIZE } from '~/consts';
 import type { IBaseObject } from '~/data/types';
 import { hotkeys } from '~/utils/constants';
 
@@ -41,10 +42,10 @@ const {
   showEmpty = false,
 } = defineProps<Props>();
 
-const iconSizeData = useStorageValue('iconSize', '56');
+const iconSizeData = useStorageValue('iconSize', DEFAULT_ICON_SIZE);
 const iconSize = computed(() => {
   const numSize = Number(iconSizeData.value);
-  return (isNaN(numSize) ? 56 : numSize) * toValue(size);
+  return (isNaN(numSize) ? +DEFAULT_ICON_SIZE : numSize) * toValue(size);
 });
 
 const sortedItems = computed(() => {

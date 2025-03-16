@@ -8,6 +8,7 @@ import {
 } from './objects';
 import { getError, W3Object } from './utils';
 import { hotkeys } from '~/utils/constants';
+import { uniqById } from '~/utils/array';
 import { ImageProcessor } from './images';
 import { writeFile, readFile } from 'fs/promises';
 import { resolve } from 'path';
@@ -163,7 +164,7 @@ export class SurvivalChaosParser {
       towerUpgrades: data.upgrades
         .map((upgradeID) => upgradesParser.getById(upgradeID))
         .filter(isNotNil)
-        .map((i) => i.withIcon(icons).parser.getUpgradeObject(i))
+        .map((i) => i.withIcon(icons).parser.getUpgradeObject(i, icons))
         .map((item) => {
           // Remove last grade
           item.cost.splice(-1, 1);
@@ -207,7 +208,7 @@ export class SurvivalChaosParser {
               const items: IArtifactObject[] | undefined = !itemsRaw
                 ? undefined
                 : Object.entries(itemsRaw)
-                    .map(([level, id]) => {
+                    .map(([id, level]) => {
                       const instance = itemsParser.getById(id);
                       if (!instance) return;
                       instance.withIcon(icons);
@@ -230,7 +231,7 @@ export class SurvivalChaosParser {
         ?.withIcon(icons)
         .withInstance((instance) => {
           const { cost, iconsCount, ...rest } =
-            instance.parser.getUpgradeObject(instance);
+            instance.parser.getUpgradeObject(instance, icons);
 
           return Array.from({ length: instance.getMaxLevel() }, (_, idx) => {
             const level = idx + 1;
@@ -254,7 +255,7 @@ export class SurvivalChaosParser {
         upgradesParser
           .getById(id)!
           .withIcon(icons)
-          .withInstance((i) => i.parser.getUpgradeObject(i))
+          .withInstance((i) => i.parser.getUpgradeObject(i, icons))
       ),
       units: mapObject(
         data.units,
@@ -492,8 +493,8 @@ export class SurvivalChaosParser {
     };
 
     return Object.fromEntries(
-      this.data.races.map((raceData) => {
-        const barracksIDs = [raceData.buildings.barrack];
+      this.races.map((raceData) => {
+        const barracksIDs = [raceData.buildings.barrack.id];
 
         let [lowerBarrack] = unitsParser.findIDByKey(
           'upt',
@@ -504,22 +505,38 @@ export class SurvivalChaosParser {
           [lowerBarrack] = unitsParser.findIDByKey('upt', lowerBarrack);
         }
         let nextBarrack = unitsParser
-          .getById(raceData.buildings.barrack)
+          .getById(raceData.buildings.barrack.id)
           ?.getValueByKey('upt');
         while (!!nextBarrack) {
           barracksIDs.push(nextBarrack);
           nextBarrack = unitsParser.getById(nextBarrack)?.getValueByKey('upt');
         }
 
+        const summon = [
+          raceData.t1spell.summonUnit,
+          raceData.t2spell.summonUnit,
+          raceData.magic.map(({ spells }) =>
+            spells?.map(({ summonUnit }) => summonUnit)
+          ),
+          raceData.towerUpgrades.map(({ spells }) =>
+            spells?.map(({ summonUnit }) => summonUnit)
+          ),
+        ]
+          .flat(5)
+          .filter(isNotNil)
+          .filter(uniqById)
+          .map(({ bounty }) => bounty);
+
         return [
           raceData.id,
           {
-            ...mapObject(raceData.units, (id) => getPointById(id)),
-            hero: getPointById(raceData.heroes[0]),
-            su: getPointById(raceData.heroes[3]),
-            tower: getPointById(raceData.buildings.tower),
-            fort: getPointById(raceData.buildings.fort),
+            ...mapObject(raceData.units, ({ bounty }) => bounty),
             barracks: barracksIDs.map((id) => getPointById(id)),
+            hero: raceData.heroes[0].bounty,
+            su: raceData.heroes[3].bounty,
+            tower: raceData.buildings.tower.bounty,
+            fort: raceData.buildings.fort.bounty,
+            summon,
           },
         ] as const;
       })
@@ -607,17 +624,15 @@ export class SurvivalChaosParser {
       units: unitReplace ? [unitReplace] : undefined,
       spells:
         rawSpells && rawSpells.length > 1
-          ? rawSpells
-              .map((s) =>
-                s.withIconSilent(icons ?? {}).parser.getSpellObject(s)
-              )
-              .filter(Abilities.filterEmptySpells)
+          ? rawSpells.map((s) =>
+              s.withIconSilent(icons ?? {}).parser.getSpellObject(s)
+            )
           : undefined,
       upgrades: instance
         .getArrayValue('res')
         ?.map((i) => upgradesParser.getById(i))
         .filter(isNotNil)
-        .map((i) => i.withIcon(icons ?? {}).parser.getUpgradeObject(i)),
+        .map((i) => i.withIcon(icons ?? {}).parser.getUpgradeObject(i, icons)),
     };
 
     return output;

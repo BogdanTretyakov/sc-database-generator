@@ -7,8 +7,8 @@
     id="bonuses"
   >
     <WarGrid :items="race.bonuses" v-slot="{ item }">
-      <WarTooltip
-        :description="item.description ?? ''"
+      <DetailsTooltip
+        :item="item"
         :src="icons"
         :coords="iconProps(item.id)"
         :class="[
@@ -19,11 +19,7 @@
         ]"
         @mouseenter="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
-      >
-        <template #tooltip>
-          <div class="text-subtitle-1" v-html="item.name" />
-        </template>
-      </WarTooltip>
+      />
     </WarGrid>
     <div class="my-2 text-h6">Buildings</div>
     <div class="d-flex flex-wrap">

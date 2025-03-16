@@ -24,10 +24,10 @@
       :restrictedSlots="['Q', 'W']"
       v-slot="{ item }"
     >
-      <WarTooltip
-        :description="item.description ?? ''"
+      <DetailsTooltip
+        :item="item"
         :src="icons"
-        :coords="iconProps(item.id)"
+        :coords="iconProps(item.id, item.iconsCount)"
         :class="[
           'selectable-item',
           {
@@ -36,12 +36,7 @@
         ]"
         @mouseenter="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
-      >
-        <template #tooltip>
-          <div class="text-subtitle-1" v-html="item.name" />
-          <WarCost :cost="item.cost" />
-        </template>
-      </WarTooltip>
+      />
     </WarGrid>
   </CCard>
 </template>

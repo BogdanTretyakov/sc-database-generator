@@ -49,7 +49,10 @@
               :src="icons"
               :description="item.description"
               :coords="iconProps(item.id)"
-              :disabled="disabledTooltips === 'true'"
+              :disabled="
+                disabledTooltips === 'true' || globalTooltips === 'true'
+              "
+              :width="+iconSize * 0.75"
             >
               <template #tooltip>
                 <div v-html="item.name" />
@@ -123,6 +126,7 @@ const compare = new Intl.Collator('en').compare;
 
 const showPath = useStorageValue('artiShowPath', 'false');
 const disabledTooltips = useStorageValue('artiDisabledTooltips', 'false');
+const globalTooltips = useStorageValue('tooltipsDisabled', 'false');
 
 const version = useVersionIndex();
 
@@ -130,6 +134,7 @@ const { raceData: artiData, iconProps } = await useRaceData<IArtifactData>(
   'artifacts'
 );
 const icons = await useRaceIcons('artifacts');
+const iconSize = useStorageValue('iconSize');
 
 const items = computed(() => artiData?.items ?? []);
 

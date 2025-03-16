@@ -4,11 +4,12 @@ import type {
   IRawPatchData,
   IRawRace,
   IRawUltimates,
+  IUnitObject,
 } from '~/data/types';
 import { abilitiesParser, unitsParser } from './objects';
 import { mapObject } from '~/utils/object';
 import { isNotNil } from '~/utils/guards';
-import { uniq } from '~/utils/array';
+import { uniq, uniqById } from '~/utils/array';
 import { getError } from './utils';
 import { BaseScriptParser } from './baseScriptParser';
 
@@ -197,6 +198,8 @@ export class OZScriptParser extends BaseScriptParser {
         data.bonusHeroes.push(output);
       });
 
+      data.bonusHeroes = data.bonusHeroes.filter(uniqById);
+
       const setUpgrades = Array.from(
         codeBlock.matchAll(
           /call SetPlayerTechResearched\(.{3,6},(?<research>\d+)(?:,(?<level>\d+))/gim
@@ -365,32 +368,102 @@ export class OZScriptParser extends BaseScriptParser {
       new RegExp(
         String.raw`(?:else)?if .*?.{2,6}==${this.strToInt(
           heroID
-        )} (?:or .{2,6}==\d+)*then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
+        )} (?:or .{2,6}==\d+ )*then(?=\n(?:^.+$\n){1,20}call UnitAddItem)`,
         'mi'
       )
     );
-    if (!replaceMatch?.index) return;
+    const output: Record<string, string> =
+      this.getChoosableHeroItems(heroID) ?? {};
 
-    const output: Record<string, string> = {};
+    if (!replaceMatch?.index) return output;
+
     const replaceCodeBlock = this.getIfBlockByIndex(replaceMatch.index);
+
+    let ended = false;
 
     Array.from(
       replaceCodeBlock.matchAll(
-        /if .{2,6}\s?>=(?<level>\d{1,2})\s.+\n(?:^.+$\n){0,20}?(?:call UnitAddItemById\(.{2,6},\s?(?<value>\d+))/gim
+        /if .{2,40}\s?>=(?<level>\d{1,2})\s.+\n(?:^.+$\n){0,20}?(?:call UnitAddItemById\(.{2,6},\s?(?<value>\d+))/gim
       )
     )
-      .filter(({ groups }) => groups && !!groups.level)
+      // Костыль для ОЗ версии
+      .filter(({ groups }, idx, arr) => {
+        if (ended || !groups || !groups.level) return false;
+        const isRightOrder =
+          Number(groups.level) >= Number(arr[idx - 1]?.groups?.level ?? 0);
+        if (!isRightOrder) {
+          ended = true;
+          return false;
+        }
+        return true;
+      })
       .forEach(({ groups }) => {
         if (!groups) return;
         const { level, value } = groups;
-        output[level] = this.intToStr(value);
+        output[this.intToStr(value)] = level;
       });
+    return output;
+  }
+
+  getChoosableHeroItems(heroID: string): Record<string, string> | undefined {
+    const abilitiesMatch = this.script.match(
+      new RegExp(
+        String.raw`if GetUnitTypeId\((?<var>.{2,6})\)==${this.strToInt(
+          heroID
+        )}.+\n.+?GetHeroLevel\(\k<var>\)`
+      )
+    );
+    if (!abilitiesMatch?.index) return;
+    const setAbiCodeBlock = this.getIfBlockByIndex(abilitiesMatch.index);
+
+    const match = Array.from(
+      setAbiCodeBlock.matchAll(
+        /.+GetHeroLevel\(.{2,6}\)>?=(?<level>\d{1,2})/g
+      ) ?? []
+    );
+
+    const output = Array.from(
+      setAbiCodeBlock.matchAll(/.+GetHeroLevel\(.{2,6}\)>?=(?<level>\d{1,2})/g)
+    ).reduce((acc, item) => {
+      const { level } = item.groups ?? {};
+      if (!level || !item.index) return acc;
+
+      const thisLevelCodeBlock = this.getIfBlockByIndex(
+        item.index,
+        setAbiCodeBlock
+      );
+      const abilities = Array.from(
+        thisLevelCodeBlock.match(/(?<=UnitAddAbility\(.{2,6},)\d+/g) ?? []
+      );
+
+      const items = abilities
+        .map(
+          (abilityID) =>
+            this.script.match(
+              new RegExp(
+                String.raw`(?<=.{2,6}==${abilityID}.+\n(?:^.+$\n){1,12}.+UnitAddItemById\(.{2,6},)\d+`,
+                'gm'
+              )
+            )?.[0]
+        )
+        .filter(isNotNil);
+
+      items.forEach((itemRawId) => {
+        acc[this.intToStr(itemRawId)] = level;
+      });
+
+      return acc;
+    }, {} as Record<string, string>);
+    if (!Object.values(output).length) return;
     return output;
   }
 
   override getBonusUnit(bonusID: string): string | undefined {
     const findBlockIndex = this.script.match(
-      new RegExp(String.raw`(?:else)?if {2,6}==${this.strToInt(bonusID)}`, 'mi')
+      new RegExp(
+        String.raw`(?:else)?if .{2,6}==${this.strToInt(bonusID)}`,
+        'mi'
+      )
     )?.index;
     if (!findBlockIndex) return;
     const codeBlock = this.getIfBlockByIndex(findBlockIndex);
@@ -404,5 +477,9 @@ export class OZScriptParser extends BaseScriptParser {
       )
     )?.[0];
     return found ? this.intToStr(found) : undefined;
+  }
+
+  override enrichUnitRequires(item: IUnitObject): IUnitObject {
+    return item;
   }
 }

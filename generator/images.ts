@@ -98,7 +98,7 @@ export class ImageProcessor {
               prevAcc[name] = imageBuffer;
             }
           } catch (e) {
-            console.warn(e);
+            console.warn(`Error while getting image for ${name}: ${path}`);
           }
 
           return prevAcc;

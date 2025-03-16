@@ -35,7 +35,7 @@
       value="description"
     >
       <v-expansion-panel-text>
-        <div v-html="item.description" />
+        <div class="text-body-2" v-html="item.description" />
       </v-expansion-panel-text>
     </v-expansion-panel>
     <v-expansion-panel title="Characteristics" value="characteristics">
@@ -93,17 +93,13 @@
     >
       <v-expansion-panel-text>
         <div class="upgrades-wrapper">
-          <WarTooltip
+          <DetailsTooltip
             v-for="upgrade in requires"
-            :description="upgrade.description ?? ''"
+            :item="upgrade"
             :src="raceIcons"
             :coords="iconProps(upgrade.id, upgrade.iconsCount)"
           >
-            <template #tooltip>
-              <div class="text-subtitle-1" v-html="upgrade.name" />
-              <WarCost :cost="upgrade.cost" />
-            </template>
-          </WarTooltip>
+          </DetailsTooltip>
         </div>
       </v-expansion-panel-text>
     </v-expansion-panel>
@@ -113,6 +109,7 @@
 
 <script setup lang="ts">
 import type { GetObjectFunction, IUnitObject } from '~/data/types';
+import WarArrayInfo from '../WarArrayInfo.vue';
 
 interface Props {
   item: IUnitObject;

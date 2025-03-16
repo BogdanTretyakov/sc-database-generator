@@ -3,6 +3,7 @@
     dot
     color="primary"
     location="left top"
+    class="details-badge"
     :model-value="hasDetails"
     @click="clickHandler"
     :class="{ 'cursor-pointer': hasDetails }"
@@ -35,15 +36,15 @@ const hasDetails = computed(() => {
 
   if (isUnitObject(itemVal) || isHeroObject(itemVal)) return true;
 
-  if (isSpellObject(itemVal)) {
-    return Array<keyof ISpellObject>(
-      'area',
-      'cooldown',
-      'cost',
-      'duration',
-      'summonUnit'
-    ).some((key) => key in itemVal && !!itemVal[key]?.length);
-  }
+  // if (isSpellObject(itemVal)) {
+  //   return Array<keyof ISpellObject>(
+  //     'area',
+  //     'cooldown',
+  //     'cost',
+  //     'duration',
+  //     'summonUnit'
+  //   ).some((key) => key in itemVal && !!itemVal[key]?.length);
+  // }
 
   if (isUpgradeObject(itemVal)) {
     return !!itemVal.spells?.length;
@@ -57,3 +58,14 @@ const clickHandler = () => {
   setItem?.(toValue(item));
 };
 </script>
+
+<style lang="css" scoped>
+.details-badge {
+  width: 100%;
+  height: 100%;
+}
+.details-badge::v-deep(.v-badge__wrapper) {
+  width: 100%;
+  height: 100%;
+}
+</style>

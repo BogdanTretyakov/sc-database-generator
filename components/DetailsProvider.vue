@@ -7,16 +7,26 @@
       disable-resize-watcher
       elevation="4"
       class="pa-2"
-      width="350"
+      width="400"
       disable-route-watcher
     >
       <div
         v-if="item"
         class="d-flex align-center justify-space-between panel-header pb-2 elevation-1 mb-2"
       >
-        <v-chip density="compact" size="small" class="flex-shrink-0"
-          >ID: {{ item.id }}</v-chip
-        >
+        <v-tooltip color="transparent">
+          <template #activator="{ props }">
+            <GameIcon
+              :src="icons"
+              :coords="iconProps(item.id)"
+              width="32"
+              v-bind="props"
+              @click="handleIdClick"
+            />
+          </template>
+          <template #default> ID: {{ item.id }} </template>
+        </v-tooltip>
+
         <span v-html="item.name" class="text-h6 mx-2" />
         <v-btn density="comfortable" icon flat @click="setShowingItems(null)">
           <v-icon icon="$close" />
@@ -38,6 +48,8 @@ interface Props {
 }
 
 const { objFinder } = defineProps<Props>();
+const icons = await useRaceIcons();
+const { iconProps } = await useRaceData();
 
 const item = ref<IBaseObject | null>(null);
 const hashValue = useHashValue();
@@ -67,6 +79,10 @@ watch(
 
 const setShowingItems = (val: null | IBaseObject) => {
   item.value = val;
+};
+
+const handleIdClick = () => {
+  navigator.clipboard.writeText(item.value?.id || '');
 };
 
 provide('detailsSet', setShowingItems);

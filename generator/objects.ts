@@ -2,7 +2,7 @@ import { W3Object, W3Parser, W3Slk } from './utils';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import { isNotNil } from '~/utils/guards';
-import { uniq } from '~/utils/array';
+import { uniq, uniqById } from '~/utils/array';
 import type {
   IArtifactObject,
   IHeroObject,
@@ -221,27 +221,29 @@ export class Upgrades extends W3Parser {
 
   getUpgradeObject(
     data: W3Object<Upgrades>,
-    { level, skipLast }: { level?: number; skipLast?: boolean } = {}
+    icons?: Record<string, string>
   ): IUpgradeObject {
-    const icons = data.getIcons();
+    const localIcons = data.getIcons();
+    let level;
 
     const spells = abilitiesParser
       .getIdsByValue('req', data.id)
       .map((id) => abilitiesParser.getById(id))
       .filter(isNotNil)
-      .map((s) => s.parser.getSpellObject(s));
+      .map((s) => s.withIconSilent(icons ?? {}).parser.getSpellObject(s, icons))
+      .filter((item) => Abilities.filterEmptySpells(item));
 
     return this.applyPatch({
       type: 'upgrade',
       id: data.id,
       hotkey: data.getValueByKey('hk1', level),
       name: data.getName(level),
-      iconsCount: icons.length > 1 ? icons.length : undefined,
+      iconsCount: localIcons.length > 1 ? localIcons.length : undefined,
       description: data.getValueByKey('ub1', level),
       spells,
       cost: level
         ? [this.getBaseCost(data) + (level - 1) * this.getModifierCost(data)]
-        : this.getCostArray(data, skipLast),
+        : this.getCostArray(data),
       timers: level
         ? [
             this.getWithSlkFallback(data, 'tib', this.upgrades, 'timebase') +
@@ -256,26 +258,29 @@ export class Abilities extends W3Parser {
   override skins = getSkinsData('abilityskin.txt', defaultArts);
   override iconID = 'art';
 
-  private summonKeys = ['sf1', 'we1', 'dp1'];
+  private summonKeys = ['sf1', 'we1', 'dp1', 'aiu', 'ai3'];
 
   override getName(data: W3Object<Abilities>): string {
     return data.getRawValue('tp1');
   }
 
   static filterEmptySpells(item: ISpellObject) {
-    const keys: Array<keyof ISpellObject> = [
+    const keys = [
       'area',
       'cooldown',
       'cost',
       'duration',
-    ];
-    return item.name && keys.every((key) => !(key in item));
+      'summonUnit',
+    ] as const;
+    return !!item.name && keys.some((key) => !!item?.[key]?.length);
   }
 
   getSummons(data: W3Object<Abilities>) {
     return this.summonKeys
-      .map((key) => data.getValueByKey(key))
+      .map((key) => data.getAllValuesByKey(key))
       .filter(isNotNil)
+      .flat()
+      .filter(uniq)
       .map(String)
       .map((s) => s.split(','))
       .flat()
@@ -301,7 +306,8 @@ export class Abilities extends W3Parser {
       summonUnit: this.getSummons(data)
         .map((id) => unitsParser.getById(id))
         .filter(isNotNil)
-        .map((s) => s.withIconSilent(icons ?? {}).parser.getUnitObject(s)),
+        .map((s) => s.withIconSilent(icons ?? {}).parser.getUnitObject(s))
+        .filter(uniqById),
     });
   }
 }

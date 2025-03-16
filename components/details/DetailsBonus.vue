@@ -6,14 +6,14 @@
       value="description"
     >
       <v-expansion-panel-text>
-        <div v-html="item.description" />
+        <div class="text-body-2" v-html="item.description" />
       </v-expansion-panel-text>
     </v-expansion-panel>
-    <v-expansion-panel
-      v-if="isShowGrid && gridItems.length"
-      title="Bonus spells/upgrades"
-      value="grid"
-    >
+    <v-expansion-panel v-if="isShowGrid && gridItems.length" value="grid">
+      <v-expansion-panel-title width="100%" class="d-flex">
+        <span class="mr-auto">Bonus spells/upgrades</span>
+        <CombineCost :items="item.upgrades ?? []"> Total cost </CombineCost>
+      </v-expansion-panel-title>
       <v-expansion-panel-text>
         <div class="d-flex justify-center">
           <WarGrid
@@ -23,15 +23,11 @@
             show-empty
           >
             <template #default="{ item }">
-              <WarTooltip
+              <DetailsTooltip
                 :src="raceIcons"
-                :coords="iconProps(item.id)"
-                :description="item.description ?? ''"
-              >
-                <template #tooltip>
-                  <div class="text-subtitle-1" v-html="item.name" />
-                </template>
-              </WarTooltip>
+                :coords="iconProps(item.id, item.iconsCount)"
+                :item="item"
+              />
             </template>
           </WarGrid>
         </div>
@@ -47,24 +43,45 @@
         <DetailsUnit :item="unit" />
       </v-expansion-panel-text>
     </v-expansion-panel>
+    <v-expansion-panel
+      v-if="!!openUpgrades.length"
+      title="Unlocked upgrades"
+      value="opens"
+    >
+      <v-expansion-panel-text>
+        <div class="d-flex justify-center">
+          <WarGrid
+            :items="openUpgrades"
+            disable-details
+            skip-hotkey
+            #="{ item }"
+          >
+            <DetailsTooltip
+              :src="raceIcons"
+              :coords="iconProps(item.id, item.iconsCount)"
+              :item="item"
+            />
+          </WarGrid>
+        </div>
+      </v-expansion-panel-text>
+    </v-expansion-panel>
   </v-expansion-panels>
-
-  <v-textarea :model-value="tempData" />
 </template>
 
 <script setup lang="ts">
-import type { IBonusObject } from '~/data/types';
+import type { GetObjectFunction, IBonusObject } from '~/data/types';
 
 interface Props {
   item: IBonusObject;
 }
 
+const objFinder = inject<GetObjectFunction>('objFinder')!;
 const raceIcons = await useRaceIcons();
 const { iconProps } = await useRaceData();
 
 const { item } = defineProps<Props>();
 
-const panels = ref(['grid']);
+const panels = ref(['grid', 'opens']);
 
 watch(
   () => item,
@@ -87,5 +104,7 @@ const gridItems = computed(() => {
   ];
 });
 
-const tempData = computed(() => JSON.stringify(item, null, 4));
+const openUpgrades = computed(() => {
+  return item.relatedID.map((id) => objFinder('upgrade', id)).filter(isNotNil);
+});
 </script>

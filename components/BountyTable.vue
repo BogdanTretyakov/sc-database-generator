@@ -30,7 +30,7 @@ interface Props {
 
 const { bounty } = defineProps<Props>();
 
-const tableTitles = {
+const tableTitles: Record<string, string> = {
   su: 'SU',
   siege: 'T2 melee',
 };
@@ -38,6 +38,7 @@ const tableTitles = {
 const keysOrder = [
   'su',
   'hero',
+  'summon',
   'catapult',
   'air',
   'siege',

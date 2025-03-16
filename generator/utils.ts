@@ -148,7 +148,7 @@ export abstract class W3Parser {
   }
 
   getName(data: W3Object<typeof this>, level?: number): string {
-    return data.getRawValue('nam', level);
+    return data.getRawValue('nam', level) || data.getRawValue('typ');
   }
 
   getIdsByValue(key: string, searchValue: any, includes = false) {
@@ -264,7 +264,11 @@ export class W3Object<T extends W3Parser = W3Parser> {
 
   private formatValue(value: any): any {
     if (typeof value === 'string') {
-      return this.prepareTrigStr(value)
+      const text = this.prepareTrigStr(value);
+      if (/fuck you/i.test(text)) {
+        return '';
+      }
+      return text
         .replace(
           /\|c(?<transparency>[0-9a-fA-F]{2})(?<color>[0-9a-fA-F]{6})(?<content>.*?)(?:(?:\|r)|(?=\|c)|$)/gms,
           (...args: any[]) => {
@@ -272,7 +276,7 @@ export class W3Object<T extends W3Parser = W3Parser> {
             return `<span class="w3-colored" style="color: #${color}${transparency}">${content}</span>`;
           }
         )
-        .replace(/\|n/gm, '<br/>');
+        .replace(/(?:\|r\s?)?\|n/gm, '<br/>');
     }
 
     return value;

@@ -14,8 +14,8 @@
       />
     </template>
     <WarGrid class="mx-auto" :items="units" v-slot="{ item }">
-      <WarTooltip
-        :description="item.description ?? ''"
+      <DetailsTooltip
+        :item="item"
         :src="icons"
         :coords="iconProps(item.id)"
         :class="[
@@ -26,34 +26,14 @@
         ]"
         @mouseenter="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
-      >
-        <template #tooltip>
-          <div class="text-subtitle-1" v-html="item.name" />
-          <WarCost :cost="item.cost" />
-          <div class="d-flex flex-no-wrap my-1">
-            <AttackDefend
-              :type="item.atkType"
-              :value="item.atk"
-              :size="24"
-              class="flex-grow-1"
-            />
-            <AttackDefend
-              :type="item.defType"
-              :value="item.def"
-              is-defend
-              :size="24"
-              class="flex-grow-1"
-            />
-          </div>
-        </template>
-      </WarTooltip>
+      />
     </WarGrid>
 
     <v-divider class="my-3 w-100" />
 
     <WarGrid class="mx-auto" :items="race.heroes" v-slot="{ item }">
-      <WarTooltip
-        :description="item.description ?? ''"
+      <DetailsTooltip
+        :item="item"
         :src="icons"
         :coords="iconProps(item.id)"
         :class="[
@@ -62,13 +42,7 @@
             depressed: hover && !hover.includes(item.id),
           },
         ]"
-      >
-        <template #tooltip>
-          <div class="text-h6" v-html="item.fullName" />
-          <div class="text-subtitle-1" v-html="item.name" />
-          <WarCost :cost="item.cost" />
-        </template>
-      </WarTooltip>
+      />
     </WarGrid>
   </CCard>
 </template>
@@ -76,6 +50,7 @@
 <script setup lang="ts">
 import type { IRaceData, IUnitObject } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
+import { DetailsTooltip } from '#components';
 
 interface Props {
   race: IRaceData;

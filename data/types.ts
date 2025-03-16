@@ -3,6 +3,7 @@ export interface IBaseObject {
   name: string;
   hotkey: string;
   description?: string;
+  iconsCount?: number;
   type: string;
 }
 
@@ -241,7 +242,7 @@ export interface IBounty {
   fort: number;
   barracks: number[];
   // additional: number[];
-  // summon: number[];
+  summon: number[];
   // fortSummon: number[];
 }
 

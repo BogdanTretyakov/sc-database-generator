@@ -56,26 +56,19 @@
     </template>
     <template #heroItems>
       <v-expansion-panel
-        v-if="!!item.items?.length"
+        v-if="!!heroItems.length"
         title="Hero items"
         value="items"
       >
         <v-expansion-panel-text>
-          <div class="hero-items-wrapper">
-            <WarTooltip
-              v-for="arti in item.items"
-              :src="raceIcons"
-              :coords="iconProps(arti.id)"
-              :description="arti.description ?? ''"
-            >
-              <template #tooltip>
-                <div class="text-subtitle-1" v-html="arti.name" />
-                <div class="text-caption">
-                  Obtain at
-                  <span class="text-yellow">{{ arti.level }}</span> level
-                </div>
-              </template>
-            </WarTooltip>
+          <div class="d-flex justify-center">
+            <WarGrid :items="heroItems" #="{ item: arti }">
+              <DetailsTooltip
+                :src="raceIcons"
+                :coords="iconProps(arti.id)"
+                :item="arti"
+              />
+            </WarGrid>
           </div>
         </v-expansion-panel-text>
       </v-expansion-panel>
@@ -95,6 +88,23 @@ const { iconProps } = await useRaceData();
 const [assetsPath, { str, int, agi }] = useAssets();
 
 const { item } = defineProps<Props>();
+
+const heroItems = computed(() => {
+  if (!item.items) return [];
+  const levels = item.items.map(({ level }) => level);
+  if (!levels?.length) return [];
+  const levelsMap = levels
+    .filter(uniq)
+    .sort((a, b) => a - b)
+    .reduce((acc, level, idx) => {
+      acc[level] = hotkeys[idx];
+      return acc;
+    }, {} as Record<number, string>);
+  return item.items.map((item) => ({
+    ...item,
+    hotkey: levelsMap[item.level],
+  }));
+});
 </script>
 
 <style lang="css" scoped>

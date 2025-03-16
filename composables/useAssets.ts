@@ -12,6 +12,8 @@ const mappedCoords = mapObject(
   })
 );
 
+export type AssetsIconKey = keyof typeof coords;
+
 export const useAssets = () => {
   return [icons, mappedCoords] as const;
 };

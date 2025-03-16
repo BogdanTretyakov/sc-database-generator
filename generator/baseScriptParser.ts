@@ -25,9 +25,9 @@ export abstract class BaseScriptParser {
   abstract enrichUnitRequires(item: IUnitObject): IUnitObject;
   abstract getHeroItems(heroID: string): Record<string, string> | undefined;
 
-  protected getIfBlockByIndex(cursorPosition: number) {
-    const isIf = this.script.startsWith('if', cursorPosition);
-    const isElseif = this.script.startsWith('elseif', cursorPosition);
+  protected getIfBlockByIndex(cursorPosition: number, text = this.script) {
+    const isIf = text.startsWith('if', cursorPosition);
+    const isElseif = text.startsWith('elseif', cursorPosition);
 
     if (!isIf && !isElseif) {
       throw new Error('Start position not ar if/elseif block');
@@ -36,28 +36,28 @@ export abstract class BaseScriptParser {
     let depth = 0;
     let i = cursorPosition + (isIf ? 2 : isElseif ? 6 : 4);
 
-    while (i < this.script.length) {
-      if (this.script.startsWith('if', i)) {
+    while (i < text.length) {
+      if (text.startsWith('if', i)) {
         depth++;
         i += 2;
-      } else if (this.script.startsWith('else', i)) {
-        if (depth === 0) {
-          return this.script.slice(cursorPosition, i);
+      } else if (text.startsWith('else', i)) {
+        if (depth <= 0) {
+          return text.slice(cursorPosition, i);
         }
-        i += this.script.startsWith('elseif', i) ? 6 : 4;
-      } else if (this.script.startsWith('endif', i)) {
-        if (depth === 0) {
-          return this.script.slice(cursorPosition, i + 5);
+        i += text.startsWith('elseif', i) ? 6 : 4;
+      } else if (text.startsWith('endif', i)) {
+        if (depth <= 0) {
+          return text.slice(cursorPosition, i + 5);
         }
         depth--;
         i += 5;
-      } else if (this.script.startsWith('endfunction', i)) {
-        return this.script.slice(cursorPosition, i);
+      } else if (text.startsWith('endfunction', i)) {
+        return text.slice(cursorPosition, i);
       } else {
         i++;
       }
     }
 
-    return this.script.slice(cursorPosition);
+    return text.slice(cursorPosition);
   }
 }
