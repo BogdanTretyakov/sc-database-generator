@@ -62,7 +62,7 @@
       >
         <v-expansion-panel-text>
           <div class="d-flex justify-center">
-            <WarGrid :items="heroItems" #="{ item: arti }">
+            <WarGrid :items="heroItems" #="{ item: arti }" :size="0.75">
               <DetailsTooltip
                 :src="raceIcons"
                 :coords="iconProps(arti.id)"

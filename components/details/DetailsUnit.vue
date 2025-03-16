@@ -38,6 +38,7 @@
         <div class="text-body-2" v-html="item.description" />
       </v-expansion-panel-text>
     </v-expansion-panel>
+    <slot name="heroItems" />
     <v-expansion-panel title="Characteristics" value="characteristics">
       <v-expansion-panel-text>
         <v-row class="my-1">
@@ -103,7 +104,6 @@
         </div>
       </v-expansion-panel-text>
     </v-expansion-panel>
-    <slot name="heroItems" />
   </v-expansion-panels>
 </template>
 

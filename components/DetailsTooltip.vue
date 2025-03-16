@@ -13,7 +13,7 @@
       <div
         v-if="isHeroObject(item)"
         class="text-subtitle-1"
-        v-html="item.name"
+        v-html="item.fullName"
       />
 
       <WarArrayInfo

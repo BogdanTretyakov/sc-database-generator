@@ -32,7 +32,7 @@
         @mouseover="() => setHover(item)"
         @mouseout="() => (hover = undefined)"
       >
-        {{ item.name }}
+        <span v-html="item.name" />
       </v-btn>
     </div>
   </CCard>
