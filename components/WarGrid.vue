@@ -4,14 +4,23 @@
       class="grid-item"
       v-for="(item, index) in sortedItems"
       :key="item?.id ?? index"
+      :class="{
+        'empty-item': showEmpty && !item,
+      }"
     >
-      <slot v-if="item" :item="item" />
+      <template v-if="item">
+        <DetailsWrapper v-if="!disableDetails" :item="item">
+          <slot :item="item" />
+        </DetailsWrapper>
+        <slot v-else :item="item" />
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts" generic="T extends IBaseObject">
 import type { StyleValue } from 'vue';
+import { DEFAULT_ICON_SIZE } from '~/consts';
 import type { IBaseObject } from '~/data/types';
 import { hotkeys } from '~/utils/constants';
 
@@ -20,14 +29,24 @@ interface Props {
   size?: MaybeRef<number>;
   skipHotkey?: boolean;
   restrictedSlots?: string[];
+  disableDetails?: boolean;
+  showEmpty?: boolean;
 }
 
 const {
   items,
-  size = 64,
+  size = 1,
   skipHotkey = false,
   restrictedSlots = [],
+  disableDetails = false,
+  showEmpty = false,
 } = defineProps<Props>();
+
+const iconSizeData = useStorageValue('iconSize', DEFAULT_ICON_SIZE);
+const iconSize = computed(() => {
+  const numSize = Number(iconSizeData.value);
+  return (isNaN(numSize) ? +DEFAULT_ICON_SIZE : numSize) * toValue(size);
+});
 
 const sortedItems = computed(() => {
   if (skipHotkey) {
@@ -95,8 +114,8 @@ const sortedItems = computed(() => {
 });
 
 const containerStyles = computed<StyleValue>(() => ({
-  gridTemplateColumns: `repeat(4, ${toValue(size)}px)`,
-  gridTemplateRows: `repeat(auto-fill, ${toValue(size)}px)`,
+  gridTemplateColumns: `repeat(4, ${toValue(iconSize.value)}px)`,
+  gridTemplateRows: `repeat(auto-fill, ${toValue(iconSize.value)}px)`,
 }));
 
 defineSlots<{
@@ -111,5 +130,8 @@ defineSlots<{
 
 .grid-item {
   aspect-ratio: 1;
+}
+.empty-item {
+  background-color: rgba(0, 0, 0, 0.3);
 }
 </style>

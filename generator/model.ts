@@ -9,7 +9,8 @@ export class W3Model {
   constructor(private instance: W3Object<Units>) {
     const rawName = [
       instance.parser.getModel(instance),
-      String(instance.getValueByKey('pat') ?? ''),
+      // TODO: Disabled until render 3D
+      // String(instance.getValueByKey('pat') ?? ''),
     ]
       .filter(isNotNil)
       .map((s) =>

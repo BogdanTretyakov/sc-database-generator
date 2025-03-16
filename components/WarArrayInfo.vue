@@ -1,21 +1,21 @@
 <template>
   <div class="container">
-    <template v-if="Array.isArray(cost)">
+    <template v-if="Array.isArray(data)">
       <div class="d-flex align-center w-100 pr-1">
         <GameIcon
           :src="icons"
-          :coords="gold"
+          :coords="iconTypes[icon]"
           width="24"
           :padding="[4, 4, 4, 4]"
           class="mr-2"
         />
         <div class="flex-grow-1 w-100">
           <span
-            v-for="(value, idx) in cost"
+            v-for="(value, idx) in data"
             :key="idx"
             class="text-no-wrap mr-1"
           >
-            Lv{{ idx + 1 }}: <span class="cost">{{ value }}</span>
+            Lv{{ idx + 1 }}: <span :class="itemClass">{{ value }}</span>
           </span>
         </div>
       </div>
@@ -24,24 +24,36 @@
       <div class="d-flex align-center">
         <GameIcon
           :src="icons"
-          :coords="gold"
+          :coords="iconTypes[icon]"
           width="16"
           :padding="[4, 4, 4, 4]"
           class="mr-1"
         />
-        <span class="cost">{{ cost }}</span>
+        <span :class="itemClass">{{ data }}</span>
       </div>
     </template>
   </div>
 </template>
+
 <script setup lang="ts">
 interface Props {
-  cost: number | number[];
+  data: unknown | unknown[];
+  icon: AssetsIconKey;
 }
 
-const [icons, { gold }] = useAssets();
+const [icons, iconTypes] = useAssets();
 
-const { cost } = defineProps<Props>();
+const { data, icon } = defineProps<Props>();
+
+const itemClass = computed(() => {
+  switch (icon) {
+    case 'gold':
+      return 'cost';
+
+    default:
+      return '';
+  }
+});
 </script>
 
 <style lang="css" scoped>

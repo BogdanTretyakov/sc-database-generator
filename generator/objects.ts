@@ -2,6 +2,14 @@ import { W3Object, W3Parser, W3Slk } from './utils';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import { isNotNil } from '~/utils/guards';
+import { uniq, uniqById } from '~/utils/array';
+import type {
+  IArtifactObject,
+  IHeroObject,
+  ISpellObject,
+  IUnitObject,
+  IUpgradeObject,
+} from '~/data/types';
 
 const defaultArts = ['art', 'art:sd', 'art:hd'] as const;
 
@@ -30,7 +38,11 @@ export class Units extends W3Parser {
     if (name) {
       return name;
     }
-    return this.strings[data.id]?.name ?? this.strings[data.wc3id]?.name ?? '';
+    return (
+      this.strings[data.id]?.name ||
+      this.strings[data.wc3id]?.name ||
+      data.getValueByKey('tip')
+    );
   }
 
   getFullName(data: W3Object<Units>): string {
@@ -41,10 +53,6 @@ export class Units extends W3Parser {
       this.strings[data.wc3id]?.propernames ??
       '';
     return props.split(',')[0]?.trim();
-  }
-
-  getAttackType(data: W3Object<Units>): string {
-    return this.getWithSlkFallback(data, 'a1t', this.weapons, 'atkType1');
   }
 
   getAttack(data: W3Object<Units>): string {
@@ -62,14 +70,6 @@ export class Units extends W3Parser {
     return `${startDamage}-${endDamage}`;
   }
 
-  getDefendType(data: W3Object<Units>): string {
-    return this.getWithSlkFallback(data, 'dty', this.ballance, 'defType');
-  }
-
-  getDefend(data: W3Object<Units>): string {
-    return this.getWithSlkFallback(data, 'def', this.ballance, 'def');
-  }
-
   getModel(data: W3Object<Units>): string {
     const model = data.getValueByKey('mdl');
     if (model) return model;
@@ -81,10 +81,76 @@ export class Units extends W3Parser {
     return origSkin.file ?? origSkin['file:sd'] ?? origSkin['file:hd'];
   }
 
-  getPoints(data: W3Object<Units>): string {
-    return Number(
-      this.getWithSlkFallback(data, 'poi', this.unitData, 'points')
-    ).toFixed();
+  getPoints(data: W3Object<Units>) {
+    return this.getWithSlkFallback(data, 'poi', this.unitData, 'points');
+  }
+
+  getUnitObject(data: W3Object<Units>): IUnitObject {
+    const customTags = Array<string>();
+
+    if (
+      this.getWithSlkFallback(data, 'mvt', this.unitData, 'movetp') === 'fly'
+    ) {
+      customTags.push('air');
+    }
+
+    return this.applyPatch({
+      type: 'unit',
+      id: data.id,
+      name: data.getName(),
+      hotkey: data.getValueByKey('hot'),
+      description: data.getValueByKey('tub'),
+      cost: data.getValueByKey('gol'),
+      hp: this.getWithSlkFallback(data, 'hpm', this.ballance, 'HP'),
+      hpReg: this.getWithSlkFallback(data, 'hpr', this.ballance, 'regenHP'),
+      mp: this.getWithSlkFallback(data, 'mpm', this.ballance, 'realM'),
+      mpReg: this.getWithSlkFallback(data, 'mpr', this.ballance, 'regenMana'),
+      def: this.getWithSlkFallback(data, 'def', this.ballance, 'def'),
+      defType: this.getWithSlkFallback(data, 'dty', this.ballance, 'defType'),
+      atk: this.getAttack(data),
+      atkType: this.getWithSlkFallback(data, 'a1t', this.weapons, 'atkType1'),
+      atkRange: this.getWithSlkFallback(data, 'a1r', this.weapons, 'rangeN1'),
+      atkSpeed: this.getWithSlkFallback(data, 'a1c', this.weapons, 'cool1'),
+      weaponType: this.getWithSlkFallback(data, 'a1w', this.weapons, 'weapTp1'),
+      upgrades: data.getArrayValue('pgr') ?? [],
+      tags: String(
+        this.getWithSlkFallback(data, 'typ', this.ballance, 'type') ?? ''
+      )
+        .replace(/_/g, '')
+        .split(',')
+        .concat(customTags)
+        .map((s) => s.trim().toLocaleLowerCase())
+        .filter(isNotNil),
+      skills: (data.getArrayValue('hab') ?? data.getArrayValue('abi'))
+        ?.map((id) => abilitiesParser.getById(id))
+        .filter(isNotNil)
+        .map((i) => i.parser.getSpellObject(i)),
+      // .filter(Abilities.filterEmptySpells),
+      bounty: this.getPoints(data),
+    });
+  }
+
+  getHeroObject(data: W3Object<Units>): IHeroObject {
+    return this.applyPatch({
+      ...this.getUnitObject(data),
+      type: 'hero',
+      fullName: this.getFullName(data),
+      skills:
+        (data.getArrayValue('hab') ?? data.getArrayValue('abi'))
+          ?.map((id) => abilitiesParser.getById(id))
+          .filter(isNotNil)
+          .map((i) => i.parser.getSpellObject(i))
+          .filter(Abilities.filterEmptySpells) ?? [],
+      stat: String(
+        this.getWithSlkFallback(data, 'pra', this.ballance, 'Primary')
+      ).toLocaleLowerCase() as IHeroObject['stat'],
+      agi: this.getWithSlkFallback(data, 'agi', this.ballance, 'AGI'),
+      str: this.getWithSlkFallback(data, 'str', this.ballance, 'STR'),
+      int: this.getWithSlkFallback(data, 'int', this.ballance, 'INT'),
+      agiLvl: this.getWithSlkFallback(data, 'agp', this.ballance, 'AGIplus'),
+      strLvl: this.getWithSlkFallback(data, 'stp', this.ballance, 'STRplus'),
+      intLvl: this.getWithSlkFallback(data, 'inp', this.ballance, 'INTplus'),
+    });
   }
 }
 export class Upgrades extends W3Parser {
@@ -120,18 +186,144 @@ export class Upgrades extends W3Parser {
     }
     return val;
   }
+
+  private getCostArray(data: W3Object<Upgrades>, skipLast = false) {
+    const basePrice = this.getBaseCost(data);
+    const addiction = this.getModifierCost(data);
+    return Array.from(
+      {
+        length: data.getMaxLevel() - (skipLast ? 1 : 0),
+      },
+      (_, idx) => basePrice + idx * addiction
+    );
+  }
+
+  private getTimersArray(data: W3Object<Upgrades>): number[] {
+    const baseTimer = this.getWithSlkFallback(
+      data,
+      'tib',
+      this.upgrades,
+      'timebase'
+    );
+    const modTimer = this.getWithSlkFallback(
+      data,
+      'tim',
+      this.upgrades,
+      'timemod'
+    );
+    return Array.from(
+      {
+        length: data.getMaxLevel(),
+      },
+      (_, idx) => baseTimer + idx * modTimer
+    );
+  }
+
+  getUpgradeObject(
+    data: W3Object<Upgrades>,
+    icons?: Record<string, string>
+  ): IUpgradeObject {
+    const localIcons = data.getIcons();
+    let level;
+
+    const spells = abilitiesParser
+      .getIdsByValue('req', data.id)
+      .map((id) => abilitiesParser.getById(id))
+      .filter(isNotNil)
+      .map((s) => s.withIconSilent(icons ?? {}).parser.getSpellObject(s, icons))
+      .filter((item) => Abilities.filterEmptySpells(item));
+
+    return this.applyPatch({
+      type: 'upgrade',
+      id: data.id,
+      hotkey: data.getValueByKey('hk1', level),
+      name: data.getName(level),
+      iconsCount: localIcons.length > 1 ? localIcons.length : undefined,
+      description: data.getValueByKey('ub1', level),
+      spells,
+      cost: level
+        ? [this.getBaseCost(data) + (level - 1) * this.getModifierCost(data)]
+        : this.getCostArray(data),
+      timers: level
+        ? [
+            this.getWithSlkFallback(data, 'tib', this.upgrades, 'timebase') +
+              (level - 1) *
+                this.getWithSlkFallback(data, 'tim', this.upgrades, 'timemod'),
+          ]
+        : this.getTimersArray(data),
+    });
+  }
 }
-class Abilities extends W3Parser {
+export class Abilities extends W3Parser {
   override skins = getSkinsData('abilityskin.txt', defaultArts);
   override iconID = 'art';
 
-  override getName(data: W3Object<this>): string {
+  private summonKeys = ['sf1', 'we1', 'dp1', 'aiu', 'ai3'];
+
+  override getName(data: W3Object<Abilities>): string {
     return data.getRawValue('tp1');
+  }
+
+  static filterEmptySpells(item: ISpellObject) {
+    const keys = [
+      'area',
+      'cooldown',
+      'cost',
+      'duration',
+      'summonUnit',
+    ] as const;
+    return !!item.name && keys.some((key) => !!item?.[key]?.length);
+  }
+
+  getSummons(data: W3Object<Abilities>) {
+    return this.summonKeys
+      .map((key) => data.getAllValuesByKey(key))
+      .filter(isNotNil)
+      .flat()
+      .filter(uniq)
+      .map(String)
+      .map((s) => s.split(','))
+      .flat()
+      .map((s) => s.trim())
+      .filter(uniq);
+  }
+
+  getSpellObject(
+    data: W3Object<Abilities>,
+    icons?: Record<string, string>
+  ): ISpellObject {
+    return this.applyPatch({
+      type: 'spell',
+      id: data.id,
+      name: data.getName(),
+      hotkey: data.getValueByKey('hky'),
+      description: data.getValueByKey('ub1'),
+      area: data.getArrayValue('are')?.map(Number),
+      cooldown: data.getArrayValue('cdn')?.map(Number),
+      cost: data.getArrayValue('mcs')?.map(Number),
+      duration: data.getArrayValue('dut')?.map(Number),
+      targets: data.getArrayValue('tar'),
+      summonUnit: this.getSummons(data)
+        .map((id) => unitsParser.getById(id))
+        .filter(isNotNil)
+        .map((s) => s.withIconSilent(icons ?? {}).parser.getUnitObject(s))
+        .filter(uniqById),
+    });
   }
 }
 class Items extends W3Parser {
   override skins = getSkinsData('itemfunc.txt', defaultArts);
   override iconID = 'ico';
+
+  getArtifactObject(data: W3Object<this>): Omit<IArtifactObject, 'level'> {
+    return this.applyPatch({
+      type: 'artifact',
+      id: data.id,
+      name: data.getName(),
+      description: data.getValueByKey('tub'),
+      hotkey: data.getRawValue('nam'),
+    });
+  }
 }
 
 function getSkinsData<const T extends string[] | readonly string[]>(

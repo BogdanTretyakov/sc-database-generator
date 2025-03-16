@@ -24,6 +24,7 @@
             :neutral="neutral"
             :icons="icons"
             :icon-props="iconProps"
+            class="mx-2"
           />
         </div>
       </CCard>

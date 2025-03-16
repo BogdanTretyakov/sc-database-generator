@@ -13,7 +13,7 @@ import { chmodSync, mkdirSync } from 'fs';
 import { decodeImage, parseDDSHeader } from 'dds-ktx-parser';
 // @ts-expect-error no typings
 import tga2png from 'tga2png';
-import { W3File } from './utils';
+import { W3File } from './w3file';
 
 const webpDir = resolve(process.cwd(), 'node_modules/webp-converter');
 
@@ -92,10 +92,15 @@ export class ImageProcessor {
 
           const prevAcc = await acc;
 
-          const imageBuffer = await this.getPngBufferFromPath(path);
-          if (imageBuffer) {
-            prevAcc[name] = imageBuffer;
+          try {
+            const imageBuffer = await this.getPngBufferFromPath(path);
+            if (imageBuffer) {
+              prevAcc[name] = imageBuffer;
+            }
+          } catch (e) {
+            console.warn(`Error while getting image for ${name}: ${path}`);
           }
+
           return prevAcc;
         },
         Promise.resolve({} as Record<string, Buffer>)

@@ -23,15 +23,11 @@
       class="d-flex align-center flex-column"
     >
       <WarGrid :items="shrines[hotkey]" skip-hotkey v-slot="{ item }">
-        <WarTooltip
-          :description="item.description"
+        <DetailsTooltip
+          :item="item"
           :src="icons"
-          :coords="iconProps(item.id)"
-        >
-          <template #tooltip>
-            <div class="text-subtitle-1" v-html="item.name" />
-          </template>
-        </WarTooltip>
+          :coords="iconProps(item.id, item.iconsCount)"
+        />
       </WarGrid>
     </CCard>
   </div>
@@ -45,7 +41,7 @@ import type { IconBoundaries } from './GameIcon.vue';
 interface Props {
   data: IBaseObject[];
   icons: string;
-  iconProps(id: string): IconBoundaries | IconBoundaries[];
+  iconProps(id: string, count?: number): IconBoundaries | IconBoundaries[];
 }
 
 const { data, icons, iconProps } = defineProps<Props>();

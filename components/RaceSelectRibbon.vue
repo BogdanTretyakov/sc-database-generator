@@ -7,25 +7,26 @@
         :key="race.key"
         v-slot="{ isSelected }"
       >
-        <WarTooltip
-          class="race-wrapper"
-          :class="{ selected: isSelected }"
-          :coords="iconProps(race.id)"
-          :src="iconsSrc"
-          description=""
-        >
-          <template #tooltip>
-            <div v-html="race.name" />
-          </template>
-          <NuxtLink
-            :to="{
-              name: 'RaceIndex',
-              params: { ...$route.params, race: race.key },
-            }"
+        <div class="race-wrapper" :class="{ selected: isSelected }">
+          <WarTooltip
+            :coords="iconProps(race.id)"
+            :src="iconsSrc"
+            description=""
+            :width="iconSize"
           >
-            {{ race.name }}
-          </NuxtLink>
-        </WarTooltip>
+            <template #tooltip>
+              <div v-html="race.name" />
+            </template>
+            <NuxtLink
+              :to="{
+                name: 'RaceIndex',
+                params: { ...$route.params, race: race.key },
+              }"
+            >
+              {{ race.name }}
+            </NuxtLink>
+          </WarTooltip>
+        </div>
       </v-slide-group-item>
     </v-slide-group>
   </div>
@@ -33,7 +34,7 @@
 
 <script setup lang="ts">
 import type { IRacePickerObject } from '~/data/types';
-
+const iconSize = useStorageValue('iconSize');
 const iconsSrc = await useRaceIcons('races');
 const { raceData, iconProps } = await useRaceData<
   Record<string, IRacePickerObject[]>

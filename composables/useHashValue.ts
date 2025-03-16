@@ -1,11 +1,8 @@
 export const useHashValue = (defaultValue?: string) => {
   const route = useRoute();
-  const value = ref(defaultValue);
-
-  onNuxtReady(() => {
-    const routerValue = route.hash.replace('#', '');
-    value.value = routerValue || defaultValue;
-  });
+  const value = ref<string | undefined>(
+    route.hash?.replace('#', '') ?? defaultValue
+  );
 
   watch(
     () => value.value,

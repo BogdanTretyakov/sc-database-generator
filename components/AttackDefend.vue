@@ -8,7 +8,7 @@
             :width="size"
             :coords="coords"
             :padding="[0, 8, 8, 0]"
-            class="my-4"
+            class="my-1"
             v-bind="props"
           />
         </template>
@@ -27,7 +27,7 @@ import type { IconBoundaries } from './GameIcon.vue';
 interface Props {
   isDefend?: boolean;
   type: string;
-  value?: string;
+  value?: number | string;
   size?: number;
 }
 
@@ -40,11 +40,23 @@ const attackTypes: Record<string, string> = {
   chaos: '<span style="color: #2fd43c">Chaos</span>',
   magic: '<span style="color: #2c67dc">Magic</span>',
   pierce: '<span style="color: #d4e143">Pierce</span>',
+  hero: '<span style="color: #d4e143">Hero</span>',
   normal: '<span style="color: #51ded8">Normal</span>',
 };
 
+const defendTypes: Record<string, string> = {
+  hero: 'Hero',
+  divine: 'Divine',
+  none: 'Unarmored',
+  small: 'Light',
+  large: 'Heavy',
+  medium: 'Normal',
+  flesh: 'Unarmored',
+  fort: 'Fortified'
+}
+
 const text = computed(() => {
-  const map = isDefend ? {} : attackTypes;
+  const map = isDefend ? defendTypes : attackTypes;
   return map[type] ?? '';
 });
 
@@ -65,6 +77,7 @@ const defendIcons: Record<string, IconBoundaries> = {
   large: assetsCoords.heavy,
   medium: assetsCoords.medium,
   flesh: assetsCoords.unarmored,
+  fort: assetsCoords.fortified
 };
 
 const coords = computed(() => {
