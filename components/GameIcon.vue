@@ -1,8 +1,17 @@
 <template>
-  <img v-bind="$attrs" :src="src" class="icon" :style="styles" />
+  <component
+    :is="tagProps.is"
+    :style="tagProps.style"
+    :src="tagProps.src"
+    v-bind="attrs"
+    class="icon"
+    ref="image"
+  />
 </template>
 
 <script setup lang="ts">
+import { useFallbackImage } from '~/composables/useFallbackImage';
+
 export interface IconBoundaries {
   x: number;
   y: number;
@@ -18,8 +27,24 @@ export interface GameIconProps {
 
 const { coords, src, padding = [0, 0, 0, 0] } = defineProps<GameIconProps>();
 const idx = ref(0);
+const attrs = useAttrs();
+const imageRef = useTemplateRef<HTMLElement>('image');
 
-const styles = computed(() => {
+const fallBackStyles = useFallbackImage({
+  src,
+  imageRef,
+  coords,
+  idx,
+});
+
+const tagProps = computed(() => {
+  if (fallBackStyles.value) {
+    return {
+      is: 'div',
+      style: fallBackStyles.value,
+    };
+  }
+
   const [pt, pr, pb, pl] = padding;
   const {
     x = 0,
@@ -28,9 +53,13 @@ const styles = computed(() => {
     height = 1,
   } = Array.isArray(coords) ? coords[idx.value] ?? {} : coords ?? {};
   return {
-    'object-view-box': `xywh(${x + pl}px ${y + pt}px ${width - pr - pl}px ${
-      height - pb - pt
-    }px)`,
+    is: 'img',
+    src: src,
+    style: {
+      'object-view-box': `xywh(${x + pl}px ${y + pt}px ${width - pr - pl}px ${
+        height - pb - pt
+      }px)`,
+    },
   };
 });
 
