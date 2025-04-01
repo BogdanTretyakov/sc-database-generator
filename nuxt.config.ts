@@ -59,6 +59,7 @@ export default defineNuxtConfig({
   experimental: {
     renderJsonPayloads: false,
     payloadExtraction: false,
+    asyncContext: true,
 
     defaults: {
       nuxtLink: {

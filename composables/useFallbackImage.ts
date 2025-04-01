@@ -25,7 +25,7 @@ export const useFallbackImage = ({ src, imageRef, coords, idx }: Props) => {
   watch(
     () => toValue(src),
     (srcValue) => {
-      if (!isEnabled) return;
+      if (!isEnabled || import.meta.server) return;
       if (srcValue in imageDimensions.value) return;
       imageDimensions.value[srcValue] = [0, 0];
       const img = new Image();
