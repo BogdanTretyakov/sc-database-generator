@@ -132,6 +132,7 @@ const {
   raceData: artiData,
   iconProps,
   iconsSrc,
+  version,
 } = await useRaceData<IArtifactData>('artifacts');
 const iconSize = useStorageValue('iconSize');
 
@@ -243,7 +244,7 @@ onNuxtReady(() => {
 });
 
 useSeoMeta({
-  title: `Artifacts v`,
+  title: `Artifacts v${version}`,
   description: 'Artifacts of Survival Chaos: all heroes combined artifacts',
 });
 
