@@ -34,7 +34,7 @@
         </v-overlay>
       </div>
     </v-main>
-    <GlobalSettings />
+    <FloatButtons />
   </v-app>
 </template>
 
