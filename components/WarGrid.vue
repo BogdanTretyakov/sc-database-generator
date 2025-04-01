@@ -9,7 +9,7 @@
       }"
     >
       <template v-if="item">
-        <DetailsWrapper v-if="!disableDetails" :item="item">
+        <DetailsWrapper v-if="!disableDetails && !IS_TOUCH" :item="item">
           <slot :item="item" />
         </DetailsWrapper>
         <slot v-else :item="item" />
@@ -20,7 +20,7 @@
 
 <script setup lang="ts" generic="T extends IBaseObject">
 import type { StyleValue } from 'vue';
-import { DEFAULT_ICON_SIZE } from '~/consts';
+import { DEFAULT_ICON_SIZE, IS_TOUCH } from '~/consts';
 import type { IBaseObject } from '~/data/types';
 import { hotkeys } from '~/utils/constants';
 
