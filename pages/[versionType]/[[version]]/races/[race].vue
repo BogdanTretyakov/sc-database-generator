@@ -36,7 +36,7 @@ import RaceTowers from '~/components/racePage/RaceTowers.vue';
 import RaceBonuses from '~/components/racePage/RaceBonuses.vue';
 import RaceBarracks from '~/components/racePage/RaceBarracks.vue';
 import type { GetObjectFunction } from '~/data/types';
-import { DEFAULT_ICON_SIZE } from '~/consts';
+import { DEFAULT_ICON_SIZE, IS_TOUCH } from '~/consts';
 
 const [routeRace] = [useRoute().params.race].flat();
 
@@ -68,12 +68,16 @@ const objFinder: GetObjectFunction = (type, id) => {
 
 const iconSize = useStorageValue('iconSize', DEFAULT_ICON_SIZE);
 const containerColumnWidth = computed(() => ({
-  gridTemplateColumns: `minmax(300px, 1fr) repeat(auto-fill, minmax(${
+  gridTemplateColumns: `repeat(auto-fill, minmax(${
     +iconSize.value * 5
   }px, 1fr))`,
 }));
 
-provide('hover', ref<undefined | string[]>());
+const hoverRef = IS_TOUCH
+  ? computed(() => undefined)
+  : ref<undefined | string[]>();
+
+provide('hover', hoverRef);
 
 useSeoMeta({
   title: `${raceData.name} v${version}`,

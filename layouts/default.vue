@@ -1,11 +1,19 @@
 <template>
   <v-app class="app">
+    <AppHeaderMobile v-model="showMenu" />
+
     <v-app-bar
       density="compact"
       class="patched-bg"
       :floating="false"
       scroll-behavior="elevate"
     >
+      <v-btn
+        v-if="$route.params.versionType"
+        @click="showMenu = !showMenu"
+        :icon="mdiMenu"
+        class="d-md-none"
+      ></v-btn>
       <AppHeader />
     </v-app-bar>
     <v-main>
@@ -39,8 +47,11 @@
 </template>
 
 <script setup lang="ts">
+import { mdiMenu } from '@mdi/js';
+
 const nuxtApp = useNuxtApp();
 const routeLoading = ref(false);
+const showMenu = ref(false);
 
 nuxtApp.hook('page:start', () => {
   routeLoading.value = true;
