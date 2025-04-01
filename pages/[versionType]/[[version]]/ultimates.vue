@@ -78,6 +78,7 @@ const {
   iconProps,
   raceData: { pickers, requires, spells },
   iconsSrc,
+  version,
 } = await useRaceData<IUltimatesData>('ultimates');
 
 const picked = useHashValue(pickers[0]?.id);
@@ -87,7 +88,7 @@ const selectedSpells = computed(
 );
 
 useSeoMeta({
-  title: `Ultimates v`,
+  title: `Ultimates v${version}`,
   description:
     'Ultimate skills in Survival Chaos you may research in your fortress',
   ogDescription:
