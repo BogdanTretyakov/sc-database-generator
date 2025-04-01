@@ -35,8 +35,7 @@
 <script setup lang="ts">
 import type { IRacePickerObject } from '~/data/types';
 const iconSize = useStorageValue('iconSize');
-const iconsSrc = await useRaceIcons('races');
-const { raceData, iconProps } = await useRaceData<
+const { raceData, iconProps, iconsSrc } = await useRaceData<
   Record<string, IRacePickerObject[]>
 >('races');
 

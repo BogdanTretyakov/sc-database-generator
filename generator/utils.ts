@@ -10,7 +10,7 @@ import type { IBaseObject } from '~/data/types';
 
 const patches = (() => {
   switch (globalThis.mapVersion) {
-    case 'w3c':
+    case 'og':
       return sur5alPatch;
     case 'oz':
       return ozPatch;
@@ -34,7 +34,7 @@ const w3strings = (() => {
         resolve(
           process.cwd(),
           'dataMap',
-          globalThis.mapVersion ?? 'w3c',
+          globalThis.mapVersion ?? 'og',
           'war3map.wts'
         )
       )
@@ -81,7 +81,7 @@ export abstract class W3Parser {
       resolve(
         process.cwd(),
         'dataMap',
-        globalThis.mapVersion || 'w3c',
+        globalThis.mapVersion || 'og',
         `war3map.${this.fileType}`
       )
     );
@@ -90,7 +90,7 @@ export abstract class W3Parser {
     const skinsPath = resolve(
       process.cwd(),
       'dataMap',
-      globalThis.mapVersion || 'w3c',
+      globalThis.mapVersion || 'og',
       `war3mapSkin.${this.fileType}`
     );
 

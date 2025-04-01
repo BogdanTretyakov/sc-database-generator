@@ -1,20 +1,35 @@
 <template>
   <div>
     <RaceSelectRibbon style="grid-column: 1 / -1" />
-    <DetailsProvider :obj-finder="objFinder">
+    <DetailsProvider :obj-finder="objFinder" :race-name="routeRace">
       <div class="race-container" :style="containerColumnWidth">
         <RaceDescription :race="raceData" style="flex-basis: 300px" />
-        <RaceFortress :race="raceData" :icons="icons" :icon-props="iconProps" />
-        <RaceTowers :race="raceData" :icons="icons" :icon-props="iconProps" />
-        <RaceBonuses :race="raceData" :icons="icons" :icon-props="iconProps" />
-        <RaceBarracks :race="raceData" :icons="icons" :icon-props="iconProps" />
+        <RaceFortress
+          :race="raceData"
+          :icons="iconsSrc"
+          :icon-props="iconProps"
+        />
+        <RaceTowers
+          :race="raceData"
+          :icons="iconsSrc"
+          :icon-props="iconProps"
+        />
+        <RaceBonuses
+          :race="raceData"
+          :icons="iconsSrc"
+          :icon-props="iconProps"
+        />
+        <RaceBarracks
+          :race="raceData"
+          :icons="iconsSrc"
+          :icon-props="iconProps"
+        />
       </div>
     </DetailsProvider>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defaultVersionType, versionIndexes } from '~/data';
 import RaceDescription from '~/components/racePage/RaceDescription.vue';
 import RaceFortress from '~/components/racePage/RaceFortress.vue';
 import RaceTowers from '~/components/racePage/RaceTowers.vue';
@@ -23,10 +38,10 @@ import RaceBarracks from '~/components/racePage/RaceBarracks.vue';
 import type { GetObjectFunction } from '~/data/types';
 import { DEFAULT_ICON_SIZE } from '~/consts';
 
-const version = useVersionIndex();
+const [routeRace] = [useRoute().params.race].flat();
 
-const icons = await useRaceIcons();
-const { raceData, iconProps } = await useRaceData();
+const { raceData, iconProps, iconsSrc, version, versionType } =
+  await useRaceData(routeRace);
 
 // @ts-expect-error
 const objFinder: GetObjectFunction = (type, id) => {
@@ -61,9 +76,9 @@ const containerColumnWidth = computed(() => ({
 provide('hover', ref<undefined | string[]>());
 
 useSeoMeta({
-  title: `${raceData.name} v${version.value.version}`,
-  description: `${raceData.name} of Survival Chaos v${version.value.version}: race info, bonuses, upgrades, units and heroes`,
-  ogDescription: `${raceData.name} of Survival Chaos v${version.value.version}: race info, bonuses, upgrades, units and heroes`,
+  title: `${raceData.name} v${version}`,
+  description: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
+  ogDescription: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
 });
 
 useHead({
@@ -71,21 +86,13 @@ useHead({
     {
       rel: 'preload',
       as: 'image',
-      href: icons,
+      href: iconsSrc,
     },
   ],
 });
 
 definePageMeta({
   name: 'RaceIndex',
-  middleware(to) {
-    const [versionType] = [to.params.versionType].flat();
-    const versionIndex = versionIndexes[versionType || defaultVersionType];
-    const [race] = [to.params.race].flat();
-    if (!(race in versionIndex.racesData)) {
-      return navigateTo({ name: 'RaceSelection' });
-    }
-  },
 });
 </script>
 <style lang="css" scoped>

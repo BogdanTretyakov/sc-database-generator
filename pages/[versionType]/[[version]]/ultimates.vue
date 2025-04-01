@@ -10,7 +10,7 @@
             <WarTooltip
               :class="['picker-item', picked === item.id && 'selected']"
               :description="item.description"
-              :src="icons"
+              :src="iconsSrc"
               :coords="iconProps(item.id)"
               @click="() => (picked = item.id)"
             >
@@ -34,7 +34,7 @@
                 <GameIcon
                   class="ml-2"
                   width="48"
-                  :src="icons"
+                  :src="iconsSrc"
                   :coords="iconProps(selectedSpells[n - 1].id)"
                 />
               </div>
@@ -48,7 +48,7 @@
               </div>
               <div
                 class="d-flex align-center"
-                v-if="selectedSpells[n - 1].manaCost"
+                v-if="selectedSpells[n - 1].cost?.[0]"
               >
                 <GameIcon
                   :src="assetsIcons"
@@ -57,7 +57,7 @@
                   class="mr-1"
                 />
                 <span class="color-blue">
-                  {{ selectedSpells[n - 1].manaCost }}
+                  {{ selectedSpells[n - 1].cost?.[0] }}
                 </span>
               </div>
             </div>
@@ -72,14 +72,12 @@
 <script setup lang="ts">
 import type { IUltimatesData } from '~/data/types';
 
-const version = useVersionIndex();
-
 const [assetsIcons, { mana }] = useAssets();
 
-const icons = await useRaceIcons('ultimates');
 const {
   iconProps,
   raceData: { pickers, requires, spells },
+  iconsSrc,
 } = await useRaceData<IUltimatesData>('ultimates');
 
 const picked = useHashValue(pickers[0]?.id);
@@ -89,7 +87,7 @@ const selectedSpells = computed(
 );
 
 useSeoMeta({
-  title: `Ultimates v${version.value.version}`,
+  title: `Ultimates v`,
   description:
     'Ultimate skills in Survival Chaos you may research in your fortress',
   ogDescription:

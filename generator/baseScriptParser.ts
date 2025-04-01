@@ -10,7 +10,7 @@ export abstract class BaseScriptParser {
       resolve(
         process.cwd(),
         'dataMap',
-        globalThis.mapVersion ?? 'w3c',
+        globalThis.mapVersion ?? 'og',
         'war3map.j'
       ),
       {

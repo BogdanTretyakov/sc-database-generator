@@ -1,21 +1,31 @@
 <template>
   <div class="d-flex">
     <v-btn
-      v-for="(text, name) in routes"
-      :key="name"
       variant="text"
-      :to="{
-        name,
-        params: {
-          versionType:
-            userVersion === defaultVersionType ? undefined : userVersion,
-        },
-      }"
+      to="/"
+      v-if="!versionType"
       density="comfortable"
       class="mx-1"
     >
-      {{ text }}
+      Home
     </v-btn>
+    <template v-else>
+      <v-btn
+        v-for="(text, name) in routes"
+        :key="name"
+        variant="text"
+        :to="{
+          name,
+          params: {
+            versionType,
+          },
+        }"
+        density="comfortable"
+        class="mx-1"
+      >
+        {{ text }}
+      </v-btn>
+    </template>
   </div>
   <v-spacer />
   <v-btn
@@ -26,32 +36,13 @@
   >
     Credits
   </v-btn>
-  <div>
-    <v-select
-      v-model="version"
-      :items="versionList"
-      density="compact"
-      variant="solo"
-      label="Version"
-      hide-details
-      :list-props="{
-        density: 'comfortable',
-      }"
-      bg-color="transparent"
-      flat
-      min-width="min-content"
-    >
-      <template #selection="{ item }">
-        {{ item.title }}
-      </template>
-    </v-select>
+  <div v-if="$route.params.versionType">
+    <VersionSelector />
   </div>
 </template>
 
 <script setup lang="ts">
-import { defaultVersionType, versionIndexes } from '~/data';
-const route = useRoute();
-const userVersion = useVersionType();
+const versionType = useStorageValue('preferredVersion', 'og');
 
 const routes = {
   RaceSelection: 'Races',
@@ -59,37 +50,4 @@ const routes = {
   UltimatesIndex: 'Ultimates',
   MiscIndex: 'Misc',
 };
-
-const versionList = [
-  {
-    title: `W3C ${versionIndexes.w3c.version}`,
-    value: 'w3c',
-  },
-  {
-    title: `OZEdition ${versionIndexes.oz.version}`,
-    value: 'oz',
-  },
-];
-
-const navigateName = computed(() => {
-  switch (route.name) {
-    case 'RaceIndex':
-      return 'RaceSelection';
-    default:
-      return route.name;
-  }
-});
-
-const version = computed({
-  get() {
-    return userVersion.value;
-  },
-  set(versionType) {
-    userVersion.value = versionType;
-    navigateTo(
-      { name: navigateName.value, params: { versionType } },
-      { replace: true }
-    );
-  },
-});
 </script>

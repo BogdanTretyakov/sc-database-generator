@@ -1,7 +1,12 @@
 <template>
   <div>
     <div class="text-center">
-      <h1 class="text-h2 font-bold title mb-6">Survival Chaos races</h1>
+      <h1 class="text-h2 font-bold title mb-6">
+        Survival Chaos {{ versionType === 'oz' ? 'OZEdition' : '' }} v{{
+          version
+        }}
+        races
+      </h1>
     </div>
     <div class="d-flex flex-wrap justify-space-around align-content-center">
       <div
@@ -18,19 +23,18 @@
 <script setup lang="ts">
 import type { IRacePickerObject } from '~/data/types';
 
-const version = useVersionIndex();
-
-const { raceData } = await useRaceData<Record<string, IRacePickerObject[]>>(
-  'races'
-);
+const { raceData, version, versionType, iconsSrc } = await useRaceData<
+  Record<string, IRacePickerObject[]>
+>('races');
 
 definePageMeta({
   name: 'RaceSelection',
 });
 
 useSeoMeta({
-  title: `Races v${version.value.version}`,
-  description: `Survival Chaos races list in version ${version.value.version}`,
-  ogDescription: `Survival Chaos races list in version ${version.value.version}`,
+  title: `Races v${version}${versionType === 'oz' ? ' OZGame' : ''}`,
+  description: `Survival Chaos races list in version ${version}`,
+  ogDescription: `Survival Chaos races list in version ${version}`,
+  ogImage: iconsSrc,
 });
 </script>

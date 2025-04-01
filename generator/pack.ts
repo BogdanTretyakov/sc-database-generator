@@ -5,7 +5,7 @@ import { select, input } from '@inquirer/prompts';
 const type = await select({
   message: 'Specify version do you pack',
   choices: [
-    { value: 'w3c', name: 'Official Sur5al/W3C' },
+    { value: 'og', name: 'Official Sur5al/W3C' },
     { value: 'oz', name: 'OZGame Edition' },
   ],
 });
@@ -17,7 +17,7 @@ const version = await input({
 globalThis.mapVersion = version;
 
 const inputDir = resolve(process.cwd(), 'dataGenerated');
-const outputDir = resolve(process.cwd(), 'data', type);
+const outputDir = resolve(process.cwd(), 'data', type, version);
 
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir);
@@ -39,7 +39,10 @@ const indexFileTemplate = await readFile(
   resolve(process.cwd(), 'generator', 'index.ts.example'),
   { encoding: 'utf8' }
 );
-const indexFileContent = indexFileTemplate.replace('$$VERSION$$', version);
+const indexFileContent = indexFileTemplate
+  .replace('$$VERSION$$', version)
+  .replace('$$VERSION_TYPE$$', type);
+
 await writeFile(resolve(outputDir, 'index.ts'), indexFileContent, {
   encoding: 'utf8',
 });

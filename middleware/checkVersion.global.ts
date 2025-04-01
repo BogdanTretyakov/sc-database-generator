@@ -1,37 +1,22 @@
-import { defaultVersionType, versionIndexes } from '~/data';
+import { dataFiles } from '~/data';
 
 export default defineNuxtRouteMiddleware((to) => {
-  const userVersion = useVersionType(to);
-  const [routeVersionType] = [to.params.versionType].flat();
+  const [toVersionType] = [to.params.versionType].flat();
+  const [toVersion] = [to.params.version].flat();
 
-  if (to.name === 'CreditsPage') return;
-  if (to.path === '') return;
+  if (!toVersionType) return;
 
-  if (userVersion.value && !(userVersion.value in versionIndexes)) {
-    userVersion.value = defaultVersionType;
+  if (!(toVersionType in dataFiles)) {
+    return navigateTo('/');
   }
 
-  if (
-    routeVersionType === defaultVersionType &&
-    to.fullPath.includes(`/${defaultVersionType}`)
-  ) {
-    return navigateTo(to.fullPath.replace(`/${defaultVersionType}`, ''));
-  }
-
-  if (
-    !routeVersionType &&
-    userVersion.value &&
-    userVersion.value !== defaultVersionType
-  ) {
-    return navigateTo({ params: { versionType: userVersion.value } });
-  }
-
-  if (routeVersionType && !(routeVersionType in versionIndexes)) {
+  if (toVersion && !(toVersion in dataFiles[toVersionType])) {
     return navigateTo({
       name: to.name,
+      hash: to.hash,
       params: {
         ...to.params,
-        versionType: userVersion.value || defaultVersionType,
+        version: undefined,
       },
     });
   }

@@ -24,7 +24,7 @@
           >
             <template #default="{ item }">
               <DetailsTooltip
-                :src="raceIcons"
+                :src="iconsSrc"
                 :coords="iconProps(item.id, item.iconsCount)"
                 :item="item"
               />
@@ -57,7 +57,7 @@
             #="{ item }"
           >
             <DetailsTooltip
-              :src="raceIcons"
+              :src="iconsSrc"
               :coords="iconProps(item.id, item.iconsCount)"
               :item="item"
             />
@@ -76,8 +76,8 @@ interface Props {
 }
 
 const objFinder = inject<GetObjectFunction>('objFinder')!;
-const raceIcons = await useRaceIcons();
-const { iconProps } = await useRaceData();
+const raceName = inject<string>('raceName')!;
+const { iconProps, iconsSrc } = await useRaceData(raceName);
 
 const { item } = defineProps<Props>();
 

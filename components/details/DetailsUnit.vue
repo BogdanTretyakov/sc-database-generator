@@ -97,7 +97,7 @@
           <DetailsTooltip
             v-for="upgrade in requires"
             :item="upgrade"
-            :src="raceIcons"
+            :src="iconsSrc"
             :coords="iconProps(upgrade.id, upgrade.iconsCount)"
           >
           </DetailsTooltip>
@@ -118,8 +118,8 @@ interface Props {
 const panels = ref(['characteristics', 'upgrades', 'items']);
 
 const [icons, { gold, bounty, range, attackSpeed }] = useAssets();
-const raceIcons = await useRaceIcons();
-const { iconProps } = await useRaceData();
+const raceName = inject<string>('raceName')!;
+const { iconProps, iconsSrc } = await useRaceData(raceName);
 const { item } = defineProps<Props>();
 const objFinder = inject<GetObjectFunction>('objFinder')!;
 

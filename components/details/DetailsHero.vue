@@ -64,7 +64,7 @@
           <div class="d-flex justify-center">
             <WarGrid :items="heroItems" #="{ item: arti }" :size="0.75">
               <DetailsTooltip
-                :src="raceIcons"
+                :src="iconsSrc"
                 :coords="iconProps(arti.id)"
                 :item="arti"
               />
@@ -83,8 +83,9 @@ interface Props {
   item: IHeroObject;
 }
 
-const raceIcons = await useRaceIcons();
-const { iconProps } = await useRaceData();
+const raceName = inject<string>('raceName')!;
+
+const { iconProps, iconsSrc } = await useRaceData(raceName);
 const [assetsPath, { str, int, agi }] = useAssets();
 
 const { item } = defineProps<Props>();
