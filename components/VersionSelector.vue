@@ -14,14 +14,16 @@
     flat
     min-width="min-content"
     @update:menu="handleMenu"
-    :key="routeVersionType"
+    :key="route.path"
   >
     <template #prepend-item>
       <v-list-item
         v-for="(_, key) in dataFiles"
         @click="selectValue = { type: key, value: '', title: '' }"
         density="compact"
-        :active="selectValue.type === key"
+        :active="
+          selectValue.type === key && selectValue.value === lastVersions[key]
+        "
       >
         {{ versionTypeTitles[key] }} latest (v{{ lastVersions[key] }})
       </v-list-item>
@@ -67,7 +69,8 @@ watch(
   () => routeVersionType.value,
   () => {
     typeSelection.value = routeVersionType.value;
-  }
+  },
+  { immediate: true }
 );
 
 const handleMenu = (ue: boolean) => {
@@ -98,8 +101,11 @@ const selectValue = computed({
 
     savedPrefVersion.value = type;
 
+    const name = route.name === 'RaceIndex' ? 'RaceSelection' : route.name;
+
     navigateTo(
       {
+        name,
         params: {
           versionType: type,
           version: toVersion,

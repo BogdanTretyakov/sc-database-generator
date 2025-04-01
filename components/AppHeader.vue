@@ -18,6 +18,7 @@
           name,
           params: {
             versionType,
+            version: $route.params.version,
           },
         }"
         density="comfortable"
