@@ -36,7 +36,7 @@ Use [CascView](http://www.zezula.net/en/casc/main.html) with installed last vers
 
 For **original/w3champions** version use any deprotection tool you want. We are recommend [WC3MapDeprotector](https://github.com/speige/WC3MapDeprotector). For **OZ** version of it's doesn't needs.
 
-Then use [MPQ Editor](http://www.zezula.net/en/mpq/download.html) or any other MPQ file extractor and extract all map data to subfolder `dataMap`. Create subfolder `oz` or `w3c` (depends on need version)
+Then use [MPQ Editor](http://www.zezula.net/en/mpq/download.html) or any other MPQ file extractor and extract all map data to subfolder `dataMap`. Create subfolder `oz` or `og` (depends on need version)
 
 #### Generate data & developing
 

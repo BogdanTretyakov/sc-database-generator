@@ -20,5 +20,11 @@ const racesIcons = Object.entries(
 }, {} as Record<string, string>);
 
 const version = '$$VERSION$$';
+const versionType = '$$VERSION_TYPE$$';
 
-export default { racesData, racesIcons, version } as VersionIndexFile;
+export default {
+  racesData,
+  racesIcons,
+  version,
+  versionType,
+} as VersionIndexFile;

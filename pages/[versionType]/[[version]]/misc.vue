@@ -12,7 +12,7 @@
     </v-col>
     <v-col cols="12" sm="6" md="4">
       <CCard title="Triggers">
-        <TriggerContent :type="versionType" :version="version.version" />
+        <TriggerContent :type="versionType" :version="''" />
       </CCard>
     </v-col>
     <v-col cols="12">
@@ -22,7 +22,7 @@
             v-for="neutral in neutrals"
             :key="neutral.id"
             :neutral="neutral"
-            :icons="icons"
+            :icons="iconsSrc"
             :icon-props="iconProps"
             class="mx-2"
           />
@@ -30,7 +30,7 @@
       </CCard>
     </v-col>
     <v-col cols="12" v-if="!!shrines">
-      <ShrinesBlock :data="shrines" :icons="icons" :icon-props="iconProps" />
+      <ShrinesBlock :data="shrines" :icons="iconsSrc" :icon-props="iconProps" />
     </v-col>
   </v-row>
 </template>
@@ -46,16 +46,15 @@ const versionType = computed(() => {
   return type === 'oz' ? 'oz' : 'w3c';
 });
 
-const version = useVersionIndex();
-
-const icons = await useRaceIcons('misc');
 const {
   iconProps,
   raceData: { damage, neutrals, shrines, bounty, commonBonuses },
+  iconsSrc,
+  version,
 } = await useRaceData<IMiscData>('misc');
 
 useSeoMeta({
-  title: `Misc data v${version.value.version}`,
+  title: `Misc data v${version}`,
   description:
     'Additional information in Survival Chaos: damage types, units bounty, shrines',
   ogDescription:

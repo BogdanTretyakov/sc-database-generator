@@ -10,7 +10,7 @@ export class W3File<const E extends String> {
     const nonExtPath = path.replace(/(?=.+)\.[^\.]*$/, '');
     [
       customPath,
-      resolve(process.cwd(), 'dataMap', globalThis.mapVersion || 'w3c'),
+      resolve(process.cwd(), 'dataMap', globalThis.mapVersion || 'og'),
       resolve(process.cwd(), 'dataWarcraft'),
     ]
       .filter(isNotNil)

@@ -35,7 +35,6 @@
     "@types/lodash": "^4.17.13",
     "@types/pngjs": "^6.0.5",
     "@types/spritesmith": "^3.4.5",
-    "@zadigetvoltaire/nuxt-gtm": "^0.0.13",
     "dds-ktx-parser": "^1.0.1",
     "eslint": "^9.14.0",
     "eslint-plugin-vue": "^9.31.0",
@@ -47,7 +46,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vite-plugin-vuetify": "^2.0.4",
-    "war3-model": "^3.2.0",
+    "war3-model": "^3.4.0",
     "wc3maptranslator": "^4.0.4",
     "webp-converter": "^2.3.3",
     "xlsx": "^0.18.5"

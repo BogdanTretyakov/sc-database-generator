@@ -1,43 +1,51 @@
 import type { IconBoundaries } from '~/components/GameIcon.vue';
 import type { IRaceData, IDataFile } from '~/data/types';
 
-export const useRaceData = async <T = IRaceData>(raceName?: string) => {
-  const [routeRace] = [useRoute().params.race].flat();
-  const versionIndex = useVersionIndex();
+export const useRaceData = async <T = IRaceData>(raceName: string) => {
+  const versionIndex = await useDataFile();
 
-  const race = raceName ?? routeRace;
+  if (!versionIndex.value) {
+    throw createError('no versionIndex');
+  }
+
   const { data } = await useAsyncData(
-    `race-${versionIndex.value.version}-${race}`,
-    async () => {
-      if (!(race in versionIndex.value.racesData)) {
+    `race-${versionIndex.value.version}-${raceName}`,
+    () => {
+      const versionIndexValue = toValue(versionIndex);
+      if (!versionIndexValue || !(raceName in versionIndexValue.racesData)) {
         throw new Error('No race found');
       }
-      return versionIndex.value.racesData[race]() as Promise<IDataFile<T>>;
-    },
-    {
-      default: () => ({} as IDataFile<T>),
-      deep: false,
+      return versionIndexValue.racesData[raceName]() as Promise<IDataFile<T>>;
     }
   );
+
+  const icon = computed(() => {
+    return versionIndex.value?.racesIcons[raceName];
+  });
 
   function iconProps(
     id: string,
     count?: number
   ): IconBoundaries | IconBoundaries[] {
     if (!count || count === 1) {
-      const [x, y, width, height] = data.value.icons[id] ?? [0, 0, 1, 1];
+      const [x, y, width, height] = data.value?.icons[id] ?? [0, 0, 1, 1];
       return { x, y, width, height };
     }
     return Array.from({ length: count }, (_, idx) => {
       const countedId = `${id}-${idx + 1}`;
-      const [x, y, width, height] = data.value.icons[countedId] ?? [0, 0, 1, 1];
+      const [x, y, width, height] = data.value?.icons[countedId] ?? [
+        0, 0, 1, 1,
+      ];
       return { x, y, width, height };
     });
   }
 
   return {
-    raceData: data.value.data,
-    raceIconsCoords: data.value.icons,
+    raceData: data.value?.data!,
+    raceIconsCoords: data.value?.icons!,
     iconProps,
+    iconsSrc: icon.value!,
+    version: versionIndex.value.version,
+    versionType: versionIndex.value.versionType,
   };
 };

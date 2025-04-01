@@ -15,7 +15,7 @@
           <WarGrid :items="spells" disable-details skip-hotkey #="{ item }">
             <DetailsTooltip
               :item="item"
-              :src="icons"
+              :src="iconsSrc"
               :coords="iconProps(item.id, item.iconsCount)"
             />
           </WarGrid>
@@ -37,7 +37,7 @@
           <WarGrid :items="affects" disable-details skip-hotkey #="{ item }">
             <DetailsTooltip
               :item="item"
-              :src="icons"
+              :src="iconsSrc"
               :coords="iconProps(item.id, item.iconsCount)"
             />
           </WarGrid>
@@ -56,8 +56,8 @@ interface Props {
 
 const panels = ref(['spells', 'summons', 'affects']);
 
-const { raceData, iconProps } = await useRaceData();
-const icons = await useRaceIcons();
+const raceName = inject<string>('raceName')!;
+const { raceData, iconProps, iconsSrc } = await useRaceData(raceName);
 
 const { item } = defineProps<Props>();
 

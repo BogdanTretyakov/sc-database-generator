@@ -46,7 +46,7 @@
             @mouseout="() => !selected && (activePath = [])"
           >
             <WarTooltip
-              :src="icons"
+              :src="iconsSrc"
               :description="item.description"
               :coords="iconProps(item.id)"
               :disabled="
@@ -128,12 +128,11 @@ const showPath = useStorageValue('artiShowPath', 'false');
 const disabledTooltips = useStorageValue('artiDisabledTooltips', 'false');
 const globalTooltips = useStorageValue('tooltipsDisabled', 'false');
 
-const version = useVersionIndex();
-
-const { raceData: artiData, iconProps } = await useRaceData<IArtifactData>(
-  'artifacts'
-);
-const icons = await useRaceIcons('artifacts');
+const {
+  raceData: artiData,
+  iconProps,
+  iconsSrc,
+} = await useRaceData<IArtifactData>('artifacts');
 const iconSize = useStorageValue('iconSize');
 
 const items = computed(() => artiData?.items ?? []);
@@ -244,7 +243,7 @@ onNuxtReady(() => {
 });
 
 useSeoMeta({
-  title: `Artifacts v${version.value.version}`,
+  title: `Artifacts v`,
   description: 'Artifacts of Survival Chaos: all heroes combined artifacts',
 });
 

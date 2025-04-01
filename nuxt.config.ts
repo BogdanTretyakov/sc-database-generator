@@ -16,7 +16,6 @@ export default defineNuxtConfig({
       });
     },
     '@nuxtjs/sitemap',
-    '@zadigetvoltaire/nuxt-gtm',
   ],
   vite: {
     vue: {
@@ -26,21 +25,6 @@ export default defineNuxtConfig({
     },
     build: {
       cssCodeSplit: false,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            const match = id.match(
-              /data[\/\\](?<version>.+)[\/\\](?<name>[^\\\/]+?)\..+?$/
-            );
-            if (!match) return 'all';
-            // let { version, name } = match.groups ?? {};
-            // if (['race', 'artifacts', 'ultimates'].includes(name)) {
-            //   name = 'common';
-            // }
-            // return `${version}-${name}`;
-          },
-        },
-      },
     },
   },
   pages: true,
@@ -50,7 +34,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Loading',
+      title: '',
       link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
       titleTemplate: '%s | Survival Chaos Wiki',
     },
@@ -58,10 +42,10 @@ export default defineNuxtConfig({
   generate: {
     routes: [
       '/',
-      ...['w3c', 'oz']
+      ...['og', 'oz']
         .map((key) => {
           const routes = ['races', 'artifacts', 'ultimates', 'misc'];
-          if (key === 'w3c') {
+          if (key === 'og') {
             key = '';
           } else {
             key = '/' + key;
@@ -108,11 +92,5 @@ export default defineNuxtConfig({
     url: 'https://sc-helper.github.io',
     name: 'Survival Chaos Database',
     indexable: true,
-  },
-
-  gtm: {
-    id: 'GTM-83J73GNQHC',
-    trackOnNextTick: true,
-    devtools: false,
   },
 });

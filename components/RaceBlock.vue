@@ -7,10 +7,10 @@
           :src="iconsSrc"
           :description="race.description"
           :description-class="{
-            'war-header': $route.params.versionType !== 'oz',
+            'war-header': versionType !== 'oz',
           }"
         >
-          <template v-if="$route.params.versionType === 'oz'" #tooltip>
+          <template v-if="versionType === 'oz'" #tooltip>
             <div v-html="race.name" />
           </template>
           <NuxtLink
@@ -28,7 +28,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRaceIcons } from '~/composables/useRaceIcons';
 import type { IRacePickerObject } from '~/data/types';
 
 const { title, races } = defineProps<{
@@ -36,8 +35,8 @@ const { title, races } = defineProps<{
   races: IRacePickerObject[];
 }>();
 
-const iconsSrc = await useRaceIcons('races');
-const { iconProps } = await useRaceData<IRacePickerObject>('races');
+const { iconProps, iconsSrc, versionType } =
+  await useRaceData<IRacePickerObject>('races');
 </script>
 
 <style lang="css" scoped>

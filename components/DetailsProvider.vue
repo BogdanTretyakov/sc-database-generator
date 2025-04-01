@@ -17,7 +17,7 @@
         <v-tooltip color="transparent">
           <template #activator="{ props }">
             <GameIcon
-              :src="icons"
+              :src="iconsSrc"
               :coords="iconProps(item.id)"
               width="32"
               v-bind="props"
@@ -45,11 +45,11 @@ import type { GetObjectFunction, IBaseObject } from '~/data/types';
 
 interface Props {
   objFinder: GetObjectFunction;
+  raceName: string;
 }
 
-const { objFinder } = defineProps<Props>();
-const icons = await useRaceIcons();
-const { iconProps } = await useRaceData();
+const { objFinder, raceName } = defineProps<Props>();
+const { iconProps, iconsSrc } = await useRaceData(raceName);
 
 const item = ref<IBaseObject | null>(null);
 const hashValue = useHashValue();
@@ -87,6 +87,7 @@ const handleIdClick = () => {
 
 provide('detailsSet', setShowingItems);
 provide('objFinder', objFinder);
+provide('raceName', raceName);
 </script>
 
 <style lang="css" scoped>
