@@ -45,12 +45,7 @@ export default defineNuxtConfig({
       ...['og', 'oz']
         .map((key) => {
           const routes = ['races', 'artifacts', 'ultimates', 'misc'];
-          if (key === 'og') {
-            key = '';
-          } else {
-            key = '/' + key;
-          }
-          return routes.map((route) => [key, route].join('/'));
+          return routes.map((route) => `/${key}/${route}/`);
         })
         .flat(),
     ],
