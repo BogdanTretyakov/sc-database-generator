@@ -40,7 +40,7 @@ export class OZScriptParser extends BaseScriptParser {
       mage: 'D',
       siege: 'H',
       air: 'J',
-      catapult: 'I',
+      catapult: 'K',
     },
     towerUpgrades: ['uw', 'rw', 'sw', 'tw', 'iw', 'Sw', 'cw', 'ow', 'Ow'],
   };

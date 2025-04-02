@@ -117,7 +117,7 @@ const selectValue = computed({
 });
 
 const items = computed(() => {
-  return Object.keys(dataFiles[typeSelection.value] ?? {})
+  return sortVersion(Object.keys(dataFiles[typeSelection.value] ?? {}))
     .map((v) => ({
       value: v,
       type: typeSelection.value,
