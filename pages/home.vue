@@ -18,7 +18,6 @@
               <span class="text-purple">Su5ial</span>
             </p>
             <NuxtLink
-              @click="handleSelect('og')"
               :to="{ name: 'RaceSelection', params: { versionType: 'og' } }"
               >Original</NuxtLink
             >
@@ -32,7 +31,6 @@
               <span class="text-green">Stvel</span>
             </p>
             <NuxtLink
-              @click="handleSelect('oz')"
               :to="{ name: 'RaceSelection', params: { versionType: 'oz' } }"
               >OZgame</NuxtLink
             >
@@ -49,7 +47,14 @@
 import { dataFiles } from '~/data';
 const savedPrefVersion = useStorageValue('preferredVersion');
 
-onMounted(() => {
+onBeforeRouteLeave((to, from, next) => {
+  const [versionType] = [to.params.versionType].flat();
+  if (!versionType) return next();
+  savedPrefVersion.value = versionType;
+  next();
+});
+
+onNuxtReady(() => {
   const versionType = storage.get('preferredVersion');
   if (!versionType || !(versionType in dataFiles)) return;
   navigateTo({
@@ -60,9 +65,9 @@ onMounted(() => {
   });
 });
 
-const handleSelect = (ver: string) => {
-  savedPrefVersion.value = ver;
-};
+definePageMeta({
+  name: 'Home',
+});
 
 useSeoMeta({
   title: 'Welcome Page',

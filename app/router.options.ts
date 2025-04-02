@@ -4,16 +4,17 @@ export default {
   routes: () => [
     {
       path: '/:versionType/:version?',
+      component: () => import('~/pages/versionData/index.vue'),
       children: [
-        {
-          name: 'RaceIndex',
-          path: 'races/:race',
-          component: () => import('~/pages/versionData/racePage.vue'),
-        },
         {
           name: 'RaceSelection',
           path: 'races',
           component: () => import('~/pages/versionData/raceSelection.vue'),
+        },
+        {
+          name: 'RaceIndex',
+          path: 'races/:race',
+          component: () => import('~/pages/versionData/racePage.vue'),
         },
         {
           name: 'UltimatesIndex',
