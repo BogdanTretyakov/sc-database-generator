@@ -139,11 +139,7 @@ export abstract class W3Parser {
     if (icon) return icon;
     const skin = this.skins[data.id] ?? this.skins[data.wc3id];
     if (!skin) return getError(`getting icon of ${data.id}`);
-    const art =
-      skin.art ??
-      skin['art:sd'] ??
-      skin['art:hd'] ??
-      getError(`get icon of ${data.id}`);
+    const art = skin.art ?? skin['art:sd'] ?? skin['art:hd'] ?? '';
     return art.split(',')[level ?? 0] ?? art.split(',')[0];
   }
 
