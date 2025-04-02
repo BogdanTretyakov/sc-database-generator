@@ -9,14 +9,7 @@ export default defineNuxtConfig({
     transpile: ['vuetify'],
   },
 
-  modules: [
-    (_options, nuxt) => {
-      nuxt.hooks.hook('vite:extendConfig', (config) => {
-        config.plugins?.push(vuetify({ autoImport: true }));
-      });
-    },
-    '@nuxtjs/sitemap',
-  ],
+  modules: ['@nuxtjs/sitemap'],
   vite: {
     vue: {
       template: {
@@ -45,7 +38,7 @@ export default defineNuxtConfig({
       ...['og', 'oz']
         .map((key) => {
           const routes = ['races', 'artifacts', 'ultimates', 'misc'];
-          return routes.map((route) => `/${key}/${route}/`);
+          return routes.map((route) => `/${key}/${route}`);
         })
         .flat(),
     ],
@@ -63,7 +56,6 @@ export default defineNuxtConfig({
           visibility: false,
           interaction: true,
         },
-        trailingSlash: 'append',
       },
     },
   },
@@ -71,6 +63,9 @@ export default defineNuxtConfig({
     options: {},
   },
   hooks: {
+    'vite:extendConfig'(config) {
+      config.plugins?.push(vuetify({ autoImport: true }));
+    },
     'build:manifest'(manifest) {
       for (const key in manifest) {
         const file = manifest[key];
@@ -84,9 +79,20 @@ export default defineNuxtConfig({
     },
   },
 
+  nitro: {
+    prerender: {
+      autoSubfolderIndex: false,
+    },
+  },
+
   site: {
     url: 'https://sc-helper.github.io',
     name: 'Survival Chaos Database',
     indexable: true,
+  },
+  sitemap: {
+    excludeAppSources: ['nuxt:pages'],
+    autoLastmod: true,
+    exclude: ['/200.html', '/404.html'],
   },
 });
