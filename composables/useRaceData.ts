@@ -40,6 +40,10 @@ export const useRaceData = async <T = IRaceData>(raceName: string) => {
     });
   }
 
+  if (!data.value) {
+    throw createError('no data loaded');
+  }
+
   return {
     raceData: data.value?.data!,
     raceIconsCoords: data.value?.icons!,

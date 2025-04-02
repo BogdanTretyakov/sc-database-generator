@@ -38,10 +38,10 @@ import RaceBarracks from '~/components/racePage/RaceBarracks.vue';
 import type { GetObjectFunction } from '~/data/types';
 import { DEFAULT_ICON_SIZE, IS_TOUCH } from '~/consts';
 
+const app = useNuxtApp();
 const [routeRace] = [useRoute().params.race].flat();
 
-const { raceData, iconProps, iconsSrc, version, versionType } =
-  await useRaceData(routeRace);
+const { raceData, iconProps, iconsSrc, version } = await useRaceData(routeRace);
 
 // @ts-expect-error
 const objFinder: GetObjectFunction = (type, id) => {
@@ -79,20 +79,22 @@ const hoverRef = IS_TOUCH
 
 provide('hover', hoverRef);
 
-useSeoMeta({
-  title: `${raceData.name} v${version}`,
-  description: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
-  ogDescription: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
-});
+app.runWithContext(() => {
+  useSeoMeta({
+    title: `${raceData.name} v${version}`,
+    description: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
+    ogDescription: `${raceData.name} of Survival Chaos v${version}: race info, bonuses, upgrades, units and heroes`,
+  });
 
-useHead({
-  link: [
-    {
-      rel: 'preload',
-      as: 'image',
-      href: iconsSrc,
-    },
-  ],
+  useHead({
+    link: [
+      {
+        rel: 'preload',
+        as: 'image',
+        href: iconsSrc,
+      },
+    ],
+  });
 });
 
 definePageMeta({
