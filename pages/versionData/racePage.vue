@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RaceSelectRibbon style="grid-column: 1 / -1" />
+    <RaceSelectRibbon class="mb-2" />
     <DetailsProvider :obj-finder="objFinder" :race-name="routeRace">
       <div class="race-container" :style="containerColumnWidth">
         <RaceDescription :race="raceData" style="flex-basis: 300px" />

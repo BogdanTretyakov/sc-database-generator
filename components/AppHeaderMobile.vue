@@ -7,7 +7,7 @@
       elevation="4"
     >
       <div class="fill-height d-flex flex-column">
-        <v-list>
+        <v-list v-if="versionType">
           <v-list-item
             v-for="(name, routeName) in MENU_ROUTES"
             :key="routeName"
