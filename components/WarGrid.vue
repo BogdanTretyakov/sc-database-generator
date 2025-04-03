@@ -9,7 +9,7 @@
       }"
     >
       <template v-if="item">
-        <DetailsWrapper v-if="!disableDetails && !IS_TOUCH" :item="item">
+        <DetailsWrapper v-if="!disableDetails || IS_TOUCH" :item="item">
           <slot :item="item" />
         </DetailsWrapper>
         <slot v-else :item="item" />

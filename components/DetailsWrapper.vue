@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends IBaseObject">
+import { IS_TOUCH } from '~/consts';
 import type { IBaseObject, IBonusObject, ISpellObject } from '~/data/types';
 
 interface Props<T extends IBaseObject> {
@@ -27,6 +28,7 @@ const setItem = inject<(val: IBaseObject | null) => void>('detailsSet');
 
 const hasDetails = computed(() => {
   if (!setItem) return false;
+  if (IS_TOUCH) return true;
   const itemVal = toValue(item);
   if (isBonusObject(itemVal)) {
     return Array<keyof IBonusObject>('units', 'upgrades', 'spells').some(

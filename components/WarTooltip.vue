@@ -4,7 +4,6 @@
       <v-tooltip
         location="right top"
         activator="parent"
-        :open-on-click="IS_TOUCH"
         max-width="350"
         close-on-content-click
         :transition="{
