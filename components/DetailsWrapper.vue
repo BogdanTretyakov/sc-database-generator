@@ -4,7 +4,7 @@
     color="primary"
     location="left top"
     class="details-badge"
-    :model-value="hasDetails"
+    :model-value="hideDot ? false : hasDetails"
     @click="clickHandler"
     :class="{ 'cursor-pointer': hasDetails }"
   >
@@ -18,9 +18,10 @@ import type { IBaseObject, IBonusObject, ISpellObject } from '~/data/types';
 
 interface Props<T extends IBaseObject> {
   item: MaybeRef<T>;
+  hideDot?: boolean;
 }
 
-const { item } = defineProps<Props<T>>();
+const { item, hideDot = false } = defineProps<Props<T>>();
 defineSlots<{
   default(): any;
 }>();

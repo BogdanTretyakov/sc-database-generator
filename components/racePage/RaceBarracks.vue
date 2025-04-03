@@ -6,6 +6,13 @@
     style="grid-row: span 2"
     id="units"
   >
+    <template #title>
+      <DetailsWrapper hide-dot :item="race.buildings.barrack">
+        <v-btn size="large" class="mx-auto" variant="text" color="yellow">
+          <b>Barracks</b>
+        </v-btn>
+      </DetailsWrapper>
+    </template>
     <template #prependHead>
       <AttackDefend
         key="barrack-attack"
@@ -48,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IRaceData, IUnitObject } from '~/data/types';
+import type { GetObjectFunction, IRaceData, IUnitObject } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 import { DetailsTooltip } from '#components';
 
@@ -60,6 +67,7 @@ interface Props {
 const { race, icons, iconProps } = defineProps<Props>();
 
 const hover = inject<Ref<undefined | string[]>>('hover', ref());
+const objFinder = inject<GetObjectFunction>('objFinder')!;
 
 const unitsHotkeys: Record<string, string> = {
   melee: 'A',

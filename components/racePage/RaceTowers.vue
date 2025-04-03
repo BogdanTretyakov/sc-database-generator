@@ -6,6 +6,13 @@
     style="grid-row: span 2"
     id="upgrades"
   >
+    <template #title>
+      <DetailsWrapper hide-dot :item="race.buildings.tower">
+        <v-btn size="large" class="mx-auto" variant="text" color="yellow">
+          <b>Towers</b>
+        </v-btn>
+      </DetailsWrapper>
+    </template>
     <template #prependHead>
       <AttackDefend
         key="tower-attack"

@@ -6,6 +6,13 @@
     :full-height="false"
     id="fortress"
   >
+    <template #title>
+      <DetailsWrapper hide-dot :item="race.buildings.fort">
+        <v-btn size="large" class="mx-auto" variant="text" color="yellow">
+          <b>Fortress</b>
+        </v-btn>
+      </DetailsWrapper>
+    </template>
     <template #prependHead>
       <AttackDefend
         key="fort-attack"
