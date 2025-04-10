@@ -101,7 +101,10 @@ const selectValue = computed({
 
     savedPrefVersion.value = type;
 
-    const name = route.name === 'RaceIndex' ? 'RaceSelection' : route.name;
+    const name =
+      route.name === 'RaceIndex' && type !== route.params.versionType
+        ? 'RaceSelection'
+        : route.name;
 
     navigateTo(
       {
