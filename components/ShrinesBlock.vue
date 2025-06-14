@@ -15,6 +15,15 @@
           <span class="text-purple">Ultimate</span>: 60:00
         </div>
       </div>
+      <v-divider/>
+      <v-text-field
+        class="mt-4"
+        v-model="shrineAbilitySearch"
+        clearable
+        label="Search ability"
+        variant="outlined"
+        @click:clear="shrineAbilitySearch = ''"
+      />
     </CCard>
     <CCard
       v-for="hotkey in shrinesOrder"
@@ -27,6 +36,9 @@
           :item="item"
           :src="icons"
           :coords="iconProps(item.id, item.iconsCount)"
+          :class="{
+            depressed: !!shrineAbilitySearch && !item.name.toLocaleLowerCase().includes(shrineAbilitySearch.toLocaleLowerCase())
+          }"
         />
       </WarGrid>
     </CCard>
@@ -45,9 +57,10 @@ interface Props {
 }
 
 const { data, icons, iconProps } = defineProps<Props>();
+const shrineAbilitySearch = ref('')
 
 const shrines = computed(() =>
-  data.reduce<Record<string, IBaseObject[]>>((acc, item) => {
+   data.reduce<Record<string, IBaseObject[]>>((acc, item) => {
     const hotkey = capitalize(item.hotkey || 'unknown');
     if (hotkey.toLocaleLowerCase() === 'r') {
       // Ultimates are temporal disabled
@@ -76,6 +89,9 @@ const shrinesOrder = computed(() =>
 </script>
 
 <style lang="css" scoped>
+.depressed {
+  opacity: 0.2;
+}
 .misc-container {
   display: flex;
   flex-flow: row wrap;
