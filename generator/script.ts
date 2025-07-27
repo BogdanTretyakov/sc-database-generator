@@ -567,6 +567,13 @@ export class Sur5alScriptParser extends BaseScriptParser {
           mlst: '6',
           esaz: '7',
         },
+        // Monkey patch for new heroes
+        H04G: {
+          I005: '4',
+          I006: '8',
+          I007: '14',
+          I008: '20',
+        },
       }
     );
   }
