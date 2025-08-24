@@ -8,7 +8,7 @@ export interface VersionIndexFile {
 }
 
 export const dataFiles = Object.entries(
-  import.meta.glob('./**/index.ts', { import: 'default' })
+  import.meta.glob(['./**/index.ts', '!./changelogs/**'], { import: 'default' })
 ).reduce((acc, [key, value]) => {
   const path = key.split('/');
   const [, type, version] = path;

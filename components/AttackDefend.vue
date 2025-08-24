@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex align-center">
+  <div class="d-flex align-center attackIcons">
     <ClientOnly>
       <v-tooltip location="top">
         <template #activator="{ props }">
@@ -26,14 +26,14 @@ import type { IconBoundaries } from './GameIcon.vue';
 
 interface Props {
   isDefend?: boolean;
-  type: string;
+  type?: string;
   value?: number | string;
   size?: number;
 }
 
 const [assets, assetsCoords] = useAssets();
 
-const { isDefend, type, value, size = 32 } = defineProps<Props>();
+const { isDefend, type, value, size = 24 } = defineProps<Props>();
 
 const attackTypes: Record<string, string> = {
   siege: '<span style="color: #ffbfbf">Siege</span>',
@@ -52,8 +52,8 @@ const defendTypes: Record<string, string> = {
   large: 'Heavy',
   medium: 'Normal',
   flesh: 'Unarmored',
-  fort: 'Fortified'
-}
+  fort: 'Fortified',
+};
 
 const text = computed(() => {
   const map = isDefend ? defendTypes : attackTypes;
@@ -77,11 +77,24 @@ const defendIcons: Record<string, IconBoundaries> = {
   large: assetsCoords.heavy,
   medium: assetsCoords.medium,
   flesh: assetsCoords.unarmored,
-  fort: assetsCoords.fortified
+  fort: assetsCoords.fortified,
 };
 
 const coords = computed(() => {
   const map = isDefend ? defendIcons : attackIcons;
-  return map[type] ?? { x: 0, y: 0, width: 1, height: 1 };
+  return (
+    map[type ?? (isDefend ? 'medium' : 'normal')] ?? {
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
+    }
+  );
 });
 </script>
+
+<style lang="css" scoped>
+.attackIcons {
+  font-size: 0.8em;
+}
+</style>

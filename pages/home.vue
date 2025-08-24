@@ -57,12 +57,12 @@ onBeforeRouteLeave((to, from, next) => {
 onNuxtReady(() => {
   const versionType = storage.get('preferredVersion');
   if (!versionType || !(versionType in dataFiles)) return;
-  navigateTo({
-    name: 'RaceSelection',
-    params: {
-      versionType,
-    },
-  });
+  // navigateTo({
+  //   name: 'RaceSelection',
+  //   params: {
+  //     versionType,
+  //   },
+  // });
 });
 
 definePageMeta({

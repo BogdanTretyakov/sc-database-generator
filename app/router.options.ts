@@ -43,5 +43,10 @@ export default {
       path: '/credits',
       component: () => import('~/pages/credits.vue'),
     },
+    {
+      name: 'Changelog',
+      path: '/changelog',
+      component: () => import('~/pages/changelog.vue'),
+    }
   ],
 } satisfies RouterConfig;

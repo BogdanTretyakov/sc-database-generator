@@ -9,11 +9,11 @@
           :padding="[4, 4, 4, 4]"
           class="mr-2"
         />
-        <div class="flex-grow-1 w-100">
+        <div class="flex-grow-1 w-100 d-flex flex-wrap">
           <span
             v-for="(value, idx) in data"
             :key="idx"
-            class="text-no-wrap mr-1"
+            class="text-no-wrap mr-2 mb-1"
           >
             Lv{{ idx + 1 }}: <span :class="itemClass">{{ value }}</span>
           </span>
@@ -48,7 +48,10 @@ const { data, icon } = defineProps<Props>();
 const itemClass = computed(() => {
   switch (icon) {
     case 'gold':
+    case 'bounty':
       return 'cost';
+    case 'health':
+      return 'text-white';
 
     default:
       return '';

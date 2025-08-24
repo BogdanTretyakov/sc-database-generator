@@ -16,7 +16,7 @@ export function uniqById<T extends { id: number | string }>(
 
 export function sortVersion(items: string[]) {
   return items
-    .map((ver) => ver.match(/\d+|\w/g))
+    .map((ver) => ver.match(/\d+|\w|-/g))
     .filter(isNotNil)
     .sort(([a1, a2, a3], [b1, b2, b3]) => {
       if (a1 !== b1) return collator.compare(b1, a1);

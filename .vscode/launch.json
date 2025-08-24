@@ -6,7 +6,7 @@
       "request": "launch",
 
       // Debug current file in VSCode
-      "program": "generator/index.ts",
+      "program": "generator/changelog.ts",
 
       /*
        * Path to tsx binary

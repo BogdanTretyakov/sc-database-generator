@@ -1,23 +1,20 @@
+import './versionSelect';
 import { resolve } from 'path';
 import { rename, readdir, mkdir, readFile, writeFile, rm } from 'fs/promises';
-import { select, input } from '@inquirer/prompts';
-
-const type = await select({
-  message: 'Specify version do you pack',
-  choices: [
-    { value: 'og', name: 'Official Sur5al/W3C' },
-    { value: 'oz', name: 'OZGame Edition' },
-  ],
-});
+import { input } from '@inquirer/prompts';
 
 const version = await input({
   message: 'Version of packing map',
   transformer: (val) => val.trim(),
 });
-globalThis.mapVersion = version;
 
 const inputDir = resolve(process.cwd(), 'dataGenerated');
-const outputDir = resolve(process.cwd(), 'data', type, version);
+const outputDir = resolve(
+  process.cwd(),
+  'data',
+  globalThis.mapVersion,
+  version
+);
 
 await rm(outputDir, { recursive: true, force: true });
 await mkdir(outputDir);
@@ -41,8 +38,10 @@ const indexFileTemplate = await readFile(
 );
 const indexFileContent = indexFileTemplate
   .replace('$$VERSION$$', version)
-  .replace('$$VERSION_TYPE$$', type);
+  .replace('$$VERSION_TYPE$$', globalThis.mapVersion);
 
 await writeFile(resolve(outputDir, 'index.ts'), indexFileContent, {
   encoding: 'utf8',
 });
+
+await import('./changelog');
