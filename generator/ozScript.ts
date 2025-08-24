@@ -6,7 +6,7 @@ import type {
   IRawUltimates,
   IUnitObject,
 } from '~/data/types';
-import { abilitiesParser, unitsParser } from './objects';
+import { abilitiesParser, unitsParser, upgradesParser } from './objects';
 import { mapObject } from '~/utils/object';
 import { isNotNil } from '~/utils/guards';
 import { uniq, uniqById } from '~/utils/array';
@@ -124,13 +124,41 @@ export class OZScriptParser extends BaseScriptParser {
         this.scriptVariables.buildings,
         (key) => raceVariables[key]
       ),
-      baseUpgrades: mapObject(
-        this.scriptVariables.baseUpgrades,
-        (key) => raceVariables[key]
-      ),
-      upgrades: this.scriptVariables.towerUpgrades.map(
-        (key) => raceVariables[key]
-      ),
+      baseUpgrades: unitsParser
+        .getById(raceVariables[this.scriptVariables.buildings.fort])
+        ?.withInstance((instance) => {
+          const botObjectUpgrades = mapObject(
+            this.scriptVariables.baseUpgrades,
+            (key) => raceVariables[key]
+          );
+          const upgradesInstances =
+            instance
+              .getArrayValue('res')
+              ?.map((id) => upgradesParser.getById(id))
+              .filter(isNotNil) ?? [];
+
+          const fortInstanceUpgrades = mapObject(
+            {
+              melee: 'A',
+              armor: 'D',
+              range: 'S',
+              wall: 'F',
+            },
+            (hotKey) =>
+              upgradesInstances.find((i) => i.getValueByKey('hk1') === hotKey)
+                ?.id,
+            true
+          );
+
+          return {
+            ...botObjectUpgrades,
+            ...fortInstanceUpgrades,
+          };
+        }),
+
+      upgrades: unitsParser
+        .getById(raceVariables[this.scriptVariables.buildings.tower])
+        ?.getArrayValue('res'),
       heroes: this.scriptVariables.heroes.map((key) => raceVariables[key]),
       bonuses:
         unitsParser
