@@ -1,3 +1,5 @@
+import type { IconBoundaries } from '~/components/GameIcon.vue';
+
 export interface IBaseObject {
   id: string;
   name: string;
@@ -274,3 +276,45 @@ export type GetObjectFunction = <T extends keyof ObjectsTypeMap>(
   key: T,
   id: string
 ) => ObjectsTypeMap[T] | undefined;
+
+export interface IChangelog {
+  from: string;
+  to: string;
+  type: string;
+  changes: Record<string, IChangelogRace>;
+  newRaces?: IRacePickerObject[];
+  ultimates?: {
+    pickers: ChangeTuple<WithIconId<IBaseUltimateObject>>[];
+    requires: IUltimatesData['requires'];
+  };
+}
+
+export type ChangeTuple<T> = [
+  'replace' | 'change',
+  old: T extends object
+    ? Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
+    : T,
+  new: T extends object
+    ? Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
+    : T
+];
+export type WithIconId<T extends IBaseObject> = T & { iconId: string };
+
+export interface IChangelogRace {
+  name: string;
+  description?: ChangeTuple<string>;
+  upgrades?: ChangeTuple<WithIconId<IUpgradeObject>>[];
+  heroes?: ChangeTuple<WithIconId<IHeroObject>>[];
+  units?: Partial<
+    Record<keyof IRaceData['units'], ChangeTuple<WithIconId<IUnitObject>>>
+  >;
+  bonuses?: ChangeTuple<WithIconId<IBonusObject>>[];
+  towerUpgrades?: ChangeTuple<WithIconId<IUpgradeObject>>[];
+  auras?: ChangeTuple<WithIconId<IBaseObject>>[];
+  magic?: ChangeTuple<WithIconId<IUpgradeObject>>[];
+  buildings?: Partial<
+    Record<keyof IRaceData['buildings'], ChangeTuple<WithIconId<IUnitObject>>>
+  >;
+  t1spell?: ChangeTuple<WithIconId<ISpellObject>>;
+  t2spell?: ChangeTuple<WithIconId<ISpellObject>>;
+}

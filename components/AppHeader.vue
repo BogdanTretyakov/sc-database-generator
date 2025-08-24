@@ -34,9 +34,17 @@
       variant="text"
       density="comfortable"
       class="mx-1"
+      :to="{ name: 'Changelog' }"
+    >
+      Changelogs
+    </v-btn>
+    <v-btn
+      variant="text"
+      density="comfortable"
+      class="mx-1"
       :to="{ name: 'CreditsPage' }"
     >
-      Credits
+      Contacts
     </v-btn>
     <div v-if="$route.params.versionType">
       <VersionSelector />

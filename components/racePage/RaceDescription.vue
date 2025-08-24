@@ -2,6 +2,7 @@
   <div style="grid-row: span 2; grid-column: 1">
     <CCard title="" id="details" :full-height="false">
       <template #title>
+        <h1 class="text-wrap text-h4" v-if="title" v-html="title" />
         <h1 class="text-wrap text-h3" :style="{ color }" v-html="race.name" />
       </template>
       <div v-html="description" />
@@ -13,9 +14,10 @@
 import type { IRaceData } from '~/data/types';
 
 interface Props {
-  race: IRaceData;
+  race: Pick<IRaceData, 'name' | 'description'>;
+  title?: string;
 }
-const { race } = defineProps<Props>();
+const { race, title } = defineProps<Props>();
 
 const description = computed(() =>
   race.description

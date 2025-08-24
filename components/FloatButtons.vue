@@ -93,6 +93,7 @@ const iconSize = computed({
   position: fixed;
   bottom: 12px;
   right: 22px;
+  z-index: 100;
 }
 
 .donate-button {
@@ -127,13 +128,13 @@ const iconSize = computed({
     transform: scale(1);
   }
   40% {
-    transform: scale(1.08);
+    transform: scale(1.13);
   }
   50% {
     transform: scale(0.98);
   }
   55% {
-    transform: scale(1.02);
+    transform: scale(1.07);
   }
   60% {
     transform: scale(0.98);

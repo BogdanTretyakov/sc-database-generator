@@ -8,19 +8,11 @@ import { buffer } from 'node:stream/consumers';
 import { PassThrough } from 'stream';
 import Vinyl from 'vinyl';
 // @ts-expect-error no typings
-import { buffer2webpbuffer, grant_permission } from 'webp-converter';
-import { chmodSync, mkdirSync } from 'fs';
+import { buffer2webpbuffer } from 'webp-converter';
 import { decodeImage, parseDDSHeader } from 'dds-ktx-parser';
 // @ts-expect-error no typings
 import tga2png from 'tga2png';
 import { W3File } from './w3file';
-
-const webpDir = resolve(process.cwd(), 'node_modules/webp-converter');
-
-grant_permission();
-mkdirSync(resolve(webpDir, 'temp'), { recursive: true });
-chmodSync(webpDir, 0o775);
-chmodSync(resolve(webpDir, 'temp'), 0o775);
 
 export class ImageProcessor {
   constructor(private baseImagesUrl: string, private outputDir: string) {}

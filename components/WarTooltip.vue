@@ -2,7 +2,7 @@
   <div v-bind="$attrs">
     <ClientOnly>
       <v-tooltip
-        location="right top"
+        location="bottom center"
         activator="parent"
         max-width="350"
         close-on-content-click
