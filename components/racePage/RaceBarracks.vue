@@ -19,6 +19,9 @@
         :type="race.buildings.barrack.atkType"
       />
     </template>
+    <DividerLabel class="mb-2 mt-n6">
+      <span class="mx-2 text-caption text-grey">Units</span>
+    </DividerLabel>
     <WarGrid class="mx-auto" :items="units" v-slot="{ item }">
       <DetailsTooltip
         :item="item"
@@ -35,7 +38,9 @@
       />
     </WarGrid>
 
-    <v-divider class="my-3 w-100" />
+    <DividerLabel class="mb-1">
+      <span class="mx-2 text-caption text-grey">Heroes</span>
+    </DividerLabel>
 
     <WarGrid class="mx-auto" :items="race.heroes" v-slot="{ item }">
       <DetailsTooltip

@@ -48,7 +48,11 @@
           @mouseout="() => (hover = undefined)"
         />
       </WarGrid>
-      <div class="my-2 text-h6">Buildings</div>
+      <DividerLabel class="my-1">
+        <span class="mx-2 text-caption text-grey text-no-wrap"
+          >Bonus buildings</span
+        >
+      </DividerLabel>
       <div class="d-flex flex-wrap">
         <v-btn
           v-for="item in bonusBuildings"
