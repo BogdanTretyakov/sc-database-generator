@@ -3,7 +3,6 @@
     title="Towers"
     :full-height="false"
     class="d-flex flex-column"
-    style="grid-row: span 2"
     id="upgrades"
   >
     <template #title>

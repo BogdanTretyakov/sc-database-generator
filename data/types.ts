@@ -88,7 +88,7 @@ export interface IRawPatchData {
   misc: IRawMiscData;
 }
 
-export interface IRawRace {
+export interface IRawRace extends Pick<IRaceData, 'ultiData'> {
   name: string;
   key: string;
   id: string;
@@ -102,7 +102,6 @@ export interface IRawRace {
     wall: string;
   };
   auras: string[];
-  ulti?: string;
   t1spell: string;
   t2spell: string;
   heroes: string[];
@@ -154,11 +153,19 @@ export interface IUltimatesData {
   requires: Record<string, string>;
 }
 
+export interface IRaceUltimateData extends IBaseObject {
+  type: 'ultimate';
+  damageTime?: number;
+  stealInterrupt?: boolean;
+  fakeStealInterrupt?: boolean;
+}
+
 export interface IRaceData {
   name: string;
   key: string;
   id: string;
   description: string;
+  /** @deprecated Only at old data */
   ultimateId?: string;
   auras: IBaseObject[];
   bonuses: IBonusObject[];
@@ -187,6 +194,7 @@ export interface IRaceData {
   t2spell: ISpellObject;
   heroes: Array<IHeroObject>;
   bonusBuildings: IBaseObject[];
+  ultiData?: IRaceUltimateData;
 }
 
 export type IRaceIcons = Record<

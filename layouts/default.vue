@@ -17,9 +17,7 @@
       <AppHeader />
     </v-app-bar>
     <v-main>
-      <div
-        class="overflow-y-scroll fill-height scroll-offset position-relative"
-      >
+      <div class="overflow-y-auto fill-height scroll-offset position-relative">
         <v-container fluid>
           <v-fade-transition leave-absolute>
             <NuxtPage :page-key="(route) => route.path" />

@@ -2,7 +2,6 @@
   <CCard
     title="Fortress"
     class="d-flex flex-column justify-start"
-    style="grid-row: span 2"
     :full-height="false"
     id="fortress"
   >
@@ -62,6 +61,7 @@
 
     <WarGrid class="mx-auto" :items="spells" v-slot="{ item }">
       <DetailsTooltip
+        v-if="isSpellObject(item)"
         :item="item"
         :src="icons"
         :coords="iconProps(item.id)"
@@ -72,6 +72,31 @@
           },
         ]"
       />
+      <WarTooltip v-else :src="icons" :coords="iconProps(item.id)">
+        <template #tooltip>
+          <div class="text-h6" v-html="item.name.replace(/\[.+\]/g, '')" />
+          <br />
+          <template v-if="'damageTime' in item">
+            <div class="text-subtitle-1">
+              Time to full damage:
+              <span class="text-yellow">{{
+                item.damageTime == 0 ? 'Instant' : item.damageTime + 's'
+              }}</span>
+            </div>
+          </template>
+          <template v-if="'stealInterrupt' in item">
+            <div class="text-subtitle-1">
+              Interrupts mana steal:
+              <span :class="item.stealInterrupt ? 'text-green' : 'text-red'">
+                {{ item.stealInterrupt ? 'Yes' : 'No' }}
+              </span>
+              <span v-if="item.fakeStealInterrupt" class="text-green">
+                (+ Decoy UW)
+              </span>
+            </div>
+          </template>
+        </template>
+      </WarTooltip>
     </WarGrid>
   </CCard>
 </template>
@@ -90,19 +115,9 @@ const { race, icons, iconProps } = defineProps<Props>();
 
 const hover = inject<Ref<undefined | string[]>>('hover', ref());
 
-const spells = computed(() => {
-  const spells = [race.t1spell, race.t2spell];
-  if (race.ultimateId) {
-    spells.push({
-      type: 'spell',
-      hotkey: 'V',
-      id: race.ultimateId,
-      name: 'Precision UW Icon',
-      description: '',
-    });
-  }
-  return spells;
-});
+const spells = computed(() =>
+  [race.t1spell, race.t2spell, race.ultiData].filter(isNotNil)
+);
 
 const researches = computed<Array<IUpgradeObject>>(() => {
   return race.magic

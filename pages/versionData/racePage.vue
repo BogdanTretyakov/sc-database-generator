@@ -105,6 +105,7 @@ definePageMeta({
 .title {
   text-shadow: #000000 0px 0px 5px, #000000 0px 0px 5px;
 }
+
 .race-container {
   display: grid;
   gap: 16px;
@@ -114,6 +115,7 @@ definePageMeta({
 .row-span-2 {
   grid-row: span 2;
 }
+
 .selected {
   outline: 4px solid #ffd428;
 }
@@ -123,6 +125,7 @@ definePageMeta({
 .depressed {
   opacity: 0.4;
 }
+
 .selectable-item {
   transition: 200ms opacity ease-in-out;
 }

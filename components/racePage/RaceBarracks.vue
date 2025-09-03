@@ -3,7 +3,6 @@
     title="Barracks"
     :full-height="false"
     class="d-flex flex-column"
-    style="grid-row: span 2"
     id="units"
   >
     <template #title>

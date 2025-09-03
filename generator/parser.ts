@@ -126,14 +126,13 @@ export class SurvivalChaosParser {
   private tokenizeRaceData(data: IRawRace, description: string) {
     const icons: Record<string, string> = {};
 
-    abilitiesParser.getById(data.ulti ?? '')?.withIcon(icons);
+    abilitiesParser.getById(data.ultiData?.id ?? '')?.withIcon(icons);
 
     const output: IRaceData = {
       id: data.id,
       key: data.key,
       name: data.name,
       description,
-      ultimateId: data.ulti,
       bonusBuildings: data.bonuses
         .map((id) => unitsParser.getById(id))
         .filter(isNotNil)
@@ -267,6 +266,7 @@ export class SurvivalChaosParser {
               this.parser.enrichUnitRequires(i.parser.getUnitObject(i))
             )!
       ),
+      ultiData: data.ultiData,
     };
 
     if (output.towerUpgrades.length !== data.upgrades.length) {

@@ -1,5 +1,6 @@
 import { abilitiesParser, unitsParser } from './objects';
 import type {
+  IRaceData,
   IRawArtifacts,
   IRawPatchData,
   IRawRace,
@@ -231,10 +232,14 @@ export class Sur5alScriptParser extends BaseScriptParser {
 
     const [t1spell, t2spell] =
       unitsParser.getById(fortId)?.withInstance((data) => {
-        const skills = String(data.getValueByKey('abi')).split(',');
-        return skills
-          .filter((id) => ![ulti, auraID, hiddenDoomId].includes(id))
-          .filter((id) => Boolean(abilitiesParser.getById(id)));
+        const skills = data.getArrayValue('abi') ?? [];
+        const t1 = skills.find(
+          (id) => abilitiesParser.getById(id)?.getValueByKey('hky') === 'Z'
+        )!;
+        const t2 = skills.find(
+          (id) => abilitiesParser.getById(id)?.getValueByKey('hky') === 'X'
+        )!;
+        return [t1, t2];
       }) ?? [];
 
     const output: IRawRace = {
@@ -253,7 +258,6 @@ export class Sur5alScriptParser extends BaseScriptParser {
         (key) => rawRaceData[upgrades.key][key]
       ),
       auras,
-      ulti,
       t1spell,
       t2spell,
       magic: rawRaceData[upgrades.key][upgrades.magic],
@@ -300,18 +304,21 @@ export class Sur5alScriptParser extends BaseScriptParser {
     };
 
     this.enrichRaceData(output);
+    this.enrichUltiData(output, rawRaceData);
 
     return output;
   }
 
   private enrichRaceData(data: IRawRace) {
     data.bonuses.forEach((bonusID) => {
+      // di - ragna
       if (bonusID === 'n02Q') {
         data.bonusHeroes.push({
           id: 'U00N',
           slot: 4,
         });
       }
+      // wo - wolf
       if (bonusID === 'n00W') {
         data.bonusHeroes.push({
           id: 'N00T',
@@ -636,5 +643,122 @@ export class Sur5alScriptParser extends BaseScriptParser {
     item.upgrades = item.upgrades?.filter(uniq);
 
     return item;
+  }
+
+  private interruptTypes = [
+    'thunderbolt',
+    'entanglingroots',
+    'entangle',
+    'freezy',
+    'freezyon',
+    'silence',
+    'stop',
+  ];
+
+  enrichUltiData(
+    input: IRawRace,
+    raceData: Record<string, Record<string, string>>
+  ) {
+    const { key, ulti, description } = this.scriptVariables.replaceable;
+    const ultiId = raceData[key][ulti];
+    const raceDescription = raceData[key][description];
+
+    input.ultiData = {
+      id: ultiId,
+      type: 'ultimate',
+      name: abilitiesParser.getById(ultiId)?.getName() ?? 'Precision UW',
+      hotkey: 'V',
+    };
+    (() => {
+      const ultiConditionCheckFn = this.script.match(
+        new RegExp(
+          String.raw`\w+(?=\stakes nothing returns boolean\nreturn\(GetSpellAbilityId\(\)=='${ultiId}'\))`,
+          'm'
+        )
+      )?.[0];
+      if (!ultiConditionCheckFn) return;
+      const playerSetVar = this.script.match(
+        new RegExp(
+          String.raw`(?<=if\(${ultiConditionCheckFn}\(\).+\nset\s)\w{2,4}\[.+\]`,
+          'm'
+        )
+      )?.[0];
+      if (!playerSetVar) return;
+      const escapedPlayerSetVar = playerSetVar
+        .replaceAll('[', '\\[')
+        .replaceAll(']', '\\]')
+        .replaceAll('$', '\\$');
+      let checkPlayerFn = this.script.match(
+        new RegExp(
+          String.raw`\w+(?=\stakes nothing returns boolean\nreturn\(${escapedPlayerSetVar}==)`,
+          'm'
+        )
+      )?.[0];
+      let unitDamageAbility: string | undefined;
+      if (!checkPlayerFn) {
+        unitDamageAbility ??= this.script.match(
+          new RegExp(
+            String.raw`(?<=CreateNUnitsAtLoc.+${escapedPlayerSetVar}.+\n(?:^.+$\n){0,3}call UnitAddAbilityBJ\(')\w+(?=.+\n(?:^.+$\n){0,3}call IssueTargetOrderBJ.+thunderbolt)`,
+            'm'
+          )
+        )?.[0];
+        if (!unitDamageAbility) return;
+        input.ultiData!.stealInterrupt = true;
+      }
+      unitDamageAbility ??= this.script.match(
+        new RegExp(
+          String.raw`(?<=if\(${checkPlayerFn}\(\).+\n(?:^.+$\n){1,10}call UnitAddAbilityBJ\(')\w+`,
+          'm'
+        )
+      )?.[0];
+      if (!unitDamageAbility) return;
+      abilitiesParser.getById(unitDamageAbility)?.withInstance((instance) => {
+        const itemOrder = instance.getValueByKey('ord');
+        input.ultiData!.stealInterrupt ??=
+          this.interruptTypes.includes(itemOrder);
+        const damageTime =
+          instance.getValueByKey('dur') ?? instance.getValueByKey('bz1');
+        if (damageTime) {
+          input.ultiData!.damageTime = damageTime;
+        }
+      });
+    })();
+
+    (() => {
+      // TODO: maybe get it from script?
+      const manaBurnId = 'A0QV';
+      const decoyId = this.script.match(
+        new RegExp(
+          String.raw`(?<=call UnitAddAbilityBJ\('${manaBurnId}.+\n(?:^.+$\n){0,2}call UnitRemoveAbilityBJ\('${raceDescription}.+\ncall UnitAddAbilityBJ\(')\w+`,
+          'm'
+        )
+      )?.[0];
+      if (!decoyId) return;
+
+      (() => {
+        const conditionFuncName = this.script.match(
+          new RegExp(
+            String.raw`\w+(?=\stakes nothing returns boolean\nreturn\(GetSpellAbilityId\(\)=='${decoyId})`,
+            'm'
+          )
+        )?.[0];
+        if (!conditionFuncName) return;
+        const isScriptedInterrupt = this.script.match(
+          new RegExp(
+            String.raw`if\(${conditionFuncName}.+\n(?:^.+$\n){1,10}call IssueTargetOrderBJ.+thunderbolt`,
+            'm'
+          )
+        );
+        if (isScriptedInterrupt) {
+          input.ultiData!.fakeStealInterrupt = true;
+        }
+      })();
+
+      abilitiesParser.getById(decoyId)?.withInstance((instance) => {
+        const itemOrder = instance.getValueByKey('ord');
+        input.ultiData!.fakeStealInterrupt ??=
+          this.interruptTypes.includes(itemOrder);
+      });
+    })();
   }
 }

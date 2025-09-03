@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { IRawPatchData, IUnitObject } from '~/data/types';
+import type { IRaceData, IRawPatchData, IUnitObject } from '~/data/types';
 
 export abstract class BaseScriptParser {
   protected script: string;
