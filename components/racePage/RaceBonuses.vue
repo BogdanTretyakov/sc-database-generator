@@ -8,6 +8,31 @@
       class="d-flex flex-column align-center justify-start"
       id="bonuses"
     >
+      <template #title>
+        <VTooltip
+          open-on-click
+          :open-on-hover="false"
+          :offset="[-4, 0]"
+          close-on-back
+          location="top"
+          :transition="{
+            component: VFadeTransition,
+          }"
+        >
+          <template #activator="{ props }">
+            <v-btn
+              size="large"
+              class="mx-auto"
+              variant="text"
+              color="yellow"
+              v-bind="props"
+            >
+              <b>Bonuses</b>
+            </v-btn>
+          </template>
+          <span>There is no easter eggs</span>
+        </VTooltip>
+      </template>
       <WarGrid :items="race.bonuses" v-slot="{ item }">
         <DetailsTooltip
           :item="item"
@@ -44,6 +69,7 @@
 <script setup lang="ts">
 import type { IBaseObject, IBonusObject, IRaceData } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
+import { VFadeTransition } from 'vuetify/components';
 
 interface Props {
   race: IRaceData;
