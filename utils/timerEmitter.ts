@@ -1,4 +1,4 @@
-const callbacks = Array<() => void>()
+const callbacks = new Set<() => void>()
 
 onNuxtReady(() => {
   setInterval(() => {
@@ -8,11 +8,8 @@ onNuxtReady(() => {
 
 
 export const timerEmitter = (cb: () => void) => {
-  callbacks.push(cb)
+  callbacks.add(cb)
   return () => {
-    const idx = callbacks.indexOf(cb)
-    if (idx >= 0) {
-      callbacks.splice(idx, 0)
-    }
+    callbacks.delete(cb)
   }
 }

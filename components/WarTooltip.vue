@@ -9,7 +9,7 @@
         :transition="{
           component: VFadeTransition,
         }"
-        :disabled="disabled || globalDisabled === 'true'"
+        :disabled="disabledTooltip"
         class="tooltip-opacity"
       >
         <slot name="tooltip:body">
@@ -37,7 +37,6 @@
 <script setup lang="ts">
 import { VFadeTransition } from 'vuetify/components';
 import type { GameIconProps } from './GameIcon.vue';
-import { IS_TOUCH } from '~/consts';
 
 interface Props extends GameIconProps {
   description?: string;
@@ -49,6 +48,12 @@ const { description, descriptionClass, coords, src, disabled, padding } =
   defineProps<Props>();
 
 const globalDisabled = useStorageValue('tooltipsDisabled', 'false');
+const isMetaKey = useMetaKey();
+
+const disabledTooltip = computed(() => {
+  const computed = disabled || globalDisabled.value === 'true';
+  return isMetaKey.value ? !computed : computed;
+});
 
 defineSlots<{
   default?(): any;

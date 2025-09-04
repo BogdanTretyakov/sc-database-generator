@@ -1,5 +1,6 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
-  "files": ["./global.d.ts"]
+  "files": ["./global.d.ts"],
+  "exclude": ["./dataWarcraft", "./dataMap", "./generator/debug"]
 }

@@ -81,7 +81,9 @@
       />
       <WarTooltip v-else :src="icons" :coords="iconProps(item.id)">
         <template #tooltip>
-          <div class="text-h6" v-html="item.name.replace(/\[.+\]/g, '')" />
+          <div class="text-h6">
+            Precision UW: <span v-html="item.name.replace(/\[.+\]/g, '')" />
+          </div>
           <br />
           <template v-if="'damageTime' in item">
             <div class="text-subtitle-1">

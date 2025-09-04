@@ -30,6 +30,12 @@ export default defineNuxtConfig({
       title: '',
       link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
       titleTemplate: '%s | Survival Chaos Wiki',
+      script: [
+        {
+          async: true,
+          src: 'https://www.googletagmanager.com/gtag/js?id=G-KW4BMH97RN',
+        },
+      ],
     },
   },
   generate: {

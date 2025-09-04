@@ -50,6 +50,7 @@ import { mdiMenu } from '@mdi/js';
 const nuxtApp = useNuxtApp();
 const routeLoading = ref(false);
 const showMenu = ref(false);
+useMetaKeyProvider();
 
 nuxtApp.hook('page:start', () => {
   routeLoading.value = true;
