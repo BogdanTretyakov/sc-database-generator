@@ -61,14 +61,16 @@ export class OZScriptParser extends BaseScriptParser {
   }
 
   private getRace(id: string): IRawRace {
-    const raceInitBlock = this.script.match(
+    const numId = this.strToInt(id);
+    const findRaceInitBlock = this.script.match(
       new RegExp(
-        String.raw`call .+\(.+,${this.strToInt(
-          id
-        )}\)\n(?:^.+$\n)+?(?:(?:elseif .{2,6}=\d{1,2})|(?:endfunction.+))`,
-        'mi'
+        String.raw`(?:else)?if .{1,6}==.{1,3}.+\n(^.+$\n){0,3}call .{1,6}\(.{1,6},\s?${numId}\)\n(^.+$\n){1,20}call.+UnitRemoveAbility.+${numId}`,
+        'm'
       )
-    )?.[0];
+    );
+    if (!findRaceInitBlock?.index) getError(`get race block ${id}`);
+
+    const raceInitBlock = this.getIfBlockByIndex(findRaceInitBlock.index);
 
     if (!raceInitBlock) getError(`get race block ${id}`);
 
