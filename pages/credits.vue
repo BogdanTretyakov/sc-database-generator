@@ -286,8 +286,8 @@ const makers: ContentMaker[] = [
 ];
 
 useSeoMeta({
-  title: `Survival Chaos Database Credits`,
-  titleTemplate: '',
+  title: `Contacts`,
+  ogTitle: `Contacts | Survival Chaos`,
   description:
     'Survival Chaos database credits. We are appreciate these people',
   ogDescription: 'Survival Chaos database site. We are appreciate these people',

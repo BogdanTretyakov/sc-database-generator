@@ -1,8 +1,11 @@
-export const useStorageValue = (storageKey: string, defaultValue?: string) => {
-  const value = useState(storageKey, () => defaultValue ?? '');
+export const useStorageValue = <T extends string = string>(
+  storageKey: string,
+  defaultValue?: T
+) => {
+  const value = useState<T>(storageKey, () => defaultValue ?? ('' as T));
 
   onNuxtReady(() => {
-    value.value = storage.get(storageKey) ?? defaultValue ?? '';
+    value.value = (storage.get(storageKey) ?? defaultValue ?? '') as T;
   });
 
   watch(

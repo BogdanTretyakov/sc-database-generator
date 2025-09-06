@@ -20,6 +20,7 @@
       <div
         id="scrollContainer"
         class="overflow-y-auto fill-height scroll-offset position-relative"
+        style="scroll-behavior: smooth"
       >
         <v-container fluid>
           <v-fade-transition leave-absolute>

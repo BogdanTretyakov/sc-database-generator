@@ -208,17 +208,17 @@ defineSlots<{
   display: block;
 }
 
-.changelogIcon.old {
+.changelogIcon.new {
   z-index: 1;
 }
 
-.iconsContainer:not(.sameIcon) .new {
+.iconsContainer:not(.sameIcon) .old {
   animation: shrink 6s linear infinite both;
   border-right: 1px solid white;
   will-change: width;
 }
 
-.changelogIcon.new {
+.changelogIcon.old {
   z-index: 2;
 }
 

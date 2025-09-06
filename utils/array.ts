@@ -24,5 +24,6 @@ export function sortVersion(items: string[]) {
       if (a3 || b3) return collator.compare(b3 ?? '', a3 ?? '');
       return 0;
     })
-    .map((parts) => parts.join('.').replace(/\.(?!\d)/, ''));
+    .map((parts) => parts.join('.').replace(/\.(?!\d)/, ''))
+    .map((val) => val.replace('-.', '-').replace(/\.(?=\D)/, ''));
 }

@@ -7,7 +7,6 @@
             <v-select
               v-model="selectValue"
               :items="items"
-              return-object
               density="compact"
               variant="outlined"
               label="Compare version"
@@ -19,6 +18,7 @@
               bg-color="transparent"
               flat
               min-width="min-content"
+              :key="typeSelection"
             >
               <template #prepend-item>
                 <div class="full-width d-flex my-1">
@@ -70,7 +70,7 @@
       :icon="mdiArrowUp"
       color="primary"
       class="toTopBtn"
-      @click="scrollTop"
+      href="#changelog"
     />
   </div>
 </template>
@@ -87,11 +87,7 @@ import type { IChangelog, IDataFile, IBaseObject } from '~/data/types';
 import values from 'lodash/values';
 import { mdiArrowUp } from '@mdi/js';
 
-const scrollTop = () => {
-  document
-    .getElementById('scrollContainer')
-    ?.scrollTo({ top: 0, behavior: 'smooth' });
-};
+const app = useNuxtApp();
 
 const dataFiles = {
   og: ogChangelogs.data,
@@ -102,36 +98,48 @@ const versionTypeTitles: Record<string, string> = {
   og: 'Original',
   oz: 'OZGame',
 };
-const savedPrefVersion = useStorageValue('preferredVersion');
 
-const typeSelection = ref(savedPrefVersion.value || 'og');
-const selectValue = ref<ListItem>();
-watch(
-  () => typeSelection.value,
-  (val, oldVal) => {
-    if (val === oldVal || !val) return;
-    const [firstValue] = sortVersion(Object.keys(dataFiles[val] ?? {}));
-    selectValue.value = {
-      title: firstValue
-        .replace('-.', '-')
-        .replace(/\.(?=\D)/, '')
-        .replace('-', ' → '),
-      value: firstValue.replace('-.', '-').replace(/\.(?=\D)/, ''),
-    };
+const router = useRouter();
+
+const typeSelection = computed({
+  get: () => {
+    const [routeVersion] = [
+      router.currentRoute.value.params.clVersionType,
+    ].flat();
+    return routeVersion;
   },
-  { immediate: true }
-);
+  set: (clVersionType: string) => {
+    const [clVersion] = sortVersion(
+      Object.keys(dataFiles[clVersionType] ?? {})
+    );
+    router.replace({ params: { clVersionType, clVersion } });
+  },
+});
+const selectValue = computed({
+  get: () => {
+    const [routeVersion] = [router.currentRoute.value.params.clVersion].flat();
+    if (routeVersion && dataFiles[typeSelection.value][routeVersion]) {
+      return routeVersion;
+    }
+    const [firstValue] = sortVersion(
+      Object.keys(dataFiles[typeSelection.value] ?? {})
+    );
+    return firstValue;
+  },
+  set: (clVersion: string) => {
+    router.replace({ params: { clVersion } });
+  },
+});
 
 const changelogKey = computed(
-  () => `${typeSelection.value}-${selectValue.value?.value ?? ''}`
+  () => `${typeSelection.value}-${selectValue.value ?? ''}`
 );
 const { data: changelog, status: changelogStatus } = useAsyncData<
   IDataFile<IChangelog>
 >(
   changelogKey.value,
   () => {
-    const module =
-      dataFiles[typeSelection.value][selectValue.value?.value ?? ''];
+    const module = dataFiles[typeSelection.value][selectValue.value ?? ''];
     return module?.(); //.then((moduleData) => moduleData.default);
   },
   {
@@ -143,7 +151,7 @@ const { data: changelog, status: changelogStatus } = useAsyncData<
 const iconsSrc = computed(
   () =>
     (typeSelection.value === 'og' ? ogChangelogs.icons : ozChangelogs.icons)[
-      selectValue.value?.value ?? ''
+      selectValue.value ?? ''
     ]
 );
 provide('iconsSrc', iconsSrc);
@@ -190,12 +198,13 @@ definePageMeta({
   name: 'Changelog',
 });
 
-useSeoMeta({
-  title: 'Changelogs',
-  titleTemplate: '',
-  description: 'Survival Chaos versions changelogs',
-  ogDescription: 'Survival Chaos versions changelogs',
-  ogImage: '/favicon.png',
+app.runWithContext(() => {
+  useSeoMeta({
+    title: 'Changelogs',
+    description: 'Survival Chaos versions changelogs',
+    ogDescription: 'Survival Chaos versions changelogs',
+    ogImage: '/favicon.png',
+  });
 });
 </script>
 

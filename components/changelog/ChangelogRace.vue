@@ -1,5 +1,5 @@
 <template>
-  <CCard :title="changelog.name" class="changelogCard">
+  <CCard :title="changelog.name" :id="changelog.name" class="changelogCard">
     <template #prependHead v-if="racesData && currentRace">
       <GameIcon :src="racesData.iconsSrc" :coords="raceIcon" width="48" />
     </template>
@@ -32,7 +32,12 @@
       />
     </template>
     <CCard
-      v-if="changelog.auras || changelog.upgrades || changelog.magic"
+      v-if="
+        changelog.auras ||
+        changelog.upgrades ||
+        changelog.magic ||
+        spells.length
+      "
       title="Fortress"
       class="d-flex flex-column align-center"
     >
@@ -55,6 +60,12 @@
           :get-icon="getIcon"
           clear-rows
         />
+      </template>
+      <template v-if="spells.length">
+        <DividerLabel class="mb-1">
+          <span class="mx-2 text-caption text-grey">Spells</span>
+        </DividerLabel>
+        <ChangelogGrid :items="spells" :get-icon="getIcon" clear-rows />
       </template>
     </CCard>
     <CCard
@@ -93,6 +104,17 @@
         />
       </template>
     </CCard>
+    <CCard
+      v-if="changelog.buildings"
+      title="Buildings"
+      class="d-flex flex-column align-center"
+    >
+      <ChangelogGrid
+        :items="Object.values(changelog.buildings)"
+        :get-icon="getIcon"
+        clear-rows
+      />
+    </CCard>
   </div>
 </template>
 
@@ -100,6 +122,7 @@
 import type { IBaseObject, IChangelogRace } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 import RaceDescription from '../racePage/RaceDescription.vue';
+import { isNotNil } from '~/utils/guards';
 import values from 'lodash/values';
 import mapValues from 'lodash/mapValues';
 
@@ -149,6 +172,9 @@ const preparedUnits = computed(() =>
       return [changeType, oldObj, newObj] as const;
     })
   )
+);
+const spells = computed(() =>
+  [changelog.t1spell, changelog.t2spell].filter(isNotNil)
 );
 </script>
 
