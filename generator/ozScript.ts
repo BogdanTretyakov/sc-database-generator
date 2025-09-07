@@ -489,6 +489,11 @@ export class OZScriptParser extends BaseScriptParser {
   }
 
   override getBonusUnit(bonusID: string): string | undefined {
+    // Ventyr uniq
+    if (bonusID === 'n066') {
+      return 'O05N';
+    }
+
     const findBlockIndex = this.script.match(
       new RegExp(
         String.raw`(?:else)?if .{2,6}==${this.strToInt(bonusID)}`,

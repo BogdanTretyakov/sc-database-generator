@@ -7,6 +7,7 @@ import { isNotNil, isBaseObject } from '../utils/guards';
 import { ozPatch, sur5alPatch } from './patches';
 import { Upgrades } from './objects';
 import type { IBaseObject } from '~/data/types';
+import mergeWith from 'lodash/mergeWith';
 
 const patches = (() => {
   switch (globalThis.mapVersion) {
@@ -172,10 +173,11 @@ export abstract class W3Parser {
   }
 
   protected applyPatch<T extends IBaseObject>(obj: T): T {
-    return {
-      ...obj,
-      ...(patches[obj.id] ?? {}),
-    };
+    return mergeWith(obj, patches[obj.id] ?? {}, (objValue, patchValue) => {
+      if (Array.isArray(objValue)) {
+        return objValue.concat(patchValue);
+      }
+    });
   }
 }
 

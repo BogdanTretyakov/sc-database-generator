@@ -39,6 +39,15 @@
       :title="`Unit: ${unit.name}`"
       :value="`unit-${unit.id}`"
     >
+      <template #title>
+        <GameIcon
+          :src="iconsSrc"
+          :coords="iconProps(unit.id)"
+          width="32"
+          class="mr-2"
+        />
+        <span>Unit: {{ unit.name }}</span>
+      </template>
       <v-expansion-panel-text>
         <DetailsUnit :item="unit" />
       </v-expansion-panel-text>
