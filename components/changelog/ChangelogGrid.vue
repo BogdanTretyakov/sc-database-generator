@@ -9,6 +9,33 @@
       }"
     >
       <template v-if="item">
+        <div
+          :class="[
+            'iconsContainer',
+            {
+              sameIcon: isEqual(
+                getIcon(item[1].iconId),
+                getIcon(item[2].iconId)
+              ),
+            },
+          ]"
+          v-bind="props"
+        >
+          <div class="old changelogIcon">
+            <GameIcon
+              :src="iconsSrc"
+              :coords="getIcon(item[1].iconId)"
+              :width="iconSize"
+            />
+          </div>
+          <div class="new changelogIcon">
+            <GameIcon
+              :src="iconsSrc"
+              :coords="getIcon(item[2].iconId)"
+              :width="iconSize"
+            />
+          </div>
+        </div>
         <ClientOnly>
           <v-tooltip
             location="right top"
@@ -22,35 +49,6 @@
             :disabled="globalDisabled === 'true'"
             class="tooltip-opacity"
           >
-            <template #activator="{ props }">
-              <div
-                :class="[
-                  'iconsContainer',
-                  {
-                    sameIcon: isEqual(
-                      getIcon(item[1].iconId),
-                      getIcon(item[2].iconId)
-                    ),
-                  },
-                ]"
-                v-bind="props"
-              >
-                <div class="old changelogIcon">
-                  <GameIcon
-                    :src="iconsSrc"
-                    :coords="getIcon(item[1].iconId)"
-                    :width="iconSize"
-                  />
-                </div>
-                <div class="new changelogIcon">
-                  <GameIcon
-                    :src="iconsSrc"
-                    :coords="getIcon(item[2].iconId)"
-                    :width="iconSize"
-                  />
-                </div>
-              </div>
-            </template>
             <v-row class="compare-body">
               <v-col cols="6" class="overflow-hidden">
                 <div class="text-subtitle-1 text-center text-yellow">
@@ -204,8 +202,9 @@ defineSlots<{
   overflow: hidden;
 }
 
-.changelogIcon image {
-  display: block;
+.changelogIcon {
+  width: 100%;
+  height: 100%;
 }
 
 .changelogIcon.new {

@@ -7,6 +7,7 @@ interface Props {
   imageRef: ShallowRef<HTMLElement | null>;
   coords: MaybeRefOrGetter<MaybeArray<IconBoundaries>>;
   idx: MaybeRefOrGetter<number>;
+  width?: string | number;
 }
 
 const isEnabled = !globalThis?.CSS?.supports(
@@ -15,12 +16,23 @@ const isEnabled = !globalThis?.CSS?.supports(
 
 type WH = [width: number, height: number];
 
-export const useFallbackImage = ({ src, imageRef, coords, idx }: Props) => {
+export const useFallbackImage = ({
+  src,
+  imageRef,
+  coords,
+  idx,
+  width,
+}: Props) => {
   const imageDimensions = useState(
     'imageDimensions',
     () => ({} as Record<string, WH>)
   );
-  const containerWidth = ref(0);
+  const containerWidth = ref(
+    (() => {
+      const numValue = Number(width);
+      return !width || Number.isNaN(numValue) ? 0 : numValue;
+    })()
+  );
 
   watch(
     () => toValue(src),
@@ -41,7 +53,7 @@ export const useFallbackImage = ({ src, imageRef, coords, idx }: Props) => {
     () => toValue(imageRef),
     (image) => {
       if (!image) return;
-      containerWidth.value = imageRef.value?.clientWidth ?? 0;
+      containerWidth.value = image.clientWidth || containerWidth.value;
     },
     { immediate: true }
   );

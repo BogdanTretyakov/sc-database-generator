@@ -1,7 +1,7 @@
 <template>
   <component
     :is="tagProps.is"
-    :style="tagProps.style"
+    :style="style"
     :src="tagProps.src"
     v-bind="attrs"
     class="icon"
@@ -35,6 +35,7 @@ const fallBackStyles = useFallbackImage({
   imageRef,
   coords,
   idx,
+  width: attrs.width,
 });
 
 const tagProps = computed(() => {
@@ -60,6 +61,17 @@ const tagProps = computed(() => {
         height - pb - pt
       }px)`,
     },
+  };
+});
+
+const style = computed(() => {
+  const size = isNaN(Number(attrs.width))
+    ? attrs.width
+    : `${Number(attrs.width)}px`;
+  return {
+    width: size,
+    height: size,
+    ...tagProps.value.style,
   };
 });
 
