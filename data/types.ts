@@ -168,8 +168,6 @@ export interface IRaceData {
   key: string;
   id: string;
   description: string;
-  /** @deprecated Only at old data */
-  ultimateId?: string;
   auras: IBaseObject[];
   bonuses: IBonusObject[];
   towerUpgrades: IUpgradeObject[];

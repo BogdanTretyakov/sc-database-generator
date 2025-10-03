@@ -6,7 +6,7 @@
     id="fortress"
   >
     <template #title>
-      <DetailsWrapper hide-dot :item="race.buildings.fort[0]">
+      <DetailsWrapper hide-dot :item="race.buildings.fort[1]">
         <v-btn size="large" class="mx-auto" variant="text" color="yellow">
           <b>Fortress</b>
         </v-btn>
@@ -16,7 +16,7 @@
       <AttackDefend
         key="fort-attack"
         class="ml-1"
-        :type="race.buildings.fort[0].atkType"
+        :type="race.buildings.fort[1].atkType"
       />
     </template>
     <template #appendHead>
@@ -111,11 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import type {
-  IRaceData,
-  IRaceUltimateData,
-  IUpgradeObject,
-} from '~/data/types';
+import type { IRaceData, IUpgradeObject } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 import { DetailsTooltip } from '#components';
 
@@ -128,19 +124,9 @@ const { race, icons, iconProps } = defineProps<Props>();
 
 const hover = inject<Ref<undefined | string[]>>('hover', ref());
 
-const spells = computed(() => {
-  const ultimate =
-    race.ultiData ??
-    (isNotNil(race.ultimateId)
-      ? ({
-          type: 'ultimate',
-          id: race.ultimateId,
-          hotkey: 'V',
-          name: '',
-        } satisfies IRaceUltimateData)
-      : undefined);
-  return [race.t1spell, race.t2spell, ultimate].filter(isNotNil);
-});
+const spells = computed(() =>
+  [race.t1spell, race.t2spell, race.ultiData].filter(isNotNil)
+);
 
 const researches = computed<Array<IUpgradeObject>>(() => {
   return race.magic
