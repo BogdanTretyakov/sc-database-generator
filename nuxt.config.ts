@@ -27,6 +27,9 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      htmlAttrs: {
+        lang: 'en',
+      },
       title: '',
       link: [{ rel: 'icon', type: 'image/png', href: '/favicon.png' }],
       titleTemplate: '%s | Survival Chaos Wiki',
