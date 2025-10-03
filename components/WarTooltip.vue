@@ -47,7 +47,10 @@ interface Props extends GameIconProps {
 const { description, descriptionClass, coords, src, disabled, padding } =
   defineProps<Props>();
 
-const globalDisabled = useStorageValue('tooltipsDisabled', 'false');
+const globalDisabled = useStorageValue<'true' | 'false'>(
+  'tooltipsDisabled',
+  'false'
+);
 const isMetaKey = useMetaKey();
 
 const disabledTooltip = computed(() => {
@@ -68,7 +71,7 @@ div {
   height: 100%;
 }
 .tooltip-opacity {
-  opacity: 0.9;
+  opacity: 0.96;
 }
 .war-tooltip::v-deep(hr) {
   opacity: 0.6;

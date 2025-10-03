@@ -365,8 +365,8 @@ class ChangelogGenerator {
   }
 
   private handleArrayByHotkey<T extends IBaseObject>(oldObj: T[], newObj: T[]) {
-    let oldMap = keyBy(oldObj, 'id');
-    let newMap = keyBy(newObj, 'id');
+    let oldMap = keyBy(oldObj, 'name');
+    let newMap = keyBy(newObj, 'name');
 
     let oldDiffValues = values(oldMap);
     let newDiffValues = values(newMap);
@@ -388,20 +388,23 @@ class ChangelogGenerator {
 
       oldDiffValues = values(oldMap);
       newDiffValues = values(newMap);
-      if (oldDiffValues.length !== newDiffValues.length) {
-        console.log(oldMap, newMap);
-        throw new Error('Alarm! Some strange shit is going on here!!!!');
-      }
       return !oldDiffValues.length && !newDiffValues.length;
     };
 
-    const done = process();
+    let done = process();
     if (done) return output;
 
     oldMap = keyBy(oldMap, 'hotkey');
     newMap = keyBy(newMap, 'hotkey');
 
-    process();
+    done = process();
+    if (done) return output;
+
+    oldMap = keyBy(oldMap, 'id');
+    newMap = keyBy(newMap, 'id');
+
+    done = process();
+    if (done) return output;
 
     oldDiffValues.forEach((oldObj, idx) => {
       const newObj = newDiffValues[idx];

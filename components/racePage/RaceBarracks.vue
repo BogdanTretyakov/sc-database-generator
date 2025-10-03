@@ -6,7 +6,7 @@
     id="units"
   >
     <template #title>
-      <DetailsWrapper hide-dot :item="race.buildings.barrack">
+      <DetailsWrapper hide-dot :item="race.buildings.barrack[0]">
         <v-btn size="large" class="mx-auto" variant="text" color="yellow">
           <b>Barracks</b>
         </v-btn>
@@ -16,13 +16,13 @@
       <AttackDefend
         key="barrack-attack"
         class="ml-1"
-        :type="race.buildings.barrack.atkType"
+        :type="race.buildings.barrack[0].atkType"
       />
     </template>
     <DividerLabel class="mb-2 mt-n6">
       <span class="mx-2 text-caption text-grey">Units</span>
     </DividerLabel>
-    <WarGrid class="mx-auto" :items="units" v-slot="{ item }">
+    <WarGrid class="mx-auto" :items="items" v-slot="{ item }">
       <DetailsTooltip
         :item="item"
         :src="icons"
@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import type { GetObjectFunction, IRaceData, IUnitObject } from '~/data/types';
+import type { IBaseObject, IRaceData, IUnitObject } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 import { DetailsTooltip } from '#components';
 
@@ -71,7 +71,6 @@ interface Props {
 const { race, icons, iconProps } = defineProps<Props>();
 
 const hover = inject<Ref<undefined | string[]>>('hover', ref());
-const objFinder = inject<GetObjectFunction>('objFinder')!;
 
 const unitsHotkeys: Record<string, string> = {
   melee: 'A',
@@ -89,7 +88,15 @@ const units = computed(() =>
   }))
 );
 
-const setHover = (item: IUnitObject) => {
+const items = computed(() => {
+  const barrackSkills =
+    race.buildings.barrack.find((s) => s.skills?.length)?.skills ?? [];
+
+  return [...barrackSkills, ...units.value];
+});
+
+const setHover = (item: IBaseObject) => {
+  if (!isUnitObject(item)) return;
   hover.value = [item.id, ...(item.upgrades ?? [])];
 };
 </script>

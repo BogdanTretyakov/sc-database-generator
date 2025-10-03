@@ -109,8 +109,8 @@ export interface IRawRace extends Pick<IRaceData, 'ultiData'> {
   heroes: string[];
   buildings: {
     tower: string;
-    fort: string;
-    barrack: string;
+    fort: string[];
+    barrack: string[];
   };
   towerAbilities: string[];
   units: {
@@ -123,6 +123,7 @@ export interface IRawRace extends Pick<IRaceData, 'ultiData'> {
   };
   bonusUpgrades: Record<string, [id: string, baseLevel: number][]>;
   bonusHeroes: IRawBonusHero[];
+  bonusPickerId: string;
 }
 
 export interface IRawBonusHero {
@@ -188,15 +189,16 @@ export interface IRaceData {
     catapult: IUnitObject;
   };
   buildings: {
-    fort: IUnitObject;
+    fort: IUnitObject[];
     tower: IUnitObject;
-    barrack: IUnitObject;
+    barrack: IUnitObject[];
   };
   t1spell: ISpellObject;
   t2spell: ISpellObject;
   heroes: Array<IHeroObject>;
   bonusBuildings: IBaseObject[];
   ultiData?: IRaceUltimateData;
+  bonusPickerId: string;
 }
 
 export type IRaceIcons = Record<
@@ -292,10 +294,12 @@ export interface IChangelog {
 export type ChangeTuple<T> = [
   'replace' | 'change',
   old: T extends object
-    ? Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
+    ? // @ts-expect-error
+      Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
     : T,
   new: T extends object
-    ? Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
+    ? // @ts-expect-error
+      Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
     : T
 ];
 export type WithIconId<T extends IBaseObject> = T & { iconId: string };

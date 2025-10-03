@@ -20,7 +20,7 @@ const patches = (() => {
   }
 })();
 
-interface W3RawObject {
+export interface W3RawObject {
   id: string;
   type: string;
   level: number;
@@ -318,7 +318,7 @@ export class W3Object<T extends W3Parser = W3Parser> {
   }
 
   getMaxLevel() {
-    const value = this.getValueByKey('lvl');
+    const value = this.getValueByKey('lvl') ?? this.getValueByKey('lev');
     if (typeof value === 'number' && !!value) return value;
     const levels = this.data.map(({ level }) => level);
     return Math.max(...levels);

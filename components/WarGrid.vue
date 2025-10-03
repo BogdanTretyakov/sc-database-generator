@@ -76,7 +76,7 @@ const sortedItems = computed(() => {
       unkeyed.push(item);
       continue;
     }
-    if (output[idx] !== undefined) {
+    if (output[idx]) {
       competitors.push(item);
       continue;
     }

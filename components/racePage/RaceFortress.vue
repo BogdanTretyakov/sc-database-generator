@@ -6,7 +6,7 @@
     id="fortress"
   >
     <template #title>
-      <DetailsWrapper hide-dot :item="race.buildings.fort">
+      <DetailsWrapper hide-dot :item="race.buildings.fort[0]">
         <v-btn size="large" class="mx-auto" variant="text" color="yellow">
           <b>Fortress</b>
         </v-btn>
@@ -16,7 +16,7 @@
       <AttackDefend
         key="fort-attack"
         class="ml-1"
-        :type="race.buildings.fort.atkType"
+        :type="race.buildings.fort[0].atkType"
       />
     </template>
     <template #appendHead>

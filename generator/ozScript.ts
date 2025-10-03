@@ -64,7 +64,7 @@ export class OZScriptParser extends BaseScriptParser {
     const numId = this.strToInt(id);
     const findRaceInitBlock = this.script.match(
       new RegExp(
-        String.raw`(?:else)?if .{1,6}==.{1,3}.+\n(^.+$\n){0,3}call .{1,6}\(.{1,6},\s?${numId}\)\n(^.+$\n){1,20}call.+UnitRemoveAbility.+${numId}`,
+        String.raw`(?:else)?if .{1,6}==.{1,3}.+\n(^.+$\n){0,3}(^.+$\n){1,20}call.+UnitRemoveAbility.+${numId}`,
         'm'
       )
     );
@@ -122,10 +122,15 @@ export class OZScriptParser extends BaseScriptParser {
           ?.getArrayValue('pb1') || getError('get aura'),
       units: mapObject(this.scriptVariables.units, (key) => raceVariables[key]),
       magic: raceVariables[this.scriptVariables.magic],
-      buildings: mapObject(
-        this.scriptVariables.buildings,
-        (key) => raceVariables[key]
-      ),
+      buildings: {
+        fort: this.getBuildAllLevels(
+          raceVariables[this.scriptVariables.buildings.fort]
+        ),
+        barrack: this.getBuildAllLevels(
+          raceVariables[this.scriptVariables.buildings.barrack]
+        ),
+        tower: raceVariables[this.scriptVariables.buildings.tower],
+      },
       baseUpgrades: unitsParser
         .getById(raceVariables[this.scriptVariables.buildings.fort])
         ?.withInstance((instance) => {
@@ -160,7 +165,7 @@ export class OZScriptParser extends BaseScriptParser {
 
       upgrades: unitsParser
         .getById(raceVariables[this.scriptVariables.buildings.tower])
-        ?.getArrayValue('res'),
+        ?.getArrayValue('res')!,
       heroes: this.scriptVariables.heroes.map((key) => raceVariables[key]),
       bonuses:
         unitsParser
@@ -183,7 +188,8 @@ export class OZScriptParser extends BaseScriptParser {
             )
           ) ?? [],
       bonusHeroes: [],
-    };
+      bonusPickerId: raceVariables[this.scriptVariables.bonusPicker],
+    } satisfies IRawRace;
 
     return this.enrichRaceData(raceData);
   }
@@ -282,21 +288,16 @@ export class OZScriptParser extends BaseScriptParser {
         );
 
         const spells = Array.from(
-          ultimateCodeBlock?.match(/(?<=^set .{3,7}=)\d+/gm) ?? []
+          ultimateCodeBlock?.match(
+            /(?<=^set .{3,7}=)\d+|(?<=UnitAddAbility\(.{2,6},\s?)\d+/gm
+          ) ?? []
         ).filter(uniq);
 
-        switch (spells.length) {
-          case 1:
-            acc[this.intToStr(picker)] = [spell, spells[0]].map(this.intToStr);
-            break;
-          case 2:
-            acc[this.intToStr(picker)] = spells.map(this.intToStr);
-            break;
-          case 0:
-          default:
-            acc[this.intToStr(picker)] = [this.intToStr(spell)];
-            break;
-        }
+        acc[this.intToStr(picker)] = spells
+          .concat(spell)
+          .filter(isNotNil)
+          .filter(uniq)
+          .map((val) => this.intToStr(val));
 
         return acc;
       } catch (e) {
@@ -445,12 +446,6 @@ export class OZScriptParser extends BaseScriptParser {
     );
     if (!abilitiesMatch?.index) return;
     const setAbiCodeBlock = this.getIfBlockByIndex(abilitiesMatch.index);
-
-    const match = Array.from(
-      setAbiCodeBlock.matchAll(
-        /.+GetHeroLevel\(.{2,6}\)>?=(?<level>\d{1,2})/g
-      ) ?? []
-    );
 
     const output = Array.from(
       setAbiCodeBlock.matchAll(/.+GetHeroLevel\(.{2,6}\)>?=(?<level>\d{1,2})/g)

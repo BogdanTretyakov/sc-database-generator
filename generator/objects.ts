@@ -1,4 +1,4 @@
-import { W3Object, W3Parser, W3Slk } from './utils';
+import { W3Object, W3Parser, W3Slk, type W3RawObject } from './utils';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import { isNotNil } from '~/utils/guards';
@@ -292,16 +292,19 @@ export class Abilities extends W3Parser {
     data: W3Object<Abilities>,
     icons?: Record<string, string>
   ): ISpellObject {
+    const levelFilter = (s: W3RawObject) =>
+      s.level > 0 && s.level <= data.getMaxLevel();
+
     return this.applyPatch({
       type: 'spell',
       id: data.id,
       name: data.getName(),
       hotkey: data.getValueByKey('hky'),
       description: data.getValueByKey('ub1'),
-      area: data.getArrayValue('are')?.map(Number),
-      cooldown: data.getArrayValue('cdn')?.map(Number),
-      cost: data.getArrayValue('mcs')?.map(Number),
-      duration: data.getArrayValue('dut')?.map(Number),
+      area: data.getAllValuesByKey('are', levelFilter)?.map(Number),
+      cooldown: data.getAllValuesByKey('cdn', levelFilter)?.map(Number),
+      cost: data.getAllValuesByKey('mcs', levelFilter)?.map(Number),
+      duration: data.getAllValuesByKey('dut', levelFilter)?.map(Number),
       targets: data.getArrayValue('tar'),
       summonUnit: this.getSummons(data)
         .map((id) => unitsParser.getById(id))

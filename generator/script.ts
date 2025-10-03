@@ -209,14 +209,6 @@ export class Sur5alScriptParser extends BaseScriptParser {
       {} as Record<string, Record<string, string>>
     );
 
-    const hiddenDoomId =
-      this.script.match(
-        new RegExp(
-          String.raw`(?<=^call BlzUnitHideAbility\(${escapedFortVar},['|"]).*?(?=['|"],true\)$)`,
-          'i'
-        )
-      )?.[0] ?? '';
-
     const auraID =
       rawRaceData[this.scriptVariables.replaceable.key][
         this.scriptVariables.replaceable.aura
@@ -225,13 +217,10 @@ export class Sur5alScriptParser extends BaseScriptParser {
       abilitiesParser.getById(auraID)?.withInstance((data) => {
         return String(data.getValueByKey('pb1')).split(',');
       }) ?? [];
-    const ulti =
-      rawRaceData[this.scriptVariables.replaceable.key][
-        this.scriptVariables.replaceable.ulti
-      ];
 
-    const [t1spell, t2spell] =
-      unitsParser.getById(fortId)?.withInstance((data) => {
+    const [t1spell, t2spell] = unitsParser
+      .getById(fortId)
+      ?.withInstance((data) => {
         const skills = data.getArrayValue('abi') ?? [];
         const t1 = skills.find(
           (id) => abilitiesParser.getById(id)?.getValueByKey('hky') === 'Z'
@@ -240,7 +229,7 @@ export class Sur5alScriptParser extends BaseScriptParser {
           (id) => abilitiesParser.getById(id)?.getValueByKey('hky') === 'X'
         )!;
         return [t1, t2];
-      }) ?? [];
+      })!;
 
     const output: IRawRace = {
       id: raceID,
@@ -271,9 +260,11 @@ export class Sur5alScriptParser extends BaseScriptParser {
         (key) => Object.values(rawRaceData[key])[0]
       ),
       buildings: {
-        fort: fortId,
+        fort: this.getBuildAllLevels(fortId),
         tower: rawRaceData[buildings.tower.key][buildings.tower.key2],
-        barrack: rawRaceData[buildings.barrack.key][buildings.barrack.key2],
+        barrack: this.getBuildAllLevels(
+          rawRaceData[buildings.barrack.key][buildings.barrack.key2]
+        ),
       },
       towerAbilities:
         unitsParser
@@ -301,6 +292,7 @@ export class Sur5alScriptParser extends BaseScriptParser {
       },
       bonusUpgrades: {},
       bonusHeroes: [],
+      bonusPickerId: this.buildingsMap[globals.bonusPicker][buildingsKey],
     };
 
     this.enrichRaceData(output);

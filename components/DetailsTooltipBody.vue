@@ -29,11 +29,10 @@
     </v-row>
   </template>
 
-  <WarArrayInfo
-    v-if="isUpgradeObject(item) && item.cost"
-    :data="item.cost"
-    icon="gold"
-  />
+  <template v-if="isUpgradeObject(item)">
+    <WarArrayInfo v-if="item.cost?.length" :data="item.cost" icon="gold" />
+    <WarArrayInfo v-if="item.timers?.length" :data="item.timers" icon="time" />
+  </template>
 
   <template v-if="isUnitObject(item) || isHeroObject(item)">
     <v-row no-gutters>
@@ -99,8 +98,6 @@ import {
 interface Props {
   item: IBaseObject;
 }
-
-const [assetsSrc, { health }] = useAssets();
 
 const { item } = defineProps<Props>();
 </script>

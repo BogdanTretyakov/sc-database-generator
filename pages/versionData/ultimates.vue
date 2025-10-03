@@ -25,7 +25,7 @@
           </WarGrid>
         </CCard>
       </div>
-      <div v-for="n in 2">
+      <div v-for="n in 4">
         <v-fade-transition>
           <CCard v-if="selectedSpells[n - 1]" title="">
             <template #title>
@@ -41,10 +41,7 @@
             </template>
             <div class="d-flex align-start">
               <div class="flex-grow-1">
-                <SpellRequires
-                  :requires="selectedSpells[n - 1].requires"
-                  :requires-names="requires"
-                />
+                <SpellRequires :requires="{}" :requires-names="requires" />
               </div>
               <div
                 class="d-flex align-center"

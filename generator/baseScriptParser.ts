@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import type { IRaceData, IRawPatchData, IUnitObject } from '~/data/types';
+import { unitsParser } from './objects';
 
 export abstract class BaseScriptParser {
   protected script: string;
@@ -24,6 +25,24 @@ export abstract class BaseScriptParser {
   abstract getBonusUnit(bonusID: string): string | undefined;
   abstract enrichUnitRequires(item: IUnitObject): IUnitObject;
   abstract getHeroItems(heroID: string): Record<string, string> | undefined;
+
+  protected getBuildAllLevels(unitID: string) {
+    const output = [unitID];
+
+    let [prev] = unitsParser.findIDByKey('upt', unitID);
+    while (!!prev) {
+      output.unshift(prev);
+      [prev] = unitsParser.findIDByKey('upt', prev);
+    }
+
+    let next = unitsParser.getById(unitID)?.getValueByKey('upt');
+    while (!!next) {
+      output.push(next);
+      next = unitsParser.getById(next)?.getValueByKey('upt');
+    }
+
+    return output;
+  }
 
   protected getIfBlockByIndex(cursorPosition: number, text = this.script) {
     const isIf = text.startsWith('if', cursorPosition);

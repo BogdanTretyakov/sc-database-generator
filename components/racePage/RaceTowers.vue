@@ -26,9 +26,9 @@
     </template>
     <WarGrid
       class="mx-auto"
-      :items="race.towerUpgrades"
-      :restrictedSlots="['Q', 'W']"
+      :items="items"
       v-slot="{ item }"
+      :restricted-slots="['Q', 'W']"
     >
       <DetailsTooltip
         :item="item"
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IRaceData, IUpgradeObject } from '~/data/types';
+import type { IBaseObject, IRaceData } from '~/data/types';
 import type { IconBoundaries } from '../GameIcon.vue';
 
 interface Props {
@@ -60,9 +60,13 @@ const { race, icons, iconProps } = defineProps<Props>();
 
 const hover = inject<Ref<undefined | string[]>>('hover', ref());
 
-const upgrades = computed(() =>
-  Object.fromEntries(race.towerUpgrades.map((item) => [item.id, item]))
-);
+const items = computed(() => [
+  ...(race.buildings.tower.skills ?? []).map((s, idx) => ({
+    ...s,
+    hotkey: s.hotkey || hotkeys[idx],
+  })),
+  ...race.towerUpgrades,
+]);
 const relatedBonuses = computed(() =>
   Object.values(race.bonuses).reduce((acc, { id, relatedID }) => {
     relatedID.forEach((i) => {
@@ -72,7 +76,7 @@ const relatedBonuses = computed(() =>
   }, {} as Record<string, string>)
 );
 
-const setHover = (item: IUpgradeObject) => {
+const setHover = (item: IBaseObject) => {
   const units = Object.values(race.units)
     .filter(({ upgrades }) => upgrades?.includes(item.id))
     .map(({ id }) => id);
