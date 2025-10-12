@@ -51,6 +51,11 @@ export default {
       },
     },
     {
+      name: 'Statistic',
+      path: '/stats',
+      component: () => import('~/pages/statistic.vue'),
+    },
+    {
       path: '/:versionType/:version?',
       component: () => import('~/pages/versionData/index.vue'),
       children: [

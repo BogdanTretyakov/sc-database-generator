@@ -11,13 +11,9 @@
 
 <script setup lang="ts">
 import { useFallbackImage } from '~/composables/useFallbackImage';
+import type { IconBoundaries as GIconBoundaries } from '~/types/app';
 
-export interface IconBoundaries {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+export type IconBoundaries = GIconBoundaries;
 
 export interface GameIconProps {
   src: string;
@@ -35,7 +31,7 @@ const fallBackStyles = useFallbackImage({
   imageRef,
   coords,
   idx,
-  width: attrs.width,
+  width: attrs.width ? String(attrs.width) : undefined,
 });
 
 const tagProps = computed(() => {

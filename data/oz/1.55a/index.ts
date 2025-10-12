@@ -2,7 +2,7 @@ import type { IDataFile } from '~/data/types';
 import type { VersionIndexFile } from '~/data';
 
 const racesData = Object.entries(
-  import.meta.glob('./*.json', { import: 'default', eager: false })
+  import.meta.glob<any>('./*.json', { import: 'default', eager: false })
 ).reduce((acc, [key, value]) => {
   const path = key.split(/\\|\/|\./g);
   const name = path[path.length - 2];
@@ -11,7 +11,7 @@ const racesData = Object.entries(
 }, {} as Record<string, () => Promise<IDataFile>>);
 
 const racesIcons = Object.entries(
-  import.meta.glob('./*.webp', { import: 'default', eager: true })
+  import.meta.glob<any>('./*.webp', { import: 'default', eager: true })
 ).reduce((acc, [key, value]) => {
   const path = key.split(/\\|\/|\./g);
   const name = path[path.length - 2];

@@ -124,9 +124,15 @@ import type { IArtifactData, IArtifactObject } from '~/data/types';
 
 const compare = new Intl.Collator('en').compare;
 
-const showPath = useStorageValue('artiShowPath', 'false');
-const disabledTooltips = useStorageValue('artiDisabledTooltips', 'false');
-const globalTooltips = useStorageValue('tooltipsDisabled', 'false');
+const showPath = useStorageValue<'true' | 'false'>('artiShowPath', 'false');
+const disabledTooltips = useStorageValue<'true' | 'false'>(
+  'artiDisabledTooltips',
+  'false'
+);
+const globalTooltips = useStorageValue<'true' | 'false'>(
+  'tooltipsDisabled',
+  'false'
+);
 
 const {
   raceData: artiData,

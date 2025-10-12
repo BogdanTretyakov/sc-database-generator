@@ -24,7 +24,9 @@
       >
         <v-container fluid>
           <v-fade-transition leave-absolute>
-            <NuxtPage :page-key="(route) => route.path" />
+            <div>
+              <NuxtPage :page-key="(route) => route.path" />
+            </div>
           </v-fade-transition>
         </v-container>
         <v-overlay

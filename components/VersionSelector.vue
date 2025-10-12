@@ -58,7 +58,7 @@ const savedPrefVersion = useStorageValue('preferredVersion');
 
 const versionTypeTitles: Record<string, string> = {
   og: 'Original',
-  oz: 'OZGame',
+  oz: 'Reborn',
 };
 
 const route = useRoute();

@@ -30,6 +30,18 @@
       </template>
     </div>
     <v-spacer />
+    <v-badge color="warning" dot :model-value="statsMeta?.hasPatches ?? false">
+      <v-btn
+        v-if="!!statsMeta"
+        variant="text"
+        density="comfortable"
+        class="mx-1"
+        :to="{ name: 'Statistic' }"
+      >
+        Statistic
+      </v-btn>
+    </v-badge>
+
     <v-btn
       variant="text"
       density="comfortable"
@@ -54,6 +66,8 @@
 
 <script setup lang="ts">
 import { MENU_ROUTES } from '~/consts';
+
+const statsMeta = await useStatisticMeta();
 
 const versionType = useStorageValue('preferredVersion', 'og');
 </script>

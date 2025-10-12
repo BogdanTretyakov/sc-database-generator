@@ -96,7 +96,7 @@ const dataFiles = {
 
 const versionTypeTitles: Record<string, string> = {
   og: 'Original',
-  oz: 'OZGame',
+  oz: 'Reborn',
 };
 
 const router = useRouter();

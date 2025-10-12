@@ -1,11 +1,19 @@
-export const useStorageValue = <T extends string = string>(
+import identity from 'lodash/identity';
+
+export const useStorageValue = <T extends string = string, K = T>(
   storageKey: string,
-  defaultValue?: T
+  defaultValue?: T | K,
+  formatter?: (value: T | K) => K
 ) => {
-  const value = useState<T>(storageKey, () => defaultValue ?? ('' as T));
+  const value = useState<K>(
+    storageKey,
+    // @ts-expect-error don't wanna type it
+    () => (formatter ?? identity)(defaultValue) ?? ('' as K)
+  );
 
   onNuxtReady(() => {
-    value.value = (storage.get(storageKey) ?? defaultValue ?? '') as T;
+    const val = (storage.get(storageKey) ?? defaultValue ?? '') as K;
+    value.value = formatter ? formatter(val) : val;
   });
 
   watch(
@@ -15,7 +23,7 @@ export const useStorageValue = <T extends string = string>(
       if (!value) {
         return storage.remove(storageKey);
       }
-      storage.set(storageKey, value);
+      storage.set(storageKey, String(value));
     }
   );
 

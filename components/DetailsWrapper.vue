@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts" generic="T extends IBaseObject">
+import noop from 'lodash/noop';
 import { IS_TOUCH } from '~/consts';
 import type { IBaseObject, IBonusObject, ISpellObject } from '~/data/types';
 
@@ -25,7 +26,7 @@ const { item, hideDot = false } = defineProps<Props<T>>();
 defineSlots<{
   default(): any;
 }>();
-const setItem = inject<(val: IBaseObject | null) => void>('detailsSet');
+const setItem = inject<(val: IBaseObject | null) => void>('detailsSet', noop);
 
 const hasDetails = computed(() => {
   if (!setItem) return false;

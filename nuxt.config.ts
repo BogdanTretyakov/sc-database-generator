@@ -25,6 +25,12 @@ export default defineNuxtConfig({
     inlineStyles: false,
   },
 
+  runtimeConfig: {
+    public: {
+      backendUrl: process.env.BACKEND_URL ?? '',
+    },
+  },
+
   app: {
     head: {
       htmlAttrs: {
@@ -44,6 +50,7 @@ export default defineNuxtConfig({
   generate: {
     routes: [
       '/',
+      '/stats',
       ...['og', 'oz']
         .map((key) => {
           const routes = ['races', 'artifacts', 'ultimates', 'misc'];

@@ -19,7 +19,7 @@
               ),
             },
           ]"
-          v-bind="props"
+          v-bind="$props"
         >
           <div class="old changelogIcon">
             <GameIcon
@@ -104,7 +104,10 @@ const { items, clearRows = false } = defineProps<Props>();
 
 const iconsSrc = inject('iconsSrc', ref(png));
 
-const globalDisabled = useStorageValue('tooltipsDisabled', 'false');
+const globalDisabled = useStorageValue<'true' | 'false'>(
+  'tooltipsDisabled',
+  'false'
+);
 const iconSizeData = useStorageValue('iconSize', DEFAULT_ICON_SIZE);
 const iconSize = computed(() => {
   const numSize = Number(iconSizeData.value);

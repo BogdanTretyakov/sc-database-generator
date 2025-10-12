@@ -1,5 +1,3 @@
-import type { IconBoundaries } from '~/components/GameIcon.vue';
-
 export interface IBaseObject {
   id: string;
   name: string;

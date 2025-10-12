@@ -1,6 +1,19 @@
 {
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "types": ["topojson-client"],
+    "resolveJsonModule": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo"
+  },
   "files": ["./global.d.ts"],
-  "exclude": ["./dataWarcraft", "./dataMap", "./generator/debug"]
+  "exclude": [
+    "./dataWarcraft",
+    "./dataMap",
+    "./generator/debug",
+    "./dataGenerated",
+    "./data/**/*.json"
+  ]
 }
