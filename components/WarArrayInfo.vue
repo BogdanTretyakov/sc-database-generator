@@ -55,6 +55,7 @@ const itemClass = computed(() => {
     case 'bounty':
       return 'cost';
     case 'health':
+    case 'attackSpeed':
       return 'text-white';
 
     default:

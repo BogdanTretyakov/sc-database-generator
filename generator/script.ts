@@ -1,6 +1,5 @@
 import { abilitiesParser, unitsParser } from './objects';
 import type {
-  IRaceData,
   IRawArtifacts,
   IRawPatchData,
   IRawRace,
@@ -90,6 +89,7 @@ export class Sur5alScriptParser extends BaseScriptParser {
       misc: {
         neutrals: this.getNeutrals(),
       },
+      ballance: this.getBalanceData(),
     };
   }
 

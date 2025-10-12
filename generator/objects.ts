@@ -6,6 +6,7 @@ import { uniq, uniqById } from '~/utils/array';
 import type {
   IArtifactObject,
   IHeroObject,
+  IRawBalanceData,
   ISpellObject,
   IUnitObject,
   IUpgradeObject,
@@ -55,7 +56,7 @@ export class Units extends W3Parser {
     return props.split(',')[0]?.trim();
   }
 
-  getAttack(data: W3Object<Units>): string {
+  getAttack(data: W3Object<Units>, addDamage = 0): string {
     const attackBase = Number(
       this.getWithSlkFallback(data, 'a1b', this.weapons, 'dmgplus1')
     );
@@ -67,7 +68,7 @@ export class Units extends W3Parser {
     );
     const startDamage = attackBase + attackDice;
     const endDamage = attackBase + attackDice * (attackSide || 1);
-    return `${startDamage}-${endDamage}`;
+    return `${startDamage + addDamage}-${endDamage + addDamage}`;
   }
 
   getModel(data: W3Object<Units>): string {
@@ -130,10 +131,11 @@ export class Units extends W3Parser {
     });
   }
 
-  getHeroObject(data: W3Object<Units>): IHeroObject {
-    return this.applyPatch({
-      ...this.getUnitObject(data),
-      type: 'hero',
+  getHeroObject(data: W3Object<Units>, ballance: IRawBalanceData): IHeroObject {
+    const unitData = this.getUnitObject(data);
+
+    const heroData = {
+      type: 'hero' as const,
       fullName: this.getFullName(data),
       skills:
         (data.getArrayValue('hab') ?? data.getArrayValue('abi'))
@@ -150,6 +152,33 @@ export class Units extends W3Parser {
       agiLvl: this.getWithSlkFallback(data, 'agp', this.ballance, 'AGIplus'),
       strLvl: this.getWithSlkFallback(data, 'stp', this.ballance, 'STRplus'),
       intLvl: this.getWithSlkFallback(data, 'inp', this.ballance, 'INTplus'),
+    };
+
+    if (ballance) {
+      const addDamage = Math.floor(
+        heroData[heroData.stat] * (ballance.StrAttackBonus ?? 0)
+      );
+      unitData.atk = this.getAttack(data, addDamage);
+
+      unitData.def += ballance.AgiDefenseBase ?? 0;
+      unitData.def += Math.floor(
+        heroData.agiLvl * (ballance.AgiDefenseBonus ?? 0)
+      );
+      unitData.atkSpeed /=
+        1 + heroData.agi * (ballance.AgiAttackSpeedBonus ?? 0);
+
+      unitData.hp += Math.floor(
+        heroData.str * (ballance.StrHitPointBonus ?? 0)
+      );
+      unitData.hpReg += heroData.str * (ballance.StrRegenBonus ?? 0);
+
+      unitData.mp += Math.floor(heroData.int * (ballance.IntManaBonus ?? 0));
+      unitData.mpReg += heroData.int * (ballance.IntRegenBonus ?? 0);
+    }
+
+    return this.applyPatch({
+      ...unitData,
+      ...heroData,
     });
   }
 }

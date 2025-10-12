@@ -237,7 +237,7 @@ export class SurvivalChaosParser {
         .filter(isNotNil)
         .map((s, idx) =>
           s.withIcon(icons).withInstance((i) => ({
-            ...i.parser.getHeroObject(i),
+            ...i.parser.getHeroObject(i, this.data.ballance),
             hotkey: hotkeys[idx],
           }))
         )
@@ -262,7 +262,7 @@ export class SurvivalChaosParser {
                     })
                     .filter(isNotNil);
               return {
-                ...instance.parser.getHeroObject(instance),
+                ...instance.parser.getHeroObject(instance, this.data.ballance),
                 hotkey: hotkeys[slot],
                 items,
               };

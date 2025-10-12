@@ -32,7 +32,7 @@ export default {
         const [version] =
           String(to.params.clVersion) in versions
             ? [to.params.clVersion]
-            : sortVersion(Object.keys(versions));
+            : Object.keys(versions).pop();
 
         if (
           !to.params.clVersionType ||
@@ -43,7 +43,6 @@ export default {
             name: to.name,
             hash: to.hash,
             params: {
-              ...to.params,
               clVersionType: versionType,
               clVersion: version,
             },

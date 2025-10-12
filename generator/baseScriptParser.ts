@@ -1,7 +1,13 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import type { IRaceData, IRawPatchData, IUnitObject } from '~/data/types';
+import type {
+  IRaceData,
+  IRawBalanceData,
+  IRawPatchData,
+  IUnitObject,
+} from '~/data/types';
 import { unitsParser } from './objects';
+import mapValues from 'lodash/mapValues';
 
 export abstract class BaseScriptParser {
   protected script: string;
@@ -78,5 +84,44 @@ export abstract class BaseScriptParser {
     }
 
     return text.slice(cursorPosition);
+  }
+
+  protected getBalanceData() {
+    const ballanceFile = readFileSync(
+      resolve(
+        process.cwd(),
+        'dataMap',
+        globalThis.mapVersion ?? 'og',
+        'war3mapMisc.txt'
+      ),
+      {
+        encoding: 'utf8',
+      }
+    );
+
+    const rawData = Object.fromEntries(
+      ballanceFile
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter((s) => !s.startsWith('['))
+        .map((s) => s.split('=').map((s) => s.trim()))
+    );
+
+    const output: IRawBalanceData = {
+      StrAttackBonus: 0,
+      AgiDefenseBase: 0,
+      AgiDefenseBonus: 0,
+      StrHitPointBonus: 0,
+      AgiAttackSpeedBonus: 0,
+      StrRegenBonus: 0,
+      IntRegenBonus: 0,
+      IntManaBonus: 0,
+    };
+
+    return mapValues(output, (_, key) => {
+      const value = Number(rawData[key]);
+      return isNaN(value) ? 0 : value;
+    });
   }
 }

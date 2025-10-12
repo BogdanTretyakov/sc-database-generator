@@ -69,7 +69,7 @@
                 }}{{ item.weaponType === 'normal' ? ' (melee)' : '' }}</span
               >
             </div>
-            <div class="d-flex align-center">
+            <div class="d-flex align-center" v-if="item.atkSpeed">
               <WarTooltip
                 :src="icons"
                 :coords="attackSpeed"
@@ -77,7 +77,7 @@
                 description="Attack speed"
               >
               </WarTooltip>
-              <span class="ml-2 mt-n1">{{ item.atkSpeed }}</span>
+              <span class="ml-2 mt-n1">{{ item.atkSpeed.toFixed(2) }} BCD</span>
             </div>
           </v-col>
           <v-col cols="6" class="py-0">

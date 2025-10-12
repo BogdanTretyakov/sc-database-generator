@@ -1,4 +1,5 @@
 import type {
+  IRaceData,
   IRawArtifacts,
   IRawBonusHero,
   IRawPatchData,
@@ -57,6 +58,7 @@ export class OZScriptParser extends BaseScriptParser {
         shrines: this.getShrines(),
         neutrals: this.getNeutrals(),
       },
+      ballance: this.getBalanceData(),
     };
   }
 

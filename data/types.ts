@@ -82,12 +82,24 @@ export interface IBonusObject extends IBaseObject {
   heroes?: IHeroObject[];
 }
 
+export interface IRawBalanceData {
+  StrAttackBonus: number;
+  StrHitPointBonus: number;
+  StrRegenBonus: number;
+  AgiDefenseBase: number;
+  AgiDefenseBonus: number;
+  AgiAttackSpeedBonus: number;
+  IntRegenBonus: number;
+  IntManaBonus: number;
+}
+
 export interface IRawPatchData {
   pickers: Record<string, string[]>;
   races: IRawRace[];
   ultimates: IRawUltimates;
   artifacts: IRawArtifacts;
   misc: IRawMiscData;
+  ballance: IRawBalanceData;
 }
 
 export interface IRawRace extends Pick<IRaceData, 'ultiData'> {

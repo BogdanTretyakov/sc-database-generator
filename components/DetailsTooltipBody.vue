@@ -47,6 +47,12 @@
           :size="24"
         />
       </v-col>
+      <v-col class="d-flex align-center" cols="6" v-if="item.atkSpeed">
+        <WarArrayInfo
+          :data="`${item.atkSpeed.toFixed(2)} BCD`"
+          icon="attackSpeed"
+        />
+      </v-col>
       <v-col class="d-flex align-center" cols="6" v-if="item.hp">
         <WarArrayInfo :data="item.hp" icon="health" />
       </v-col>
