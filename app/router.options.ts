@@ -31,8 +31,8 @@ export default {
           changelogs[versionType as keyof typeof changelogs] ?? {};
         const [version] =
           String(to.params.clVersion) in versions
-            ? [to.params.clVersion]
-            : Object.keys(versions).pop();
+            ? [to.params.clVersion].flat()
+            : [Object.keys(versions).pop()];
 
         if (
           !to.params.clVersionType ||
