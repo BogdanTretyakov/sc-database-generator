@@ -99,6 +99,7 @@ import {
   isHeroObject,
   isSpellObject,
   isUpgradeObject,
+  isArtifactObject,
 } from '~/utils/guards';
 
 interface Props {
