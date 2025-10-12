@@ -39,7 +39,7 @@ import type { GetObjectFunction } from '~/data/types';
 import { DEFAULT_ICON_SIZE, IS_TOUCH } from '~/consts';
 
 const app = useNuxtApp();
-const [routeRace] = [useRoute().params.race].flat();
+const [routeRace] = [useRouter().currentRoute.value.params.race].flat();
 
 const { raceData, iconProps, iconsSrc, version } = await useRaceData(routeRace);
 

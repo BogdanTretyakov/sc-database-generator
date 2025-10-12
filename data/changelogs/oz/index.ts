@@ -1,7 +1,7 @@
 import { type IDataFile, type IChangelog } from '~/data/types';
 
 const data = Object.entries(
-  import.meta.glob('./*.json', { import: 'default', eager: false })
+  import.meta.glob<any>('./*.json', { import: 'default', eager: false })
 ).reduce((acc, [key, value]) => {
   const path = key.split(/\\|\//g);
   const name = path[path.length - 1].replace(/\.[^.]*$/, '');
@@ -10,7 +10,7 @@ const data = Object.entries(
 }, {} as Record<string, () => Promise<IDataFile<IChangelog>>>);
 
 const icons = Object.entries(
-  import.meta.glob('./*.webp', { import: 'default', eager: true })
+  import.meta.glob<any>('./*.webp', { import: 'default', eager: true })
 ).reduce((acc, [key, value]) => {
   const path = key.split(/\\|\//g);
   const name = path[path.length - 1].replace(/\.[^.]*$/, '');
