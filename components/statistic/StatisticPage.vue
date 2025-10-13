@@ -61,7 +61,11 @@
     </v-slide-group>
     <div class="my-2" />
     <Suspense>
-      <StatisticRaceBlock :race="selectedRace" :key="selectedRace" />
+      <StatisticRaceBlock
+        :filters="filters"
+        :race="selectedRace"
+        :key="selectedRace"
+      />
       <template #fallback>
         <div class="d-flex align-center">
           <v-progress-circular indeterminate size="60" class="mx-auto my-8" />
@@ -80,7 +84,10 @@ import type { IRacePickerObject } from '~/data/types';
 
 const iconSize = useStorageValue('iconSize');
 const showPlaces = useStorageValue('showPlaces', false, Boolean);
-const filters = inject<AllFilters>('filters')!;
+
+const { filters } = defineProps<{
+  filters: AllFilters;
+}>();
 
 const { raceData, iconsSrc, iconProps, raceIconsCoords } = await useRaceData<
   Record<string, IRacePickerObject[]>

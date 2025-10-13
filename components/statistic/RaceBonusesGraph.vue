@@ -146,11 +146,6 @@ const bonusNames = computed(() =>
       .map(({ id, name }) => [id, extractName(name)])
   )
 );
-const bonusDescriptions = computed(() =>
-  Object.fromEntries(
-    racesData.bonuses.map(({ id, description }) => [id, description])
-  )
-);
 const bonusIcons = useIconsDataUri(
   iconsSrc,
   iconsCoords,
@@ -181,15 +176,18 @@ watch(showPlaces, () => {
 const itemsData = computed(() => {
   const bonusOrder = Object.keys(bonusNames.value);
   const sortValue = sortBy.value;
-  return data.slice().sort((a, b) => {
-    if (sortValue === 'default') {
-      return bonusOrder.indexOf(a.bonus) - bonusOrder.indexOf(b.bonus);
-    }
-    if (typeof sortValue === 'number') {
-      return b.places[sortValue] - a.places[sortValue];
-    }
-    return b[sortValue] - a[sortValue];
-  });
+  return data
+    .slice()
+    .filter(({ bonus }) => bonusOrder.includes(bonus))
+    .sort((a, b) => {
+      if (sortValue === 'default') {
+        return bonusOrder.indexOf(a.bonus) - bonusOrder.indexOf(b.bonus);
+      }
+      if (typeof sortValue === 'number') {
+        return b.places[sortValue] - a.places[sortValue];
+      }
+      return b[sortValue] - a[sortValue];
+    });
 });
 
 const placesSeries: BarSeriesOption[] = [

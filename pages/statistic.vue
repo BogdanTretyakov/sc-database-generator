@@ -122,7 +122,10 @@
     </CCard>
     <ClientOnly>
       <Suspense>
-        <StatisticPage :key="typeSelection + version + 'data'" />
+        <StatisticPage
+          :filters="allFilters"
+          :key="allFilters.type + allFilters.version + 'data'"
+        />
         <template #fallback>
           <div class="d-flex align-center">
             <v-progress-circular indeterminate size="60" class="mx-auto my-8" />

@@ -17,7 +17,7 @@ export const useStatisticMeta = async () => {
   const { data } = await useFetch<StatisticMeta>('/analytic/meta', {
     key: 'statisticMeta',
     server: false,
-    baseURL: config.backendUrl ?? config.public.backendUrl,
+    baseURL: config.public.backendUrl,
   });
 
   watchEffect(() => {

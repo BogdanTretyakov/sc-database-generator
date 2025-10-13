@@ -27,7 +27,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      backendUrl: process.env.NUXT_PUBLIC_BACKEND_URL || 'http://85.28.47.144/',
+      backendUrl:
+        process.env.NUXT_PUBLIC_BACKEND_URL || 'https://85.28.47.144.nip.io/',
     },
   },
 

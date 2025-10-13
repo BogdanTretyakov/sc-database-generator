@@ -16,19 +16,19 @@
 import type { AllFilters, StatisticRace } from '~/types/statistic';
 import RaceBonusesGraph from './RaceBonusesGraph.vue';
 
-const filters = inject<Ref<AllFilters>>('filters')!;
-const { race } = defineProps<{
+const { race, filters } = defineProps<{
   race: string;
+  filters: AllFilters;
 }>();
 
 const { iconProps, iconsSrc, raceData, raceIconsCoords } = await useRaceData(
   race,
-  filters.value.type,
-  filters.value.version
+  filters.type,
+  filters.version
 );
 
 const raceFilters = computed(() => ({
-  ...filters.value,
+  ...filters,
   race: raceData.id,
 }));
 
