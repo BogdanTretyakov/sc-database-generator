@@ -2,9 +2,7 @@
   <div>
     <div class="text-center">
       <h1 class="text-h2 font-bold title mb-6">
-        Survival Chaos {{ versionType === 'oz' ? 'OZEdition' : '' }} v{{
-          version
-        }}
+        Survival Chaos {{ versionType === 'oz' ? 'Reborn' : '' }} v{{ version }}
         races
       </h1>
     </div>
@@ -32,7 +30,7 @@ definePageMeta({
 });
 
 useSeoMeta({
-  title: `Races v${version}${versionType === 'oz' ? ' OZGame' : ''}`,
+  title: `Races v${version}${versionType === 'oz' ? ' Reborn' : ''}`,
   description: `Survival Chaos races list in version ${version}`,
   ogDescription: `Survival Chaos races list in version ${version}`,
   ogImage: iconsSrc,

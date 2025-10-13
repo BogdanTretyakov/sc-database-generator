@@ -86,7 +86,7 @@
                 </v-col>
                 <v-col cols="6">
                   <h4 class="text-h6 text-green">Stvel</h4>
-                  <p>OZEdition creator</p>
+                  <p>Reborn creator</p>
                   <div class="d-flex flex-wrap justify-center">
                     <IconLink
                       :icon="faDiscord"

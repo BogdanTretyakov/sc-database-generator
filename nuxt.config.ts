@@ -1,7 +1,5 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
 
-console.log('BACKEND_URL AT BUILD:', process.env.NUXT_PUBLIC_BACKEND_URL);
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',

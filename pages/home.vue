@@ -25,14 +25,14 @@
         </v-col>
         <v-col cols="12" sm="6">
           <div class="select-version">
-            <h4 class="text-h5 font-weight-bold">OZGame Edition</h4>
+            <h4 class="text-h5 font-weight-bold">Reborn</h4>
             <p>
               Custom ballance and races made by
               <span class="text-green">Stvel</span>
             </p>
             <NuxtLink
               :to="{ name: 'RaceSelection', params: { versionType: 'oz' } }"
-              >OZgame</NuxtLink
+              >Reborn</NuxtLink
             >
           </div>
         </v-col>
