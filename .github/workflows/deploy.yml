@@ -58,6 +58,9 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Static HTML export with Nuxt
         run: ${{ steps.detect-package-manager.outputs.manager }} run generate
+        env:
+          NODE_ENV: production
+          NUXT_PUBLIC_BACKEND_URL: ${{ vars.NUXT_PUBLIC_BACKEND_URL }}
       - name: Deploy
         uses: oprypin/push-to-gh-pages@v3
         with:

@@ -1,6 +1,7 @@
 import type { StatisticMeta } from '~/types/statistic';
 
 export const useStatisticMeta = async () => {
+  const config = useRuntimeConfig();
   const cache = useState<{ data: StatisticMeta | null; ts: number }>(
     'statisticMetaCache',
     () => ({ data: null, ts: 0 })
@@ -13,14 +14,14 @@ export const useStatisticMeta = async () => {
     return computed(() => cache.value.data);
   }
 
-  const { data } = await useAsyncData(
-    'statisticMeta',
-    () => $fetchStats<StatisticMeta>('/analytic/meta'),
-    { server: false }
-  );
+  const { data } = await useFetch<StatisticMeta>('/analytic/meta', {
+    key: 'statisticMeta',
+    server: false,
+    baseURL: config.backendUrl ?? config.public.backendUrl,
+  });
 
   watchEffect(() => {
-    if (data.value) {
+    if (data.value && import.meta.client) {
       cache.value = { data: data.value, ts: now };
     }
   });
