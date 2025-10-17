@@ -1,4 +1,3 @@
-import type { IconBoundaries } from '~/components/GameIcon.vue';
 import type { IRaceData, IDataFile } from '~/data/types';
 import { dataFiles, lastVersions, type VersionIndexFile } from '~/data';
 import type { GetIconPropsFn } from '~/types/app';
@@ -8,9 +7,6 @@ type RaceCacheEntry<T> = {
   versionIndex: VersionIndexFile;
 };
 
-// Глобальный кэш на уровне модуля (для повторного рендеринга компонентов на клиенте)
-const globalRaceCache = new Map<string, RaceCacheEntry<any>>();
-
 export const useRaceData = async <T = IRaceData>(
   raceName: string,
   type?: string,
@@ -19,47 +15,27 @@ export const useRaceData = async <T = IRaceData>(
   const route = useRouter().currentRoute.value;
 
   const versionType = type ?? (route.params.versionType as string) ?? 'og';
-  let versionStr = version ?? (route.params.version as string) ?? 'latest';
-
-  const versionTypeFiles = dataFiles[versionType];
-  if (!versionTypeFiles) throw createError('unknown version type');
+  let versionStr = version ?? ((route.params.version as string) || 'latest');
 
   if (versionStr === 'latest') {
     versionStr = lastVersions[versionType];
   }
+  const versionTypeFiles = dataFiles[versionType];
+  if (!versionTypeFiles) throw createError('unknown version type');
 
-  const cacheKey = `${versionType}-${versionStr}-${raceName}`;
+  // Загрузка JSON-данных
+  const importFn = versionTypeFiles[versionStr];
+  if (!importFn) throw createError('unknown version');
 
-  // useState обеспечивает кэш на уровне SSR + клиентская гидрация
-  const cachedState = useState<RaceCacheEntry<T> | null>(
-    `race-cache-${cacheKey}`,
-    () => null
-  );
+  const versionIndex = await importFn();
 
-  let raceDataFile: IDataFile<T>;
-  let versionIndex: VersionIndexFile;
-
-  if (cachedState.value) {
-    ({ raceDataFile, versionIndex } = cachedState.value);
-  } else if (globalRaceCache.has(cacheKey)) {
-    ({ raceDataFile, versionIndex } = globalRaceCache.get(cacheKey)!);
-    cachedState.value = { raceDataFile, versionIndex };
-  } else {
-    // Загрузка JSON-данных
-    const importFn = versionTypeFiles[versionStr];
-    if (!importFn) throw createError('unknown version');
-
-    versionIndex = await importFn();
-
-    if (!(raceName in versionIndex.racesData)) {
-      throw createError('No race found');
-    }
-
-    raceDataFile = (await versionIndex.racesData[raceName]()) as IDataFile<T>;
-
-    cachedState.value = { raceDataFile, versionIndex };
-    globalRaceCache.set(cacheKey, { raceDataFile, versionIndex });
+  if (!(raceName in versionIndex.racesData)) {
+    throw createError('No race found');
   }
+
+  const raceDataFile = (await versionIndex.racesData[
+    raceName
+  ]()) as IDataFile<T>;
 
   // Функция iconProps остаётся чисто клиентской
   const iconProps = ((id: string, count?: number) => {

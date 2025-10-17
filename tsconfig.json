@@ -10,10 +10,12 @@
   },
   "files": ["./global.d.ts"],
   "exclude": [
-    "./dataWarcraft",
-    "./dataMap",
-    "./generator/debug",
-    "./dataGenerated",
-    "./data/**/*.json"
+    "node_modules",
+    "dataWarcraft",
+    "dataMap",
+    "generator/debug",
+    "dataGenerated",
+    "data/**/*.json",
+    "composables/useRaceData.ts"
   ]
 }

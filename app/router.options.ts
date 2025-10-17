@@ -25,6 +25,7 @@ export default {
       path: '/changelog/:clVersionType?/:clVersion?',
       component: () => import('~/pages/changelog.vue'),
       beforeEnter: (to, from) => {
+        if (import.meta.server) return true;
         const savedPrefVersion = storage.get('preferredVersion');
         const versionType = from.params.versionType || savedPrefVersion || 'og';
         const versions =

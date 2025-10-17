@@ -1,4 +1,12 @@
+import { readdirSync } from 'fs';
+import { resolve } from 'path';
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify';
+
+const versionTypes = readdirSync(resolve(process.cwd(), 'data'), {
+  withFileTypes: true,
+})
+  .filter((s) => s.isDirectory() && s.name !== 'changelogs')
+  .map((s) => s.name);
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -52,7 +60,8 @@ export default defineNuxtConfig({
     routes: [
       '/',
       '/stats',
-      ...['og', 'oz']
+      '/changelog',
+      ...versionTypes
         .map((key) => {
           const routes = ['races', 'artifacts', 'ultimates', 'misc'];
           return routes.map((route) => `/${key}/${route}`);
@@ -99,7 +108,6 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       autoSubfolderIndex: false,
-      ignore: ['/changelog'],
     },
   },
 

@@ -31,7 +31,7 @@
                 density="comfortable"
                 flat
                 variant="text"
-                :href="`${config.public.backendUrl}/analytic/dump`"
+                :href="`${config.public.backendUrl}analytic/dump`"
               >
                 <v-icon>{{ mdiDownload }}</v-icon>
               </v-btn>
@@ -123,6 +123,7 @@
     <ClientOnly>
       <Suspense>
         <StatisticPage
+          v-if="allFilters.type"
           :filters="allFilters"
           :key="allFilters.type + allFilters.version + 'data'"
         />
@@ -143,7 +144,6 @@
 </template>
 
 <script setup lang="ts">
-import { sortVersionObjCb } from '#imports';
 import { mdiAlert, mdiArrowUp, mdiDownload, mdiInformation } from '@mdi/js';
 import PatchStatistic from '~/components/statistic/PatchStatistic.vue';
 import { dataFiles } from '~/data';

@@ -62,7 +62,8 @@
     <div class="my-2" />
     <Suspense>
       <StatisticRaceBlock
-        :filters="filters"
+        v-if="allFilters && allFilters.type"
+        :filters="allFilters"
         :race="selectedRace"
         :key="selectedRace"
       />
@@ -89,6 +90,8 @@ const { filters } = defineProps<{
   filters: AllFilters;
 }>();
 
+const allFilters = computed(() => filters);
+
 const { raceData, iconsSrc, iconProps, raceIconsCoords } = await useRaceData<
   Record<string, IRacePickerObject[]>
 >('races', filters.type, filters.version);
@@ -98,8 +101,8 @@ const { data: statsData } = await useFetch<StatisticPatchRaces>(
   {
     baseURL: useRuntimeConfig().public.backendUrl,
     server: false,
-    query: filters,
-    watch: [filters],
+    query: allFilters,
+    watch: [allFilters],
     deep: false,
   }
 );
