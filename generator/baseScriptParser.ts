@@ -50,7 +50,11 @@ export abstract class BaseScriptParser {
     return output;
   }
 
-  protected getIfBlockByIndex(cursorPosition: number, text = this.script) {
+  protected getIfBlockByIndex(
+    cursorPosition: number,
+    text = this.script,
+    startDepth = 0
+  ) {
     const isIf = text.startsWith('if', cursorPosition);
     const isElseif = text.startsWith('elseif', cursorPosition);
 
@@ -58,7 +62,7 @@ export abstract class BaseScriptParser {
       throw new Error('Start position not ar if/elseif block');
     }
 
-    let depth = 0;
+    let depth = startDepth;
     let i = cursorPosition + (isIf ? 2 : isElseif ? 6 : 4);
 
     while (i < text.length) {
