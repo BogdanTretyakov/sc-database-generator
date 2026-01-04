@@ -305,6 +305,9 @@ const options = computed(() => {
       type: 'category',
       axisLabel: {
         interval: 0,
+        rotate: -25,
+        margin: 35,
+        align: 'center',
         formatter: (value: string) =>
           [`{${value}|}`, raceNames.value[value]].join('\n'),
         rich: {
@@ -327,44 +330,6 @@ const options = computed(() => {
       splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.1)' } },
       axisLabel: { formatter: '{value}%' },
     },
-    dataZoom: [
-      {
-        type: 'slider',
-        show: true,
-        handleSize: 24,
-        start: 0,
-        end: 35,
-        bottom: 10,
-        height: 12,
-        showDetail: false,
-        handleLabel: {
-          show: false,
-        },
-        labelFormatter: (idx) => raceNames.value[itemsData.value[idx].race],
-        dataBackground: {
-          areaStyle: {
-            color: 'transparent',
-          },
-          lineStyle: {
-            color: 'transparent',
-          },
-        },
-        selectedDataBackground: {
-          areaStyle: {
-            color: 'transparent',
-          },
-          lineStyle: {
-            color: 'transparent',
-          },
-        },
-      },
-      {
-        type: 'inside',
-        zoomOnMouseWheel: false,
-        moveOnMouseMove: true,
-        moveOnMouseWheel: true,
-      },
-    ],
     series,
   } satisfies EChartsOption;
 });

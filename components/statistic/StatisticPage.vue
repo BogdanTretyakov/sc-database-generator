@@ -6,12 +6,6 @@
     :races-data="raceData"
   >
     <MatchesByQuantileChart :data="statsData?.matchesByQuantile ?? []" />
-    <RacesPlacesChart
-      :data="statsData?.groupedRacesWinrate ?? []"
-      :icons-coords="raceIconsCoords"
-      :icons-src="iconsSrc"
-      :races-data="raceData"
-    />
   </RacesPlacesGraph>
 
   <CCard title="Data by race" class="mt-4">
@@ -79,7 +73,6 @@
 <script setup lang="ts">
 import type { AllFilters, StatisticPatchRaces } from '~/types/statistic';
 import RacesPlacesGraph from './RacesPlacesGraph.vue';
-import RacesPlacesChart from './RacePlacesChart.vue';
 import MatchesByQuantileChart from './MatchesByQuantileChart.vue';
 import type { IRacePickerObject } from '~/data/types';
 

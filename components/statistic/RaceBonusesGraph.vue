@@ -292,7 +292,8 @@ const options = computed(() => {
       axisLabel: {
         interval: 0,
         rotate: -25,
-        margin: 25,
+        margin: 35,
+        align: 'center',
         formatter: (value: string) =>
           [`{${value}|}`, bonusNames.value[value]].join('\n'),
         rich: {

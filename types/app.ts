@@ -7,5 +7,5 @@ export interface IconBoundaries {
 
 export type GetIconPropsFn = {
   (id: string): IconBoundaries;
-  (id: string, count: number): IconBoundaries[];
+  (id: string, count?: number): IconBoundaries[];
 };

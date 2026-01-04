@@ -1,9 +1,9 @@
 <template>
   <slot name="fullname" />
-  <div class="d-flex row-warp align-center my-1" v-if="!!item.tags?.length">
+  <div class="d-flex row-warp align-center my-1" v-if="tags.length">
     <div class="text-subtitle-2">Tags:</div>
     <v-chip
-      v-for="tag in item.tags"
+      v-for="tag in tags"
       class="ma-1 mr-0"
       density="compact"
       size="small"
@@ -108,8 +108,12 @@
 </template>
 
 <script setup lang="ts">
+import capitalize from 'lodash/capitalize';
 import type { GetObjectFunction, IUnitObject } from '~/data/types';
-import WarArrayInfo from '../WarArrayInfo.vue';
+
+const tagsReplaces: Record<string, string> = {
+  sapper: 'strong',
+};
 
 interface Props {
   item: IUnitObject;
@@ -128,6 +132,10 @@ const hasMpReg = computed(() => !isNaN(Number(item.mpReg)));
 
 const requires = computed(() =>
   item.upgrades?.map((id) => objFinder('upgrade', id)).filter(isNotNil)
+);
+
+const tags = computed(() =>
+  (item.tags ?? []).map((tag) => tagsReplaces[tag] ?? tag).map(capitalize)
 );
 </script>
 

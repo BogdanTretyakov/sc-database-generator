@@ -9,24 +9,6 @@
           density="comfortable"
         >
         </v-btn>
-        <client-only>
-          <v-tooltip>
-            <template #activator="{ props: tooltipProps }">
-              <v-btn
-                v-bind="tooltipProps"
-                class="mt-4 donate-button"
-                color="orange"
-                :icon="mdiCash"
-                :dark="true"
-                density="comfortable"
-                rel="nofollow"
-                target="_blank"
-                href="https://boosty.to/fastowldiedie/donate"
-              ></v-btn>
-            </template>
-            Donate author
-          </v-tooltip>
-        </client-only>
       </div>
     </template>
     <v-list density="comfortable">
