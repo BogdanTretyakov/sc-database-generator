@@ -147,14 +147,10 @@
 import { mdiAlert, mdiArrowUp, mdiDownload, mdiInformation } from '@mdi/js';
 import PatchStatistic from '~/components/statistic/PatchStatistic.vue';
 import { dataFiles } from '~/data';
+import { versionTypeTitles } from '~/types/app';
 import type { RestFilters, StatisticPatchMeta } from '~/types/statistic';
 const config = useRuntimeConfig();
 const statsMeta = await useStatisticMeta();
-
-const versionTypeTitles: Record<string, string> = {
-  og: 'Original',
-  oz: 'Reborn',
-};
 
 const versions = computed(() => {
   const result = (statsMeta.value?.filters.maps ?? []).reduce((acc, filter) => {

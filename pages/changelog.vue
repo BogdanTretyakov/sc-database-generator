@@ -86,17 +86,13 @@ import ogChangelogs from '~/data/changelogs/og';
 import type { IChangelog, IDataFile, IBaseObject } from '~/data/types';
 import values from 'lodash/values';
 import { mdiArrowUp } from '@mdi/js';
+import { versionTypeTitles } from '~/types/app';
 
 const app = useNuxtApp();
 
 const dataFiles = {
   og: ogChangelogs.data,
   oz: ozChangelogs.data,
-};
-
-const versionTypeTitles: Record<string, string> = {
-  og: 'Original',
-  oz: 'Reborn',
 };
 
 const router = useRouter();
@@ -112,7 +108,12 @@ const typeSelection = computed({
     const [clVersion] = sortVersion(
       Object.keys(dataFiles[clVersionType] ?? {})
     );
-    router.replace({ params: { clVersionType, clVersion } });
+    router.replace({
+      params: {
+        clVersionType,
+        clVersion: clVersion.replace('-.', '-').replace(/\.(?=\D)/, ''),
+      },
+    });
   },
 });
 const selectValue = computed({
