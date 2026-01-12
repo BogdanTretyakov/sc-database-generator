@@ -14,3 +14,7 @@ export const versionTypeTitles: Record<string, string> = {
   og: 'Original',
   oz: 'Reborn',
 };
+
+export const tagsReplaces: Record<string, string> = {
+  sapper: 'strong',
+};

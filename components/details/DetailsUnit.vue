@@ -110,10 +110,7 @@
 <script setup lang="ts">
 import capitalize from 'lodash/capitalize';
 import type { GetObjectFunction, IUnitObject } from '~/data/types';
-
-const tagsReplaces: Record<string, string> = {
-  sapper: 'strong',
-};
+import { tagsReplaces } from '~/types/app';
 
 interface Props {
   item: IUnitObject;

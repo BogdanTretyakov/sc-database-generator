@@ -14,6 +14,19 @@
     v-html="item.fullName"
   />
 
+  <template v-if="tags.length">
+    <div class="d-flex flex-wrap">
+      <v-chip
+        v-for="tag in tags"
+        density="compact"
+        size="small"
+        class="mr-1 mb-1"
+      >
+        {{ tag }}
+      </v-chip>
+    </div>
+  </template>
+
   <template
     v-if="
       (isUnitObject(item) || isHeroObject(item)) && (item.cost || item.bounty)
@@ -93,7 +106,9 @@
 </template>
 
 <script setup lang="ts">
+import capitalize from 'lodash/capitalize';
 import type { IBaseObject } from '~/data/types';
+import { tagsReplaces } from '~/types/app';
 import {
   isUnitObject,
   isHeroObject,
@@ -107,4 +122,13 @@ interface Props {
 }
 
 const { item } = defineProps<Props>();
+
+const tags = computed(() => {
+  if (isUnitObject(item) || isHeroObject(item)) {
+    return (item.tags ?? [])
+      .map((tag) => tagsReplaces[tag] ?? tag)
+      .map(capitalize);
+  }
+  return [];
+});
 </script>
