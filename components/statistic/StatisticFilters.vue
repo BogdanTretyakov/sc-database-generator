@@ -1,5 +1,8 @@
 <template>
   <v-col cols="12" sm="4" md="4">
+    <player-search v-model="filters.playerId" />
+  </v-col>
+  <v-col cols="12" sm="4" md="4">
     <v-checkbox
       label="Include matches with leavers"
       hide-details
@@ -56,6 +59,7 @@
 <script setup lang="ts">
 import { mdiInformation } from '@mdi/js';
 import type { RestFilters, StatisticPatchMeta } from '~/types/statistic';
+import PlayerSearch from './parts/PlayerSearch.vue';
 
 interface Props {
   stats: StatisticPatchMeta;
@@ -134,6 +138,9 @@ const getFilters = () => {
   }
   if (filtersValue.duration_to !== stats.filters.duration[1]) {
     output.duration_to = filtersValue.duration_to;
+  }
+  if (filtersValue.playerId) {
+    output.playerId = filtersValue.playerId;
   }
   return output;
 };

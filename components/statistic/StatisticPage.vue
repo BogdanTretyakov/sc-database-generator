@@ -1,4 +1,19 @@
 <template>
+  <v-fade-transition>
+    <v-row v-if="!!filters.playerId" class="mb-2">
+      <v-col cols="12" md="9">
+        <CCard title="Matches">
+          <MatchesList :per-page="5" :filters="matchesListFilters" />
+        </CCard>
+      </v-col>
+      <v-col cols="12" md="3">
+        <CCard title="Player stats" :full-height="false">
+          <PlayerPlaces :data="statsData?.playerPlaces ?? []" />
+        </CCard>
+      </v-col>
+    </v-row>
+  </v-fade-transition>
+
   <RacesPlacesGraph
     :data="statsData?.racesData ?? []"
     :icons-coords="raceIconsCoords"
@@ -71,10 +86,16 @@
 </template>
 
 <script setup lang="ts">
-import type { AllFilters, StatisticPatchRaces } from '~/types/statistic';
+import type {
+  AllFilters,
+  SearchPlayersFilters,
+  StatisticPatchRaces,
+} from '~/types/statistic';
 import RacesPlacesGraph from './RacesPlacesGraph.vue';
 import MatchesByQuantileChart from './MatchesByQuantileChart.vue';
 import type { IRacePickerObject } from '~/data/types';
+import MatchesList from './MatchesList.vue';
+import PlayerPlaces from './PlayerPlaces.vue';
 
 const iconSize = useStorageValue('iconSize');
 const showPlaces = useStorageValue('showPlaces', false, Boolean);
@@ -103,6 +124,14 @@ const { data: statsData } = await useFetch<StatisticPatchRaces>(
 const racesList = computed(() => Object.values(raceData).flat());
 
 const selectedRace = ref(racesList.value[0].key);
+
+const matchesListFilters = computed(() => {
+  const { playerId, ...restFilters } = allFilters.value;
+  return {
+    ...restFilters,
+    filters: [{ playerId }],
+  } satisfies SearchPlayersFilters;
+});
 </script>
 
 <style scoped>

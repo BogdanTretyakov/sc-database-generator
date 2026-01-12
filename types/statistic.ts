@@ -11,9 +11,21 @@ export interface RestFilters {
   quantile_from?: number;
   quantile_to?: number;
   withLeavers?: boolean;
+  playerId?: number;
+}
+
+export interface PlayerFilter {
+  playerId?: number;
+  race?: string;
+  bonus?: string;
+  place?: number;
 }
 
 export interface AllFilters extends BaseFilters, RestFilters {}
+
+export interface SearchPlayersFilters extends AllFilters {
+  filters: PlayerFilter[];
+}
 
 export interface MapTypeObject {
   mapType: string;
@@ -61,8 +73,21 @@ export interface RaceGroupedWinrate {
 
 export interface StatisticPatchRaces {
   racesData: RaceCommonStatistic[];
-  groupedRacesWinrate: RaceGroupedWinrate[];
   matchesByQuantile: [quantile: number | null, count: number][];
+  ultimatesData: {
+    id: string;
+    pickrate: number;
+    winrate: number;
+  }[];
+  leaverRate: [number | null, number][];
+  matchDurations?: Record<number, number>;
+  matchesByHour: [number, number][];
+  matchesByDay: [number, number][];
+  playerPlaces: {
+    place: number;
+    pct: number;
+    matchesCount: number;
+  }[];
 }
 
 export interface RaceHeroStatistic {
@@ -86,4 +111,57 @@ export interface StatisticRace {
   buildings: Record<string, Record<number, number>>;
   heroes: RaceHeroStatistic[];
   bonuses: RaceBonusStatistic[];
+  winrateVsRaces: {
+    race: string;
+    winrate: number;
+    matchesCount: number;
+  }[];
 }
+
+export interface MatchInfo {
+  id: number;
+  platform: string;
+  platformId: string;
+  type: string;
+  version: string;
+  duration: number;
+  endAt: string;
+  quantile: number;
+  players: MatchPlayerInfo[];
+}
+
+export interface MatchPlayerInfo {
+  id: number;
+  name: string;
+  place: number;
+  quantile: number;
+  race: string;
+  timeAlive: number;
+  bonus: string[];
+  ultimate: string;
+  aura: string;
+  events: MatchEvent[];
+}
+
+export interface MatchEvent {
+  id: string;
+  type: PlayerEvents;
+  time: number;
+}
+
+export const PlayerEvents = {
+  INITIAL_RACE: 'INITIAL_RACE',
+  BAN_RACE: 'BAN_RACE',
+  REPICK_RACE: 'REPICK_RACE',
+  HERO_BUY: 'HERO_BUY',
+  BASE_UPGRADE: 'BASE_UPGRADE',
+  TOWER_UPGRADE: 'TOWER_UPGRADE',
+  UP_FORT2: 'UP_FORT2',
+  UP_FORT3: 'UP_FORT3',
+  UP_BARRACK2: 'UP_BARRACK2',
+  UP_BARRACK3: 'UP_BARRACK3',
+  UP_BARRACK4: 'UP_BARRACK4',
+  USE_ULTIMATE: 'USE_ULTIMATE',
+};
+
+export type PlayerEvents = (typeof PlayerEvents)[keyof typeof PlayerEvents];

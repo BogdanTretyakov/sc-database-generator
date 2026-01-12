@@ -9,3 +9,8 @@ export type GetIconPropsFn = {
   (id: string): IconBoundaries;
   (id: string, count?: number): IconBoundaries[];
 };
+
+export const versionTypeTitles: Record<string, string> = {
+  og: 'Original',
+  oz: 'Reborn',
+};

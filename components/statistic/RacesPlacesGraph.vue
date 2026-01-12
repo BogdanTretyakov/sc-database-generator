@@ -89,7 +89,6 @@ import {
   DatasetComponent,
   GridComponent,
   MarkLineComponent,
-  TimelineComponent,
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { ComposeOption } from 'echarts/core';
@@ -100,7 +99,6 @@ import type {
   LegendComponentOption,
   DatasetComponentOption,
   GraphicComponentOption,
-  DataZoomComponentOption,
   MarkLineComponentOption,
 } from 'echarts/components';
 
@@ -113,7 +111,6 @@ use([
   CanvasRenderer,
   DatasetComponent,
   GridComponent,
-  TimelineComponent,
 ]);
 provide(THEME_KEY, 'dark');
 
@@ -123,7 +120,6 @@ type EChartsOption = ComposeOption<
   | LegendComponentOption
   | DatasetComponentOption
   | GraphicComponentOption
-  | DataZoomComponentOption
   | MarkLineComponentOption
   | BarSeriesOption
 >;

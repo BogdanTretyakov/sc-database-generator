@@ -54,12 +54,8 @@
 
 <script lang="ts" setup>
 import { dataFiles, lastVersions } from '~/data';
+import { versionTypeTitles } from '~/types/app';
 const savedPrefVersion = useStorageValue('preferredVersion');
-
-const versionTypeTitles: Record<string, string> = {
-  og: 'Original',
-  oz: 'Reborn',
-};
 
 const route = useRoute();
 

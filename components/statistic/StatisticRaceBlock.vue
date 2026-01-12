@@ -9,19 +9,34 @@
       :icons-coords="raceIconsCoords"
       :icons-src="iconsSrc"
     />
+    <RaceVsRaceGraph
+      class="mt-4"
+      :data="statsData.winrateVsRaces"
+      :races-data="allRaces.raceData"
+      :icons-coords="allRaces.raceIconsCoords"
+      :icons-src="allRaces.iconsSrc"
+    />
   </template>
 </template>
 
 <script setup lang="ts">
 import type { AllFilters, StatisticRace } from '~/types/statistic';
 import RaceBonusesGraph from './RaceBonusesGraph.vue';
+import RaceVsRaceGraph from './RaceVsRaceGraph.vue';
+import type { IRacePickerObject } from '~/data/types';
 
 const { race, filters } = defineProps<{
   race: string;
   filters: AllFilters;
 }>();
 
-const { iconProps, iconsSrc, raceData, raceIconsCoords } = await useRaceData(
+const allRaces = await useRaceData<Record<string, IRacePickerObject[]>>(
+  'races',
+  filters.type,
+  filters.version
+);
+
+const { iconsSrc, raceData, raceIconsCoords } = await useRaceData(
   race,
   filters.type,
   filters.version
