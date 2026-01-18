@@ -14,12 +14,17 @@
     item-value="id"
   >
     <template v-slot:item="{ props, item }">
-      <v-list-item
-        density="comfortable"
-        v-bind="props"
-        :subtitle="item.raw.platform"
-        :title="item.raw.name"
-      ></v-list-item>
+      <v-list-item density="comfortable" v-bind="props">
+        <v-list-item-subtitle
+          v-if="item.raw.name in playerNicknames"
+          class="text-white"
+        >
+          {{ playerNicknames[item.raw.name] }}
+        </v-list-item-subtitle>
+        <v-list-item-subtitle>
+          {{ item.raw.platform }}
+        </v-list-item-subtitle>
+      </v-list-item>
     </template>
   </v-autocomplete>
 </template>
@@ -29,6 +34,14 @@ type ServerPlayer = {
   id: number;
   name: string;
   platform: string;
+};
+
+const playerNicknames: Record<string, string> = {
+  'FODD#11256': 'Wiki developer',
+  'CrazyFly#2731': 'Тупой хуесосик',
+  'ПышныйБосс#2287': 'Cool player',
+  'theMOA#2185': 'World best player',
+  'snupi#21238': 'Hope of the barracks',
 };
 
 const { label = 'Player name' } = defineProps<{
@@ -66,6 +79,6 @@ watchEffect(
   },
   {
     flush: 'post',
-  }
+  },
 );
 </script>

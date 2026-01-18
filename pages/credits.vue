@@ -142,6 +142,20 @@
             </v-col>
             <v-col v-for="maker in makers" :key="maker.name" cols="6" sm="4">
               <h4 class="text-h6 text-center">{{ maker.name }}</h4>
+              <div
+                class="d-flex justify-center flex-wrap"
+                v-if="maker.tags?.length"
+              >
+                <v-chip
+                  v-for="tag in maker.tags"
+                  density="compact"
+                  size="small"
+                  class="mr-1"
+                  :key="tag"
+                >
+                  {{ tag }}
+                </v-chip>
+              </div>
               <div class="d-flex flex-wrap justify-center">
                 <IconLink
                   v-for="link in maker.links"
@@ -177,6 +191,7 @@ import {
 
 interface ContentMaker {
   name: string;
+  tags?: string[];
   links: Array<{
     title: string;
     link: string;
@@ -194,32 +209,8 @@ const libs = {
 
 const makers: ContentMaker[] = [
   {
-    name: 'Hoooooka',
-    links: [
-      {
-        title: 'Twitch',
-        link: 'https://www.twitch.tv/hoooooka',
-        icon: mdiTwitch,
-      },
-      {
-        title: 'Telegram',
-        link: 'https://t.me/hoooookaa',
-        icon: faTelegram,
-      },
-      {
-        title: 'Discord',
-        link: 'https://discord.com/invite/ukrjyBaYAx',
-        icon: faDiscord,
-      },
-      {
-        title: 'Youtube',
-        link: 'https://www.youtube.com/@davayhookah',
-        icon: mdiYoutube,
-      },
-    ],
-  },
-  {
     name: 'Snupild',
+    tags: ['Reborn'],
     links: [
       {
         title: 'Twitch',
@@ -240,6 +231,7 @@ const makers: ContentMaker[] = [
   },
   {
     name: 'Joe_Vega',
+    tags: ['OZ'],
     links: [
       {
         title: 'Twitch',
@@ -264,22 +256,56 @@ const makers: ContentMaker[] = [
     ],
   },
   {
-    name: 'Valdrién',
+    name: 'Пышный Босс',
+    tags: ['Original', 'Reborn'],
     links: [
       {
+        title: 'Twitch',
+        link: 'https://www.twitch.tv/pushniyboss',
+        icon: mdiTwitch,
+      },
+    ],
+  },
+  {
+    name: 'theMoa',
+    tags: ['Original'],
+    links: [
+      {
+        title: 'Twitch',
+        link: 'https://www.twitch.tv/thegreatmoamoa',
+        icon: mdiTwitch,
+      },
+    ],
+  },
+  {
+    name: 'MadStvOne',
+    tags: ['OZ'],
+    links: [
+      {
+        title: 'Twitch',
+        link: 'https://www.twitch.tv/madstvone',
+        icon: mdiTwitch,
+      },
+      {
         title: 'Youtube',
-        link: 'https://www.youtube.com/@Valdrien',
+        link: 'https://www.youtube.com/@MadSTV',
         icon: mdiYoutube,
       },
       {
-        title: 'Kick',
-        link: 'https://kick.com/valdrien11',
-        icon: mdiAlphaK,
+        title: 'Telegram',
+        link: 'https://t.me/+W7v5INICVuwwNmIy',
+        icon: faTelegram,
       },
+    ],
+  },
+  {
+    name: 'PavelSergeevitch',
+    tags: ['Reborn'],
+    links: [
       {
-        title: 'Discord',
-        link: 'https://discord.gg/PvW9GNnkf8',
-        icon: faDiscord,
+        title: 'Twitch',
+        link: 'https://www.twitch.tv/pavelsergeevitch',
+        icon: mdiTwitch,
       },
     ],
   },
