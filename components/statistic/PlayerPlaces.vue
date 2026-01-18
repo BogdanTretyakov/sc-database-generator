@@ -33,6 +33,8 @@ const { data } = defineProps<{
 const placesColors = ['#81c784', '#dce775', '#ffb74d', '#e57373'];
 
 const options = computed(() => {
+  const filteredData = data.filter(({ matchesCount }) => !!matchesCount);
+
   return {
     backgroundColor: 'transparent',
     tooltip: {
@@ -46,7 +48,7 @@ const options = computed(() => {
     },
     xAxis: {
       type: 'category',
-      data: [1, 2, 3, 4],
+      data: filteredData.map((item) => item.place),
     },
     yAxis: {
       splitLine: { show: true, lineStyle: { color: 'rgba(255,255,255,0.1)' } },
@@ -55,7 +57,7 @@ const options = computed(() => {
     series: [
       {
         type: 'bar',
-        data: data.map((item) => ({
+        data: filteredData.map((item) => ({
           name: item.place,
           value: item.pct,
           label: { formatter: '{value}%' },

@@ -87,7 +87,7 @@ watch(
   {
     deep: true,
     immediate: true,
-  }
+  },
 );
 
 const quantileRange = computed({
@@ -154,6 +154,6 @@ watch(
       emit('change', getFilters());
     }, 1000);
   },
-  { deep: true }
+  { deep: true },
 );
 </script>

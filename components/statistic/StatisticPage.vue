@@ -118,10 +118,20 @@ const { data: statsData } = await useFetch<StatisticPatchRaces>(
     query: allFilters,
     watch: [allFilters],
     deep: false,
-  }
+  },
 );
 
-const racesList = computed(() => Object.values(raceData).flat());
+const racesList = computed(() =>
+  Object.values(raceData)
+    .flat()
+    .filter(
+      ({ id }) =>
+        !statsData.value ||
+        statsData.value.racesData.find(
+          ({ race, totalMatches }) => race === id && totalMatches,
+        ),
+    ),
+);
 
 const selectedRace = ref(racesList.value[0].key);
 
