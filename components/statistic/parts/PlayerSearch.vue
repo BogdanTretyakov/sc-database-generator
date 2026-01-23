@@ -12,6 +12,8 @@
     @update:model-value="(value) => emit('model-value', value?.id)"
     item-title="name"
     item-value="id"
+    hide-no-data
+    placeholder="Start type nickname"
   >
     <template v-slot:item="{ props, item }">
       <v-list-item density="comfortable" v-bind="props">
@@ -42,6 +44,9 @@ const playerNicknames: Record<string, string> = {
   'ПышныйБосс#2287': 'Cool player',
   'theMOA#2185': 'World best player',
   'snupi#21238': 'Hope of the barracks',
+  'opaca#1428': 'Brazilian pawn shop',
+  'Krabster#2533': 'Главный по кастрюлькам',
+  'OUTSDORF#2608': 'True skill',
 };
 
 const { label = 'Player name' } = defineProps<{

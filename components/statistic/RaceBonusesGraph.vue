@@ -143,34 +143,34 @@ const bonusNames = computed(() =>
       .sort(({ hotkey: h1 }, { hotkey: h2 }) => {
         return hotkeys.indexOf(h1) - hotkeys.indexOf(h2);
       })
-      .map(({ id, name }) => [id, extractName(name)])
-  )
+      .map(({ id, name }) => [id, extractName(name)]),
+  ),
 );
 const bonusIcons = useIconsDataUri(
   iconsSrc,
   iconsCoords,
-  racesData.bonuses.map(({ id }) => id)
+  racesData.bonuses.map(({ id }) => id),
 );
 
 const theme = useTheme();
 const showPlaces = useStorageValue('showPlaces', false, Boolean);
 
 const sortVariants = computed(
-  () => ['default', 'pickrate', 'winrate'] as const
+  () => ['default', 'pickrate', 'winrate'] as const,
 );
 const sortVariantsPlaces = ['default', 1, 2, 3, 4] as const;
 const sortBy =
   ref<((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]>(
-    'default'
+    'winrate',
   );
 const sortSelectItems = computed(() =>
   (showPlaces.value ? sortVariantsPlaces : sortVariants.value).map((value) => ({
     title: capitalize(String(value)),
     value,
-  }))
+  })),
 );
-watch(showPlaces, () => {
-  sortBy.value = 'default';
+watch(showPlaces, (val) => {
+  sortBy.value = val ? 1 : 'winrate';
 });
 
 const itemsData = computed(() => {
@@ -221,7 +221,7 @@ const metricSeries = computed(
           color: theme.current.value.colors.success,
         },
       },
-    ] satisfies BarSeriesOption[]
+    ] satisfies BarSeriesOption[],
 );
 
 const options = computed(() => {
@@ -307,7 +307,7 @@ const options = computed(() => {
                   image,
                 },
               },
-            ])
+            ]),
           ),
         },
       },

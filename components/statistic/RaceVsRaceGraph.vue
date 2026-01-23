@@ -112,13 +112,13 @@ const raceNames = computed(() =>
   Object.fromEntries(
     Object.values(racesData)
       .flat()
-      .map(({ id, name }) => [id, name])
-  )
+      .map(({ id, name }) => [id, name]),
+  ),
 );
 const racesIcons = useIconsDataUri(
   iconsSrc,
   iconsCoords,
-  Object.keys(raceNames.value)
+  Object.keys(raceNames.value),
 );
 
 const theme = useTheme();
@@ -129,7 +129,7 @@ const sortSelectItems = sortVariants.map((variant) => ({
   value: variant,
   title: capitalize(variant),
 }));
-const sortBy = ref<(typeof sortVariants)[number]>('default');
+const sortBy = ref<(typeof sortVariants)[number]>('effectiveness');
 
 const itemsData = computed(() => {
   const raceOrder = Object.keys(raceNames.value);
@@ -182,7 +182,7 @@ const options = computed(() => {
                   image,
                 },
               },
-            ])
+            ]),
           ),
         },
       },

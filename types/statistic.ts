@@ -12,6 +12,8 @@ export interface RestFilters {
   quantile_to?: number;
   withLeavers?: boolean;
   playerId?: number;
+  platform?: string;
+  season?: string;
 }
 
 export interface PlayerFilter {
@@ -42,6 +44,12 @@ export interface StatisticMeta {
   dumpUpdateAt: string | null;
 }
 
+export interface SeasonMeta {
+  platform: string;
+  season: string;
+  matches: number;
+}
+
 export interface StatisticPatchMeta {
   matchesCount: number;
   filters: {
@@ -52,6 +60,7 @@ export interface StatisticPatchMeta {
   races: string[];
   avgMmr: number;
   avgDuration: number;
+  seasons: SeasonMeta[];
 }
 
 export interface RaceCommonStatistic {
@@ -165,3 +174,7 @@ export const PlayerEvents = {
 };
 
 export type PlayerEvents = (typeof PlayerEvents)[keyof typeof PlayerEvents];
+
+export const DEFAULT_STAT_FILTERS: RestFilters = {
+  withLeavers: true,
+};

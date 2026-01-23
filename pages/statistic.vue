@@ -148,19 +148,26 @@ import { mdiAlert, mdiArrowUp, mdiDownload, mdiInformation } from '@mdi/js';
 import PatchStatistic from '~/components/statistic/PatchStatistic.vue';
 import { dataFiles } from '~/data';
 import { versionTypeTitles } from '~/types/app';
-import type { RestFilters, StatisticPatchMeta } from '~/types/statistic';
+import {
+  DEFAULT_STAT_FILTERS,
+  type RestFilters,
+  type StatisticPatchMeta,
+} from '~/types/statistic';
 const config = useRuntimeConfig();
 const statsMeta = await useStatisticMeta();
 
 const versions = computed(() => {
-  const result = (statsMeta.value?.filters.maps ?? []).reduce((acc, filter) => {
-    const [mapType, mapVersion] = filter.split('_');
-    if (!(mapType in dataFiles)) return acc;
-    if (!acc[mapType]) acc[mapType] = [];
-    if (!dataFiles[mapType][mapVersion]) return acc;
-    acc[mapType].push(mapVersion);
-    return acc;
-  }, {} as Record<string, string[]>);
+  const result = (statsMeta.value?.filters.maps ?? []).reduce(
+    (acc, filter) => {
+      const [mapType, mapVersion] = filter.split('_');
+      if (!(mapType in dataFiles)) return acc;
+      if (!acc[mapType]) acc[mapType] = [];
+      if (!dataFiles[mapType][mapVersion]) return acc;
+      acc[mapType].push(mapVersion);
+      return acc;
+    },
+    {} as Record<string, string[]>,
+  );
   return Object.fromEntries(
     Object.entries(result).map(([key, value]) => [
       key,
@@ -170,7 +177,7 @@ const versions = computed(() => {
           title: value,
         }))
         .sort(sortVersionObjCb('title')),
-    ])
+    ]),
   );
 });
 
@@ -187,10 +194,15 @@ watch(
   () => {
     version.value = items.value[0]?.value;
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-const filters = ref<RestFilters>({});
+const filters = ref<RestFilters>(DEFAULT_STAT_FILTERS);
+
+watch(
+  () => typeSelection.value + version.value,
+  () => (filters.value = DEFAULT_STAT_FILTERS),
+);
 
 const allFilters = computed(() => ({
   type: typeSelection.value,
@@ -212,7 +224,7 @@ const { data: statsMetaPatch, status } = useFetch<StatisticPatchMeta>(
     watch: [typeSelection, version],
     immediate: !!typeSelection.value && !!version.value,
     lazy: !!typeSelection.value && !version.value,
-  }
+  },
 );
 
 useSeoMeta({

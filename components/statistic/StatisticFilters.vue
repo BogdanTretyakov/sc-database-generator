@@ -2,6 +2,28 @@
   <v-col cols="12" sm="4" md="4">
     <player-search v-model="filters.playerId" />
   </v-col>
+  <v-fade-transition>
+    <v-col cols="12" sm="4" md="4" v-if="stats.seasons.length > 1">
+      <v-select
+        v-model="filters.season"
+        :items="stats.seasons"
+        label="Season"
+        hide-details
+        density="compact"
+        variant="outlined"
+        item-title="season"
+        item-value="season"
+        clearable
+      >
+        <template #item="{ props, item }">
+          <v-list-item
+            v-bind="props"
+            :title="`${item.raw.platform} ${item.raw.season}`"
+          />
+        </template>
+      </v-select>
+    </v-col>
+  </v-fade-transition>
   <v-col cols="12" sm="4" md="4">
     <v-checkbox
       label="Include matches with leavers"
@@ -58,7 +80,7 @@
 
 <script setup lang="ts">
 import { mdiInformation } from '@mdi/js';
-import type { RestFilters, StatisticPatchMeta } from '~/types/statistic';
+import { DEFAULT_STAT_FILTERS, type RestFilters, type StatisticPatchMeta } from '~/types/statistic';
 import PlayerSearch from './parts/PlayerSearch.vue';
 
 interface Props {
@@ -82,6 +104,10 @@ watch(
       quantile_from: 0,
       quantile_to: 100,
       withLeavers: false,
+      // TODO: multiplatform
+      platform: 'W3Champions',
+      season: undefined,
+      ...DEFAULT_STAT_FILTERS,
     });
   },
   {
@@ -141,6 +167,10 @@ const getFilters = () => {
   }
   if (filtersValue.playerId) {
     output.playerId = filtersValue.playerId;
+  }
+  if (filtersValue.season) {
+    output.platform = filtersValue.platform;
+    output.season = filtersValue.season;
   }
   return output;
 };

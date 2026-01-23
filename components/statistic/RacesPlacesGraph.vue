@@ -137,13 +137,13 @@ const raceNames = computed(() =>
   Object.fromEntries(
     Object.values(racesData)
       .flat()
-      .map(({ id, name }) => [id, name])
-  )
+      .map(({ id, name }) => [id, name]),
+  ),
 );
 const racesIcons = useIconsDataUri(
   iconsSrc,
   iconsCoords,
-  Object.keys(raceNames.value)
+  Object.keys(raceNames.value),
 );
 
 const theme = useTheme();
@@ -160,21 +160,21 @@ const sortVariants = computed(
       ...(hasRepicksBans.value
         ? (['repickrate', 'banrate'] as const)
         : ([] as const)),
-    ] as const
+    ] as const,
 );
 const sortVariantsPlaces = ['default', 1, 2, 3, 4] as const;
 const sortBy =
   ref<((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]>(
-    'default'
+    'winrate',
   );
 const sortSelectItems = computed(() =>
   (showPlaces.value ? sortVariantsPlaces : sortVariants.value).map((value) => ({
     title: capitalize(String(value)),
     value,
-  }))
+  })),
 );
-watch(showPlaces, () => {
-  sortBy.value = 'default';
+watch(showPlaces, (val) => {
+  sortBy.value = val ? 1 : 'winrate';
 });
 
 const itemsData = computed(() => {
@@ -240,7 +240,7 @@ const metricSeries = computed(
             },
           ] satisfies BarSeriesOption[])
         : []),
-    ] satisfies BarSeriesOption[]
+    ] satisfies BarSeriesOption[],
 );
 
 const options = computed(() => {
@@ -317,7 +317,7 @@ const options = computed(() => {
                   image,
                 },
               },
-            ])
+            ]),
           ),
         },
       },
