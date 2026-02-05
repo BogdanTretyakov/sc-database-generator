@@ -30,6 +30,15 @@
       </template>
     </div>
     <v-spacer />
+    <v-btn
+      v-if="!!statsMeta"
+      variant="text"
+      density="comfortable"
+      class="mx-1"
+      to="/matches"
+    >
+      Matches
+    </v-btn>
     <v-badge color="warning" dot :model-value="statsMeta?.hasPatches ?? false">
       <v-btn
         v-if="!!statsMeta"

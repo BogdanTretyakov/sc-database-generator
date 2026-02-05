@@ -57,6 +57,11 @@ export default {
       component: () => import('~/pages/statistic.vue'),
     },
     {
+      name: 'Matches',
+      path: '/matches',
+      component: () => import('~/pages/matches.vue'),
+    },
+    {
       path: '/:versionType/:version?',
       component: () => import('~/pages/versionData/index.vue'),
       children: [

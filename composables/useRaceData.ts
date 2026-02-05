@@ -2,7 +2,7 @@ import type { IRaceData, IDataFile } from '~/data/types';
 import { dataFiles, lastVersions, type VersionIndexFile } from '~/data';
 import type { GetIconPropsFn } from '~/types/app';
 
-type IRaceDataReturn<T = unknown> = {
+export type IRaceDataReturn<T = unknown> = {
   raceData: T;
   raceIconsCoords: IDataFile['icons'];
   iconProps: GetIconPropsFn;
