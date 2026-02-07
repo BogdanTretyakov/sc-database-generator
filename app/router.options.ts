@@ -1,7 +1,6 @@
 import type { RouterConfig } from '@nuxt/schema';
 import oz from '~/data/changelogs/oz';
 import og from '~/data/changelogs/og';
-import { sortVersion } from '~/utils/array';
 
 const changelogs = {
   oz: oz.data,

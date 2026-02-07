@@ -60,6 +60,7 @@ export default defineNuxtConfig({
     routes: [
       '/',
       '/stats',
+      '/matches',
       '/changelog',
       ...versionTypes
         .map((key) => {

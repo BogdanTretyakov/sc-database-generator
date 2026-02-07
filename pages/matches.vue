@@ -22,12 +22,22 @@ import type { SearchPlayersFilters as SearchFilters } from '~/types/statistic';
 
 const statsMeta = await useStatisticMeta();
 
+const typeSelection = useStorageValue('preferredVersion', 'og');
+
 const filters = ref<SearchFilters>({
-  type: 'og',
+  type: typeSelection.value ?? 'og',
   version: '',
   filters: [{}],
   withLeavers: true,
 });
+
+watch(
+  typeSelection,
+  (newType) => {
+    filters.value.type = newType ?? 'og';
+  },
+  { immediate: true },
+);
 
 useSeoMeta({
   title: 'Match Search',
