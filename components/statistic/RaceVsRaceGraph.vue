@@ -129,7 +129,7 @@ const sortSelectItems = sortVariants.map((variant) => ({
   value: variant,
   title: capitalize(variant),
 }));
-const sortBy = ref<(typeof sortVariants)[number]>('effectiveness');
+const sortBy = useStorageValue('raceVsRaceSortBy', 'effectiveness');
 
 const itemsData = computed(() => {
   const raceOrder = Object.keys(raceNames.value);

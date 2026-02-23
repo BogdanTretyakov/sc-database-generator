@@ -163,19 +163,21 @@ const sortVariants = computed(
     ] as const,
 );
 const sortVariantsPlaces = ['default', 1, 2, 3, 4] as const;
-const sortBy =
-  ref<((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]>(
-    'winrate',
-  );
+
+const sortBy = useStorageValueFlag<
+  ((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]
+>('racesSortBy', showPlaces, ['winrate', 1]);
+
+// const sortBy =
+//   ref<((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]>(
+//     'winrate',
+//   );
 const sortSelectItems = computed(() =>
   (showPlaces.value ? sortVariantsPlaces : sortVariants.value).map((value) => ({
     title: capitalize(String(value)),
     value,
   })),
 );
-watch(showPlaces, (val) => {
-  sortBy.value = val ? 1 : 'winrate';
-});
 
 const itemsData = computed(() => {
   const raceOrder = Object.keys(raceNames.value);

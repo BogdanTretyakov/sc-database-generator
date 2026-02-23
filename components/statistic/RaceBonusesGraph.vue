@@ -155,23 +155,18 @@ const bonusIcons = useIconsDataUri(
 const theme = useTheme();
 const showPlaces = useStorageValue('showPlaces', false, Boolean);
 
-const sortVariants = computed(
-  () => ['default', 'pickrate', 'winrate'] as const,
-);
+const sortVariants = ['default', 'pickrate', 'winrate'] as const;
 const sortVariantsPlaces = ['default', 1, 2, 3, 4] as const;
-const sortBy =
-  ref<((typeof sortVariants)['value'] | typeof sortVariantsPlaces)[number]>(
-    'winrate',
-  );
+
+const sortBy = useStorageValueFlag<
+  (typeof sortVariants | typeof sortVariantsPlaces)[number]
+>('raceBonusesSortBy', showPlaces, ['winrate', 1]);
 const sortSelectItems = computed(() =>
-  (showPlaces.value ? sortVariantsPlaces : sortVariants.value).map((value) => ({
+  (showPlaces.value ? sortVariantsPlaces : sortVariants).map((value) => ({
     title: capitalize(String(value)),
     value,
   })),
 );
-watch(showPlaces, (val) => {
-  sortBy.value = val ? 1 : 'winrate';
-});
 
 const itemsData = computed(() => {
   const bonusOrder = Object.keys(bonusNames.value);
@@ -191,17 +186,28 @@ const itemsData = computed(() => {
 });
 
 const placesSeries: BarSeriesOption[] = [
+  theme.current.value.colors.primary,
   '#81c784',
   '#dce775',
   '#ffb74d',
   '#e57373',
-].map((color, idx) => ({
-  name: `${idx + 1}`,
-  type: 'bar',
-  itemStyle: {
-    color,
-  },
-}));
+].map((color, idx) =>
+  idx
+    ? {
+        name: `${idx}`,
+        type: 'bar',
+        itemStyle: {
+          color,
+        },
+      }
+    : {
+        name: 'Pickrate',
+        type: 'bar',
+        itemStyle: {
+          color,
+        },
+      },
+);
 
 const metricSeries = computed(
   () =>
@@ -226,7 +232,7 @@ const metricSeries = computed(
 
 const options = computed(() => {
   const dimensions = showPlaces.value
-    ? ['bonus', '1', '2', '3', '4']
+    ? ['bonus', 'pickrate', '1', '2', '3', '4']
     : ['bonus', 'pickrate', 'winrate'];
 
   const markLine: MarkLineComponentOption = {
