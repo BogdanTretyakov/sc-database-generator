@@ -19,8 +19,17 @@ const internalUseRaceData = async (
   const versionTypeFiles = dataFiles[type];
 
   // Загрузка JSON-данных
-  const importFn = versionTypeFiles[version];
-  if (!importFn) throw createError('unknown version');
+  let importFn = versionTypeFiles[version];
+  if (!importFn) {
+    if (version.match(/\w$/)) {
+      importFn = versionTypeFiles[version.replace(/\w$/, '')];
+      if (!importFn) {
+        throw createError('unknown version');
+      }
+    } else {
+      throw createError('unknown version');
+    }
+  }
 
   const versionIndex = await importFn();
 

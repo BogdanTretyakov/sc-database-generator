@@ -3,6 +3,10 @@
     <!-- Meta information row -->
     <div class="metadata-row d-flex align-center pb-4 mb-4 border-b">
       <div class="meta-item mr-6">
+        <div class="text-caption text-medium-emphasis">Version</div>
+        <div class="text-body-1">{{ matchData.type.toLocaleUpperCase() }} {{ matchData.version }}</div>
+      </div>
+      <div class="meta-item mr-6">
         <div class="text-caption text-medium-emphasis">Date end</div>
         <div class="text-body-1">{{ formattedDate }}</div>
       </div>
