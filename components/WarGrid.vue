@@ -3,7 +3,7 @@
     <div
       class="grid-item"
       v-for="(item, index) in sortedItems"
-      :key="item?.id ?? index"
+      :key="item?.uid ?? item?.id ?? index"
       :class="{
         'empty-item': showEmpty && !item,
       }"

@@ -173,6 +173,7 @@
       :ultimates-data="ultimatesData"
       :race-data="raceData"
     />
+
     <div v-else class="timeline-placeholder mt-8 pa-6 bg-surface-variant rounded d-flex align-center justify-center">
       <v-progress-circular indeterminate />
     </div>

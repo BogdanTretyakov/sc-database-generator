@@ -1,5 +1,6 @@
 export interface IBaseObject {
   id: string;
+  uid?: string;
   name: string;
   hotkey: string;
   description?: string;
