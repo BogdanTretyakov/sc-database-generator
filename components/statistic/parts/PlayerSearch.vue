@@ -1,6 +1,7 @@
 <template>
   <v-autocomplete
     :label="label"
+    v-model="modelValue"
     v-model:search="search"
     :loading="loading"
     :items="items"
@@ -9,7 +10,6 @@
     density="compact"
     clearable
     variant="outlined"
-    @update:model-value="(value) => emit('model-value', value?.id)"
     item-title="name"
     item-value="id"
     hide-no-data
@@ -53,15 +53,37 @@ const { label = 'Player name' } = defineProps<{
   label?: string;
 }>();
 
-const emit = defineEmits<{
-  (e: 'model-value', value: number | undefined): void;
-}>();
+const modelValue = defineModel<number>();
 
 const runtimeConfig = useRuntimeConfig();
 
 const search = ref<string | undefined>(void 0);
 const items = ref<ServerPlayer[]>([]);
 const loading = ref(false);
+
+watch(modelValue, (newId: number | undefined | null) => {
+  if (newId === undefined || newId === null) return;
+
+  const found = items.value.some((item) => item.id === newId);
+  if (found) return;
+
+  loading.value = true;
+  const url = new URL(`/match/player/${newId}`, runtimeConfig.public.backendUrl)
+  fetch(url)
+    .then((res) => {
+      if (!res.ok) throw new Error(`Player fetch failed: ${res.status}`);
+      return res.json();
+    })
+    .then((data: ServerPlayer) => {
+      if (data && data.id) {
+        items.value.push(data);
+      }
+    })
+    .catch((err) => console.error(err))
+    .finally(() => {
+      loading.value = false;
+    });
+}, { immediate: true });
 
 watchEffect(
   (onCleanup) => {

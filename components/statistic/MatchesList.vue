@@ -11,6 +11,7 @@
           :item="item"
           :version-type="filters.type"
           :version="filters.version"
+          @click="openMatchDetail(item)"
         />
       </template>
       <template v-else>
@@ -21,13 +22,34 @@
       </template>
     </div>
     <v-pagination v-model="page" :length="totalPages" />
+
+    <v-dialog v-model="isDetailModalOpen" max-width="1200" scrollable>
+      <v-card v-if="selectedMatch">
+        <v-toolbar color="surface-variant" density="compact">
+          <v-toolbar-title class="text-subtitle-1 font-weight-bold">Match Details: {{ selectedMatch.id }}</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn icon density="comfortable" @click="isDetailModalOpen = false">
+            <v-icon>{{ mdiClose }}</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-card-text class="pa-0">
+          <MatchDetail
+            :item="selectedMatch"
+            :version-type="filters.type"
+            :version="filters.version"
+            show-link
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { mdiAlertCircleOutline } from '@mdi/js';
+import { mdiAlertCircleOutline, mdiClose } from '@mdi/js';
 import type { SearchPlayersFilters, MatchInfo } from '~/types/statistic';
 import MatchListItem from './parts/MatchListItem.vue';
+import MatchDetail from './parts/MatchDetail.vue';
 
 const { filters, perPage } = defineProps<{
   filters: SearchPlayersFilters;
@@ -38,6 +60,13 @@ const runtimeConfig = useRuntimeConfig();
 const bodyRef = ref<HTMLDivElement | null>(null);
 
 const page = ref(1);
+const isDetailModalOpen = ref(false);
+const selectedMatch = ref<MatchInfo | null>(null);
+
+const openMatchDetail = (item: MatchInfo) => {
+  selectedMatch.value = item;
+  isDetailModalOpen.value = true;
+};
 
 watch(
   () => filters,

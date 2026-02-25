@@ -158,6 +158,14 @@ export interface MatchEvent {
   time: number;
 }
 
+export interface TimelineEvent {
+  playerId: number;
+  time: number;
+  level: number;
+  id: string;
+  type: PlayerEvents;
+}
+
 export const PlayerEvents = {
   INITIAL_RACE: 'INITIAL_RACE',
   BAN_RACE: 'BAN_RACE',
@@ -171,6 +179,7 @@ export const PlayerEvents = {
   UP_BARRACK3: 'UP_BARRACK3',
   UP_BARRACK4: 'UP_BARRACK4',
   USE_ULTIMATE: 'USE_ULTIMATE',
+  UNIT_BUY: 'UNIT_BUY',
 };
 
 export type PlayerEvents = (typeof PlayerEvents)[keyof typeof PlayerEvents];

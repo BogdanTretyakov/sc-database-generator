@@ -64,8 +64,8 @@ export const useRaceData = async <T = IRaceData>(
 ) => {
   const route = useRouter().currentRoute.value;
 
-  const versionType = type ?? (route.params.versionType as string) ?? 'og';
-  let versionStr = version ?? ((route.params.version as string) || 'latest');
+  const versionType = type || (route.params.versionType as string) || 'og';
+  let versionStr = version || ((route.params.version as string) || 'latest');
 
   if (versionStr === 'latest') {
     versionStr = lastVersions[versionType];

@@ -20,6 +20,21 @@ export default {
       component: () => import('~/pages/credits.vue'),
     },
     {
+      name: 'Statistic',
+      path: '/stats',
+      component: () => import('~/pages/statistic.vue'),
+    },
+    {
+      name: 'Matches',
+      path: '/matches',
+      component: () => import('~/pages/matches.vue'),
+    },
+    {
+      name: 'MatchDetails',
+      path: '/matches/:platform/:id',
+      component: () => import('~/pages/matchDetail.vue'),
+    },
+    {
       name: 'Changelog',
       path: '/changelog/:clVersionType?/:clVersion?',
       component: () => import('~/pages/changelog.vue'),
@@ -49,16 +64,6 @@ export default {
           };
         }
       },
-    },
-    {
-      name: 'Statistic',
-      path: '/stats',
-      component: () => import('~/pages/statistic.vue'),
-    },
-    {
-      name: 'Matches',
-      path: '/matches',
-      component: () => import('~/pages/matches.vue'),
     },
     {
       path: '/:versionType/:version?',

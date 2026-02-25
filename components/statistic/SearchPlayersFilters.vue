@@ -41,6 +41,10 @@
               </div>
             </template>
           </v-select>
+
+          <v-spacer />
+
+          <MatchSearchByIdUrl />
         </div>
       </v-col>
     </v-row>
@@ -108,6 +112,7 @@ import type { SearchPlayersFilters, StatisticMeta, PlayerFilter } from '~/types/
 import PlayerFilterItem from './parts/PlayerFilterItem.vue';
 import { dataFiles } from '~/data';
 import { sortVersionObjCb } from '~/utils/array';
+import MatchSearchByIdUrl from './parts/MatchSearchByIdUrl.vue'
 
 const props = defineProps<{
   modelValue: SearchPlayersFilters;
@@ -171,6 +176,7 @@ const getCleanFilters = (filters: UiFilters): SearchPlayersFilters => {
 watch(
   () => items.value,
   () => {
+    if (items.value.length === 0) return;
     // Only set default if current version is invalid or empty
     if (!internalFilters.value.version || !items.value.some(i => i.value === internalFilters.value.version)) {
         internalFilters.value.version = items.value[0]?.value ?? '';
@@ -202,14 +208,18 @@ watch(
 watch(
   () => internalFilters.value.type,
   () => {
-    internalFilters.value.version = items.value[0]?.value ?? '';
+    if (items.value.length > 0) {
+      internalFilters.value.version = items.value[0]?.value ?? '';
+    }
   },
 );
 
 watch(
   () => internalFilters.value.version,
-  () => {
-      internalFilters.value.filters = [{ _uid: generateUid() }];
+  (newVersion, oldVersion) => {
+      if (oldVersion && newVersion !== oldVersion) {
+        internalFilters.value.filters = [{ _uid: generateUid() }];
+      }
   },
 );
 
