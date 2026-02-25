@@ -53,7 +53,14 @@
             <!-- Player Row Label (For Separate View) -->
             <tr v-if="viewMode === 'separate'" class="player-header-row">
               <td class="player-header-cell" :colspan="totalMinutes + 1">
-                <div class="player-name-sticky text-primary font-weight-bold">
+                <div
+                  class="player-name-sticky d-flex align-center gap-2 text-primary font-weight-bold"
+                >
+                  <GameIcon
+                    :src="raceData.iconsSrc"
+                    :coords="raceData.iconProps(group.race)"
+                    width="24"
+                  />
                   {{ group.name }}
                 </div>
               </td>
@@ -77,8 +84,8 @@
                     <div
                       v-for="(event, idx) in getBucketEvents(
                         group.id,
+                        row.id,
                         minute - 1,
-                        row.eventTypes,
                       )"
                       :key="`${event.id}-${event.time}-${idx}`"
                       class="event-icon-wrapper"
@@ -88,12 +95,16 @@
                       }"
                       :style="{ borderColor: getEventColor(event) }"
                     >
-                      <WarTooltip
-                        :src="getIconSrc(event)"
-                        :coords="getIconCoords(event)"
-                        :description="getEventTooltip(event)"
-                        :width="event.type === 'UNIT_BUY' ? '24' : '36'"
-                      />
+                      <div
+                        @mouseenter="showTooltip($event, event)"
+                        @mouseleave="hideTooltip"
+                      >
+                        <GameIcon
+                          :src="getIconSrc(event)"
+                          :coords="getIconCoords(event)"
+                          :width="event.type === 'UNIT_BUY' ? '24' : '36'"
+                        />
+                      </div>
                       <span v-if="event.level > 1" class="event-level-badge">{{
                         event.level
                       }}</span>
@@ -112,12 +123,24 @@
       >
         No progression events found for this match based on current filters.
       </div>
+
+      <!-- Global single tooltip instance to prevent performance lag -->
+      <v-tooltip
+        v-model="tooltip.show"
+        :target="tooltip.target"
+        location="bottom center"
+        max-width="350"
+        :transition="{ component: VFadeTransition }"
+      >
+        <div class="war-tooltip" v-html="tooltip.description" />
+      </v-tooltip>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
+import { VFadeTransition } from 'vuetify/components';
 import {
   mdiSwordCross,
   mdiHomeLightningBolt,
@@ -125,18 +148,24 @@ import {
   mdiCastle,
   mdiAccountArrowRight,
 } from '@mdi/js';
-import type {
-  MatchPlayerInfo,
-  TimelineEvent,
+import {
+  type MatchPlayerInfo,
+  type TimelineEvent,
   PlayerEvents,
 } from '~/types/statistic';
 import { mapPlayerEventsToTimeline } from '~/utils/timelineHelpers';
-import type { IBaseObject, IRaceData, IUltimatesData } from '~/data/types';
+import type {
+  IBaseObject,
+  IRaceData,
+  IRacePickerObject,
+  IUltimatesData,
+} from '~/data/types';
 
 const props = defineProps<{
   racesData: Record<string, IRaceDataReturn<IRaceData>>;
   ultimatesData: IRaceDataReturn<IUltimatesData>;
   players: MatchPlayerInfo[];
+  raceData: IRaceDataReturn<Record<string, IRacePickerObject[]>>;
 }>();
 
 // Row configuration maps filters directly to rows
@@ -265,9 +294,21 @@ const PLAYER_COLORS = [
 
 const displayGroups = computed(() => {
   if (viewMode.value === 'combined') {
-    return [{ id: 'combined', name: 'All Players' }];
+    return [{ id: 'combined', name: 'All Players', race: 'combined' }];
   }
-  return props.players.map((p) => ({ id: String(p.id), name: p.name }));
+  return props.players.map((p) => ({
+    id: String(p.id),
+    name: p.name,
+    race: p.race,
+  }));
+});
+
+const playersMap = computed(() => {
+  const map: Record<number, MatchPlayerInfo> = {};
+  props.players.forEach((p) => {
+    map[p.id] = p;
+  });
+  return map;
 });
 
 const totalMinutes = computed(() => {
@@ -278,18 +319,25 @@ const totalMinutes = computed(() => {
   return Math.max(1, Math.ceil(maxTimeMs / 60000));
 });
 
-// Cache events by groupId, minute, and mappedType for fast access during render
+// Cache events by groupId, rowId, and minute for fast access during render without sorting overhead
 const bucketedEvents = computed(() => {
   const buckets: Record<
     string,
-    Record<number, Record<string, TimelineEvent[]>>
+    Record<string, Record<number, TimelineEvent[]>>
   > = {};
 
-  const initBucket = (gId: string, min: number, type: string) => {
+  const initBucket = (gId: string, rowId: string, min: number) => {
     if (!buckets[gId]) buckets[gId] = {};
-    if (!buckets[gId][min]) buckets[gId][min] = {};
-    if (!buckets[gId][min][type]) buckets[gId][min][type] = [];
+    if (!buckets[gId][rowId]) buckets[gId][rowId] = {};
+    if (!buckets[gId][rowId][min]) buckets[gId][rowId][min] = [];
   };
+
+  const typeToRowMap: Record<string, string> = {};
+  ROW_FILTERS.forEach((row) => {
+    row.eventTypes.forEach((t) => {
+      typeToRowMap[t] = row.id;
+    });
+  });
 
   mappedTimelineEvents.value.forEach((event) => {
     const min = Math.floor(event.time / 60000);
@@ -299,36 +347,28 @@ const bucketedEvents = computed(() => {
       mappedType = 'FORT_UPGRADE';
     if (mappedType === 'TOWER_UPGRADE') mappedType = 'BASE_UPGRADE';
 
+    const rowId = typeToRowMap[mappedType];
+    if (!rowId) return;
+
     // Separate mode
     const pId = String(event.playerId);
-    initBucket(pId, min, mappedType);
-    buckets[pId][min][mappedType].push(event);
+    initBucket(pId, rowId, min);
+    buckets[pId][rowId][min].push(event);
 
     // Combined mode
-    initBucket('combined', min, mappedType);
-    buckets['combined'][min][mappedType].push(event);
+    initBucket('combined', rowId, min);
+    buckets['combined'][rowId][min].push(event);
   });
 
   return buckets;
 });
 
-const getBucketEvents = (
-  groupId: string,
-  minute: number,
-  targetTypes: string[],
-) => {
-  let events: TimelineEvent[] = [];
-  const minBucket = bucketedEvents.value[groupId]?.[minute];
-  if (minBucket) {
-    targetTypes.forEach((t) => {
-      if (minBucket[t]) events.push(...minBucket[t]);
-    });
-  }
-  return events.sort((a, b) => a.time - b.time);
+const getBucketEvents = (groupId: string, rowId: string, minute: number) => {
+  return bucketedEvents.value[groupId]?.[rowId]?.[minute] || [];
 };
 
 const getIconSrc = (event: TimelineEvent) => {
-  const player = props.players.find((p) => p.id === event.playerId);
+  const player = playersMap.value[event.playerId];
   if (!player) return '';
 
   if (event.type === 'USE_ULTIMATE') {
@@ -359,7 +399,7 @@ const getItemMaxLvl = (item: IBaseObject) => {
 };
 
 const getIconCoords = (event: TimelineEvent) => {
-  const player = props.players.find((p) => p.id === event.playerId);
+  const player = playersMap.value[event.playerId];
   if (!player) return null;
 
   if (event.type === 'USE_ULTIMATE') {
@@ -378,7 +418,7 @@ const getIconCoords = (event: TimelineEvent) => {
 };
 
 const getEventTooltip = (event: TimelineEvent) => {
-  const player = props.players.find((p) => p.id === event.playerId);
+  const player = playersMap.value[event.playerId];
   const pName = player ? player.name : 'Unknown';
   let desc = `[${formatMillisecondsToHuman(event.time)}] `;
   if (viewMode.value === 'combined') {
@@ -386,23 +426,23 @@ const getEventTooltip = (event: TimelineEvent) => {
   }
 
   switch (event.type) {
-    case 'FORT_UPGRADE2':
+    case PlayerEvents.UP_FORT2:
       desc += 'Fortress lvl 2';
       break;
-    case 'FORT_UPGRADE3':
+    case PlayerEvents.UP_FORT3:
       desc += 'Fortress lvl 3';
       break;
-    case 'UP_BARRACK2':
+    case PlayerEvents.UP_BARRACK2:
       desc += 'Barrack lvl 2';
       break;
-    case 'UP_BARRACK3':
+    case PlayerEvents.UP_BARRACK3:
       desc += 'Barrack lvl 3';
       break;
-    case 'UP_BARRACK4':
+    case PlayerEvents.UP_BARRACK4:
       desc += 'Barrack lvl 4';
       break;
-    case 'HERO_BUY':
-    case 'UNIT_BUY': {
+    case PlayerEvents.HERO_BUY:
+    case PlayerEvents.UNIT_BUY: {
       const item = itemsMap.value[event.id];
       if (!item) break;
       desc += `${item.name}`;
@@ -411,7 +451,7 @@ const getEventTooltip = (event: TimelineEvent) => {
       }
       break;
     }
-    case 'USE_ULTIMATE': {
+    case PlayerEvents.USE_ULTIMATE: {
       const item = Object.values(props.ultimatesData.raceData.spells)
         .flat()
         .find((s) => s.id === event.id);
@@ -419,9 +459,9 @@ const getEventTooltip = (event: TimelineEvent) => {
       desc += `${item.name}`;
       break;
     }
-    case 'BASE_UPGRADE':
-    case 'TOWER_UPGRADE':
-    case 'CANCEL_UPGRADE': {
+    case PlayerEvents.BASE_UPGRADE:
+    case PlayerEvents.TOWER_UPGRADE:
+    case PlayerEvents.CANCEL_UPGRADE: {
       const item = itemsMap.value[event.id];
       if (!item) break;
       desc += `${item.name} (Lvl ${event.level})`;
@@ -443,10 +483,43 @@ const formatMillisecondsToHuman = (ms: number) => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-const getEventColor = () => 'transparent';
+// Tooltip state
+const tooltip = reactive({
+  show: false,
+  target: null as HTMLElement | null,
+  description: '',
+});
+
+const showTooltip = (e: MouseEvent, event: TimelineEvent) => {
+  tooltip.target = e.currentTarget as HTMLElement;
+  tooltip.description = getEventTooltip(event);
+  tooltip.show = true;
+};
+
+const hideTooltip = () => {
+  tooltip.show = false;
+};
+
+const playerColor = computed(() =>
+  Object.fromEntries(
+    Object.entries(playersMap.value).map(([id, { place }]) => [
+      id,
+      PLAYER_COLORS[place - 1],
+    ]),
+  ),
+);
+
+const getEventColor = (ev: TimelineEvent) =>
+  viewMode.value === 'separate'
+    ? 'transparent'
+    : (playerColor.value[ev.playerId] ?? 'transparent');
 </script>
 
 <style scoped>
+.war-tooltip::v-deep(hr) {
+  opacity: 0.6;
+  margin: 4px 0;
+}
 .match-progression {
   width: 100%;
 }

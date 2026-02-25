@@ -91,8 +91,8 @@
 
                 <template v-if="getInitialRace(player) && getInitialRace(player) !== player.race">
                   <WarTooltip
-                    :src="racesIcons"
-                    :coords="raceIconsCoords(getInitialRace(player)!)"
+                    :src="raceData.iconsSrc"
+                    :coords="raceData.iconProps(getInitialRace(player)!)"
                     :description="getRaceName(getInitialRace(player)!)"
                     width="36"
                   />
@@ -101,8 +101,8 @@
 
                 <WarTooltip
                   v-if="racesData[player.race]"
-                  :src="racesIcons"
-                  :coords="raceIconsCoords(player.race)"
+                  :src="raceData.iconsSrc"
+                  :coords="raceData.iconProps(player.race)"
                   :description="racesData[player.race].raceData.name"
                   width="36"
                 />
@@ -128,8 +128,8 @@
               <div class="d-flex align-center mt-2" v-if="getBannedRace(player)">
                 <span class="text-caption text-medium-emphasis mr-3 width-label">Banned:</span>
                 <WarTooltip
-                  :src="racesIcons"
-                  :coords="raceIconsCoords(getBannedRace(player)!)"
+                  :src="raceData.iconsSrc"
+                  :coords="raceData.iconProps(getBannedRace(player)!)"
                   :description="getRaceName(getBannedRace(player)!)"
                   width="36"
                 />
@@ -171,6 +171,7 @@
       :players="sortedPlayers"
       :races-data="racesData"
       :ultimates-data="ultimatesData"
+      :race-data="raceData"
     />
     <div v-else class="timeline-placeholder mt-8 pa-6 bg-surface-variant rounded d-flex align-center justify-center">
       <v-progress-circular indeterminate />
@@ -227,11 +228,7 @@ watch(
 );
 
 // Fetch races data mappings
-const {
-  raceData,
-  iconsSrc: racesIcons,
-  iconProps: raceIconsCoords,
-} = await useRaceData<Record<string, IRacePickerObject[]>>(
+const raceData = await useRaceData<Record<string, IRacePickerObject[]>>(
   'races',
   props.versionType,
   props.version
@@ -241,7 +238,7 @@ const ultimatesData = await useRaceData<IUltimatesData>('ultimates', props.versi
 
 const raceNames = computed(() => {
   const raceIds = matchData.value.players.map(({ race }) => race);
-  return Object.values(raceData)
+  return Object.values(raceData.raceData)
     .flat()
     .filter(({ id }) => raceIds.includes(id))
     .map(({ key }) => key);
@@ -271,7 +268,7 @@ const formatPlayerTimeAlive = (time: number) =>
   formatMillisecondsToHuman(time);
 
 const getRaceName = (id: string) => {
-  return Object.values(raceData).flat().find((r) => r.id === id)?.name || id;
+  return Object.values(raceData.raceData).flat().find((r) => r.id === id)?.name || id;
 };
 
 const getBannedRace = (player: MatchPlayerInfo) => {
