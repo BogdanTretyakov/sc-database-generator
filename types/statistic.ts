@@ -181,6 +181,7 @@ export const PlayerEvents = {
   USE_ULTIMATE: 'USE_ULTIMATE',
   UNIT_BUY: 'UNIT_BUY',
   CANCEL_UPGRADE: 'CANCEL_UPGRADE',
+  BONUS_UPGRADE: 'BONUS_UPGRADE',
 };
 
 export type PlayerEvents = (typeof PlayerEvents)[keyof typeof PlayerEvents];

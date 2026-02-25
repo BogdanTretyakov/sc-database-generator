@@ -5,6 +5,7 @@ export const getMappedEventType = (rawType: string): string => {
   if (rawType.startsWith('UP_FORT')) return 'FORT_UPGRADE';
   if (rawType.startsWith('UP_BARRACK')) return 'FORT_UPGRADE';
   if (rawType === 'TOWER_UPGRADE') return 'BASE_UPGRADE';
+  if (rawType === 'BONUS_UPGRADE') return 'BASE_UPGRADE';
   return rawType;
 };
 
@@ -36,6 +37,16 @@ export const getUpgradeTimer = (raceData: IRaceData | undefined, upgradeId: stri
         if (checkUpgrade(upg)) return timer;
       }
     }
+
+    if (raceData.bonuses) {
+      for (const bonus of raceData.bonuses) {
+        if (bonus.upgrades) {
+          for (const upg of bonus.upgrades) {
+            if (checkUpgrade(upg)) return timer;
+          }
+        }
+      }
+    }
   }
 
   return 0;
@@ -51,6 +62,23 @@ export const mapPlayerEventsToTimeline = (
   players.forEach(player => {
     const playerRaceData = racesData[player.race]?.raceData as IRaceData | undefined;
     const currentUpgradeLevels: Record<string, number> = {};
+    const upgradeBaseLevels: Record<string, number> = {};
+
+    if (playerRaceData) {
+      const allUpgrades = [
+        playerRaceData.baseUpgrades?.melee,
+        playerRaceData.baseUpgrades?.armor,
+        playerRaceData.baseUpgrades?.range,
+        playerRaceData.baseUpgrades?.wall,
+        ...(playerRaceData.towerUpgrades || []),
+        ...(playerRaceData.magic || []),
+        ...(playerRaceData.bonuses?.flatMap(b => b.upgrades || []) || [])
+      ].filter(Boolean) as IUpgradeObject[];
+
+      allUpgrades.forEach(u => {
+        if (u.level) upgradeBaseLevels[u.id] = u.level;
+      });
+    }
 
     if (player.events) {
       player.events.forEach((event: { type: string, time: number, id: string }) => {
@@ -66,15 +94,22 @@ export const mapPlayerEventsToTimeline = (
         let level = 1;
         let timeOffset = 0;
 
-        if (event.type === 'BASE_UPGRADE' || event.type === 'TOWER_UPGRADE') {
-          currentUpgradeLevels[event.id] = (currentUpgradeLevels[event.id] || 0) + 1;
+        if (['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(event.type)) {
+          if (currentUpgradeLevels[event.id] === undefined) {
+            currentUpgradeLevels[event.id] = upgradeBaseLevels[event.id] || 0;
+          }
+          currentUpgradeLevels[event.id] += 1;
           level = currentUpgradeLevels[event.id];
           if (playerRaceData) {
             timeOffset = getUpgradeTimer(playerRaceData, event.id, level);
           }
         } else if (event.type === 'CANCEL_UPGRADE') {
+          const baseLevel = upgradeBaseLevels[event.id] || 0;
+          if (currentUpgradeLevels[event.id] === undefined) {
+             currentUpgradeLevels[event.id] = baseLevel;
+          }
           level = currentUpgradeLevels[event.id] || 1;
-          if (currentUpgradeLevels[event.id] && currentUpgradeLevels[event.id] > 0) {
+          if (currentUpgradeLevels[event.id] > baseLevel) {
             currentUpgradeLevels[event.id]--;
           }
         } else if (event.type.startsWith('UP_FORT')) {
@@ -168,15 +203,18 @@ export const calculatePlayerEconomy = (
       if (item && item.type === 'hero') {
         result.heroesCost += (item as any).cost || 0;
       }
-    } else if (event.type === 'BASE_UPGRADE' || event.type === 'TOWER_UPGRADE') {
-      currentUpgradeLevels[event.id] = (currentUpgradeLevels[event.id] || 0) + 1;
+    } else if (['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(event.type)) {
+      if (currentUpgradeLevels[event.id] === undefined) {
+        currentUpgradeLevels[event.id] = (item as any)?.level || 0;
+      }
+      currentUpgradeLevels[event.id] += 1;
 
-      if (event.type === 'BASE_UPGRADE') {
+      if (event.type === 'BASE_UPGRADE' || event.type === 'BONUS_UPGRADE') {
         // Find if this is a bonus upgrade instead of a regular base upgrade
         // We consider it a bonus upgrade if it's not in baseUpgrades or magic, but is in bonuses
-        const isBonus = !raceData.magic?.some(m => m.id === event.id) &&
+        const isBonus = event.type === 'BONUS_UPGRADE' || (!raceData.magic?.some(m => m.id === event.id) &&
                         !Object.values(raceData.baseUpgrades).some(u => u.id === event.id) &&
-                        raceData.bonuses.some(b => b.upgrades?.some(u => u.id === event.id) || b.id === event.id);
+                        raceData.bonuses.some(b => b.upgrades?.some(u => u.id === event.id) || b.id === event.id));
         if (isBonus) {
           result.bonusUpgradeLevels[event.id] = currentUpgradeLevels[event.id];
         } else {
@@ -192,15 +230,20 @@ export const calculatePlayerEconomy = (
         result.totalUpgradeLevels++;
 
         const upgCost = (item as unknown as { cost: number[] }).cost[levelIdx] || 0;
-        if (event.type === 'BASE_UPGRADE') {
+        if (event.type === 'BASE_UPGRADE' || event.type === 'BONUS_UPGRADE') {
           result.baseUpgradesCost += upgCost;
         } else {
           result.towerUpgradesCost += upgCost;
         }
       }
     } else if (event.type === 'CANCEL_UPGRADE') {
+      const baseLevel = (item as any)?.level || 0;
+      if (currentUpgradeLevels[event.id] === undefined) {
+        currentUpgradeLevels[event.id] = baseLevel;
+      }
       const levelBeforeCancel = currentUpgradeLevels[event.id] || 1;
-      if (currentUpgradeLevels[event.id] && currentUpgradeLevels[event.id] > 0) {
+
+      if (currentUpgradeLevels[event.id] > baseLevel) {
         currentUpgradeLevels[event.id]--;
       }
 

@@ -228,7 +228,7 @@ export type IDamageTuple = [
   normal: number,
   hero: number,
   divine: number,
-  unarmored: number
+  unarmored: number,
 ];
 
 export interface IPatchDamage {
@@ -285,7 +285,7 @@ interface ObjectsTypeMap {
 
 export type GetObjectFunction = <T extends keyof ObjectsTypeMap>(
   key: T,
-  id: string
+  id: string,
 ) => ObjectsTypeMap[T] | undefined;
 
 export interface IChangelog {
@@ -309,7 +309,7 @@ export type ChangeTuple<T> = [
   new: T extends object
     ? // @ts-expect-error
       Partial<T> & Pick<T, 'id' | 'iconId' | 'name' | 'type' | 'hotkey'>
-    : T
+    : T,
 ];
 export type WithIconId<T extends IBaseObject> = T & { iconId: string };
 
