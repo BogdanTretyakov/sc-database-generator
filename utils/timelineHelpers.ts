@@ -72,6 +72,11 @@ export const mapPlayerEventsToTimeline = (
           if (playerRaceData) {
             timeOffset = getUpgradeTimer(playerRaceData, event.id, level);
           }
+        } else if (event.type === 'CANCEL_UPGRADE') {
+          level = currentUpgradeLevels[event.id] || 1;
+          if (currentUpgradeLevels[event.id] && currentUpgradeLevels[event.id] > 0) {
+            currentUpgradeLevels[event.id]--;
+          }
         } else if (event.type.startsWith('UP_FORT')) {
           level = parseInt(event.type.replace('UP_FORT', ''), 10) || 1;
         } else if (event.type.startsWith('UP_BARRACK')) {
