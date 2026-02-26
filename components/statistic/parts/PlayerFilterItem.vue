@@ -2,14 +2,13 @@
   <div class="d-flex flex-column gap-4">
     <div >
       <PlayerSearch
-        v-model="modelValue.playerId"
+        v-model="playerIdModel"
         label="Player Name"
-        @update:model-value="update"
       />
     </div>
     <div >
       <v-select
-        v-model="modelValue.race"
+        v-model="raceModel"
         label="Race"
         :items="races"
         density="compact"
@@ -18,7 +17,6 @@
         variant="outlined"
         item-title="name"
         item-value="id"
-        @update:model-value="update"
       >
         <template #item="{ item, props }">
           <v-list-item
@@ -48,9 +46,9 @@
     </div>
     <div >
       <v-select
-        v-model="modelValue.bonus"
+        v-model="bonusModel"
         label="Bonus"
-        :disabled="!modelValue.race"
+        :disabled="!raceModel"
         :items="bonuses"
         clearable
         density="compact"
@@ -58,7 +56,6 @@
         variant="outlined"
         item-title="name"
         item-value="id"
-        @update:model-value="update"
       >
       <template #item="{ item, props }">
           <v-list-item
@@ -90,14 +87,13 @@
     </div>
     <div >
       <v-select
-        v-model="modelValue.place"
+        v-model="placeModel"
         label="Place"
         :items="places"
         density="compact"
         hide-details
         variant="outlined"
         clearable
-        @update:model-value="update"
       ></v-select>
     </div>
   </div>
@@ -116,14 +112,29 @@ const props = defineProps<{
 
 const racesData = await useRaceData<Record<string, IRacePickerObject[]>>('races', props.type, props.version);
 
-
 const emit = defineEmits<{
   (e: 'update:modelValue', value: PlayerFilter): void;
 }>();
 
-const update = () => {
-  emit('update:modelValue', props.modelValue);
-};
+const playerIdModel = computed({
+  get: () => props.modelValue.playerId,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, playerId: val })
+});
+
+const raceModel = computed({
+  get: () => props.modelValue.race,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, race: val })
+});
+
+const bonusModel = computed({
+  get: () => props.modelValue.bonus,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, bonus: val })
+});
+
+const placeModel = computed({
+  get: () => props.modelValue.place,
+  set: (val) => emit('update:modelValue', { ...props.modelValue, place: val })
+});
 
 const races = computed(() =>
   Object.values(racesData.raceData).flat()
@@ -134,7 +145,9 @@ const selectedRaceData = ref<null|IRaceDataReturn<IRaceData>>(null)
 const bonuses = computed(() => selectedRaceData.value?.raceData.bonuses ?? [])
 
 watch(() => props.modelValue.race, async (value) => {
-  props.modelValue.bonus = undefined
+  if (props.modelValue.bonus && !value) {
+     emit('update:modelValue', { ...props.modelValue, bonus: undefined, race: value });
+  }
   const selectedRaceKey = races.value.find(r => r.id === value)?.key
   if (!selectedRaceKey) {
     selectedRaceData.value = null
@@ -142,7 +155,7 @@ watch(() => props.modelValue.race, async (value) => {
   }
   selectedRaceData.value = await useRaceData(selectedRaceKey, props.type, props.version)
 
-})
+}, { immediate: true })
 
 const places = [1, 2, 3, 4];
 </script>

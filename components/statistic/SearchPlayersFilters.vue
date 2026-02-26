@@ -50,57 +50,53 @@
     </v-row>
 
     <div class="d-flex flex-nowrap align-start">
-        <div class="d-flex flex-wrap flex-grow-1" style="margin: 0 -8px">
-             <div
-                v-for="(player, index) in internalFilters.filters"
-                :key="player._uid"
-                class="pa-2"
-                style="width: 250px"
-            >
-                <div class="d-flex align-center justify-space-between mb-2">
-                <span class="text-subtitle-2">Player {{ index + 1 }}</span>
-                <v-btn
-                    v-if="internalFilters.filters.length > 1"
-                    icon
-                    density="comfortable"
-                    variant="text"
-                    color="error"
-                    size="small"
-                    @click="removePlayer(index)"
-                >
-                    <v-icon>{{ mdiDelete }}</v-icon>
-                </v-btn>
-                </div>
-
-                <div class="d-flex flex-column gap-2">
-                    <PlayerFilterItem
-                        v-model="internalFilters.filters[index]"
-                        :type="internalFilters.type"
-                        :version="internalFilters.version"
-                    />
-                </div>
-            </div>
-
-
-              <div v-if="internalFilters.filters.length < 4"
-                  class="d-flex align-center justify-center rounded cursor-pointer transition-swing"
-                  @click="addPlayer"
-                  style="border: 2px dashed rgba(var(--v-theme-on-surface), 0.12);  width: 200px;"
-              >
-                    <v-icon size="64" color="medium-emphasis">{{ mdiPlus }}</v-icon>
-              </div>
-
-        </div>
-
-        <div class="d-flex flex-column gap-4 mt-auto ml-4" style="width: 150px">
+      <div class="d-flex flex-wrap flex-grow-1" style="margin: 0 -8px">
+        <div
+          v-for="(player, index) in internalFilters.filters"
+          :key="player._uid"
+          class="pa-2"
+          style="width: 250px"
+        >
+          <div class="d-flex align-center justify-space-between mb-2">
+            <span class="text-subtitle-2">Player {{ index + 1 }}</span>
             <v-btn
-                color="primary"
-                @click="applyFilters"
-                block
+              v-if="internalFilters.filters.length > 1"
+              icon
+              density="comfortable"
+              variant="text"
+              color="error"
+              size="small"
+              @click="removePlayer(index)"
             >
-                Search
+              <v-icon>{{ mdiDelete }}</v-icon>
             </v-btn>
+          </div>
+
+          <div class="d-flex flex-column gap-2">
+            <PlayerFilterItem
+              v-model="internalFilters.filters[index]"
+              :type="internalFilters.type"
+              :version="internalFilters.version"
+            />
+          </div>
         </div>
+
+        <div
+          v-if="internalFilters.filters.length < 4"
+          class="d-flex align-center justify-center rounded cursor-pointer transition-swing"
+          @click="addPlayer"
+          style="
+            border: 2px dashed rgba(var(--v-theme-on-surface), 0.12);
+            width: 200px;
+          "
+        >
+          <v-icon size="64" color="medium-emphasis">{{ mdiPlus }}</v-icon>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column gap-4 mt-auto ml-4" style="width: 150px">
+        <v-btn color="primary" @click="applyFilters" block> Search </v-btn>
+      </div>
     </div>
   </div>
 </template>
@@ -108,11 +104,15 @@
 <script setup lang="ts">
 import { mdiDelete, mdiPlus } from '@mdi/js';
 import { versionTypeTitles } from '~/types/app';
-import type { SearchPlayersFilters, StatisticMeta, PlayerFilter } from '~/types/statistic';
+import type {
+  SearchPlayersFilters,
+  StatisticMeta,
+  PlayerFilter,
+} from '~/types/statistic';
 import PlayerFilterItem from './parts/PlayerFilterItem.vue';
 import { dataFiles } from '~/data';
 import { sortVersionObjCb } from '~/utils/array';
-import MatchSearchByIdUrl from './parts/MatchSearchByIdUrl.vue'
+import MatchSearchByIdUrl from './parts/MatchSearchByIdUrl.vue';
 
 const props = defineProps<{
   modelValue: SearchPlayersFilters;
@@ -150,7 +150,7 @@ const versions = computed(() => {
 
 type PlayerFilterWithUid = PlayerFilter & { _uid: number };
 interface UiFilters extends Omit<SearchPlayersFilters, 'filters'> {
-    filters: PlayerFilterWithUid[];
+  filters: PlayerFilterWithUid[];
 }
 
 const generateUid = () => Date.now() + Math.random();
@@ -167,10 +167,10 @@ const items = computed(() => {
 });
 
 const getCleanFilters = (filters: UiFilters): SearchPlayersFilters => {
-    return {
-        ...filters,
-        filters: filters.filters.map(({ _uid, ...rest }) => rest)
-    };
+  return {
+    ...filters,
+    filters: filters.filters.map(({ _uid, ...rest }) => rest),
+  };
 };
 
 watch(
@@ -178,8 +178,11 @@ watch(
   () => {
     if (items.value.length === 0) return;
     // Only set default if current version is invalid or empty
-    if (!internalFilters.value.version || !items.value.some(i => i.value === internalFilters.value.version)) {
-        internalFilters.value.version = items.value[0]?.value ?? '';
+    if (
+      !internalFilters.value.version ||
+      !items.value.some((i) => i.value === internalFilters.value.version)
+    ) {
+      internalFilters.value.version = items.value[0]?.value ?? '';
     }
   },
   { immediate: true },
@@ -193,9 +196,9 @@ watch(
 
     // We only update if fundamental props change, not just ref updates
     if (JSON.stringify(newVal) !== JSON.stringify(currentClean)) {
-       // Preserve existing state if IDs match where possible, else regenerate
-       // Actually simpler to just rebuild state if prop forces update
-       internalFilters.value = {
+      // Preserve existing state if IDs match where possible, else regenerate
+      // Actually simpler to just rebuild state if prop forces update
+      internalFilters.value = {
         ...newVal,
         withLeavers: true,
         filters: newVal.filters.map((f) => ({ ...f, _uid: generateUid() })),
@@ -217,9 +220,9 @@ watch(
 watch(
   () => internalFilters.value.version,
   (newVersion, oldVersion) => {
-      if (oldVersion && newVersion !== oldVersion) {
-        internalFilters.value.filters = [{ _uid: generateUid() }];
-      }
+    if (oldVersion && newVersion !== oldVersion) {
+      internalFilters.value.filters = [{ _uid: generateUid() }];
+    }
   },
 );
 
@@ -242,10 +245,10 @@ const removePlayer = (index: number) => {
 
 <style scoped>
 .gap-2 {
-    gap: 8px;
+  gap: 8px;
 }
 .gap-4 {
-    gap: 16px;
+  gap: 16px;
 }
 .transition-swing {
   transition: 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);

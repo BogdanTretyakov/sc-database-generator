@@ -1,5 +1,9 @@
 import type { IRaceData, IUpgradeObject } from '~/data/types';
-import type { MatchPlayerInfo, PlayerEvents, TimelineEvent } from '~/types/statistic';
+import type {
+  MatchPlayerInfo,
+  PlayerEvents,
+  TimelineEvent,
+} from '~/types/statistic';
 
 export const getMappedEventType = (rawType: string): string => {
   if (rawType.startsWith('UP_FORT')) return 'FORT_UPGRADE';
@@ -9,11 +13,20 @@ export const getMappedEventType = (rawType: string): string => {
   return rawType;
 };
 
-export const getUpgradeTimer = (raceData: IRaceData | undefined, upgradeId: string, level: number): number => {
+export const getUpgradeTimer = (
+  raceData: IRaceData | undefined,
+  upgradeId: string,
+  level: number,
+): number => {
   let timer = 0;
 
   const checkUpgrade = (upg: IUpgradeObject | undefined) => {
-    if (upg && upg.id === upgradeId && upg.timers && upg.timers.length >= level) {
+    if (
+      upg &&
+      upg.id === upgradeId &&
+      upg.timers &&
+      upg.timers.length >= level
+    ) {
       timer = upg.timers[level - 1] * 1000;
       return true;
     }
@@ -55,77 +68,82 @@ export const getUpgradeTimer = (raceData: IRaceData | undefined, upgradeId: stri
 export const mapPlayerEventsToTimeline = (
   players: MatchPlayerInfo[],
   racesData: Record<string, any>,
-  activeFilters: string[]
+  activeFilters: string[],
 ): TimelineEvent[] => {
   const events: TimelineEvent[] = [];
 
-  players.forEach(player => {
-    const playerRaceData = racesData[player.race]?.raceData as IRaceData | undefined;
+  players.forEach((player) => {
+    const playerRaceData = racesData[player.race]?.raceData as
+      | IRaceData
+      | undefined;
     const currentUpgradeLevels: Record<string, number> = {};
     const upgradeBaseLevels: Record<string, number> = {};
 
     if (playerRaceData) {
-      const allUpgrades = [
-        playerRaceData.baseUpgrades?.melee,
-        playerRaceData.baseUpgrades?.armor,
-        playerRaceData.baseUpgrades?.range,
-        playerRaceData.baseUpgrades?.wall,
-        ...(playerRaceData.towerUpgrades || []),
-        ...(playerRaceData.magic || []),
-        ...(playerRaceData.bonuses?.flatMap(b => b.upgrades || []) || [])
-      ].filter(Boolean) as IUpgradeObject[];
+      const bonusUpgrades = (playerRaceData.bonuses?.flatMap(
+        (b) => b.upgrades || [],
+      ) || []) as IUpgradeObject[];
 
-      allUpgrades.forEach(u => {
+      bonusUpgrades.forEach((u) => {
         if (u.level) upgradeBaseLevels[u.id] = u.level;
       });
     }
 
     if (player.events) {
-      player.events.forEach((event: { type: string, time: number, id: string }) => {
-        if (['BAN_RACE', 'INITIAL_RACE'].includes(event.type) && event.time === 0) {
-          return;
-        }
-
-        const mappedType = getMappedEventType(event.type);
-        if (!activeFilters.includes(mappedType)) {
-          return;
-        }
-
-        let level = 1;
-        let timeOffset = 0;
-
-        if (['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(event.type)) {
-          if (currentUpgradeLevels[event.id] === undefined) {
-            currentUpgradeLevels[event.id] = upgradeBaseLevels[event.id] || 0;
+      player.events.forEach(
+        (event: { type: string; time: number; id: string }) => {
+          if (
+            ['BAN_RACE', 'INITIAL_RACE'].includes(event.type) &&
+            event.time === 0
+          ) {
+            return;
           }
-          currentUpgradeLevels[event.id] += 1;
-          level = currentUpgradeLevels[event.id];
-          if (playerRaceData) {
-            timeOffset = getUpgradeTimer(playerRaceData, event.id, level);
-          }
-        } else if (event.type === 'CANCEL_UPGRADE') {
-          const baseLevel = upgradeBaseLevels[event.id] || 0;
-          if (currentUpgradeLevels[event.id] === undefined) {
-             currentUpgradeLevels[event.id] = baseLevel;
-          }
-          level = currentUpgradeLevels[event.id] || 1;
-          if (currentUpgradeLevels[event.id] > baseLevel) {
-            currentUpgradeLevels[event.id]--;
-          }
-        } else if (event.type.startsWith('UP_FORT')) {
-          level = parseInt(event.type.replace('UP_FORT', ''), 10) || 1;
-        } else if (event.type.startsWith('UP_BARRACK')) {
-          level = parseInt(event.type.replace('UP_BARRACK', ''), 10) || 1;
-        }
 
-        events.push({
-          playerId: player.id,
-          time: event.time + timeOffset,
-          level,
-          id: event.id,
-          type: event.type as PlayerEvents,
-        });
-      });
+          const mappedType = getMappedEventType(event.type);
+          if (!activeFilters.includes(mappedType)) {
+            return;
+          }
+
+          let level = 1;
+          let timeOffset = 0;
+
+          if (
+            ['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(
+              event.type,
+            )
+          ) {
+            if (currentUpgradeLevels[event.id] === undefined) {
+              currentUpgradeLevels[event.id] = upgradeBaseLevels[event.id] || 0;
+            }
+            currentUpgradeLevels[event.id] += 1;
+            level = currentUpgradeLevels[event.id];
+            if (playerRaceData) {
+              timeOffset = getUpgradeTimer(playerRaceData, event.id, level);
+            }
+          } else if (event.type === 'CANCEL_UPGRADE') {
+            const baseLevel = upgradeBaseLevels[event.id] || 0;
+            if (currentUpgradeLevels[event.id] === undefined) {
+              currentUpgradeLevels[event.id] = baseLevel;
+            }
+            level = currentUpgradeLevels[event.id] || 1;
+            if (currentUpgradeLevels[event.id] > baseLevel) {
+              currentUpgradeLevels[event.id]--;
+            }
+          } else if (event.type.startsWith('UP_FORT')) {
+            level = parseInt(event.type.replace('UP_FORT', ''), 10) || 1;
+          } else if (event.type.startsWith('UP_BARRACK')) {
+            level = parseInt(event.type.replace('UP_BARRACK', ''), 10) || 1;
+          }
+
+          events.push({
+            playerId: player.id,
+            time: event.time + timeOffset,
+            level,
+            id: event.id,
+            type: event.type as PlayerEvents,
+          });
+        },
+      );
     }
   });
 
@@ -152,7 +170,7 @@ export interface PlayerEconomyData {
 export const calculatePlayerEconomy = (
   events: TimelineEvent[],
   raceData: IRaceData,
-  targetTimeMs: number
+  targetTimeMs: number,
 ): PlayerEconomyData => {
   const result: PlayerEconomyData = {
     unitsCost: 0,
@@ -173,18 +191,33 @@ export const calculatePlayerEconomy = (
 
   const currentUpgradeLevels: Record<string, number> = {};
 
-  const itemsMap = Object.fromEntries([
-    ...raceData.heroes,
-    ...Object.values(raceData.units),
-    ...Object.values(raceData.baseUpgrades),
-    ...raceData.towerUpgrades,
-    ...raceData.magic,
-    ...raceData.bonuses,
-    ...raceData.bonuses.flatMap(b => [...(b.units ?? []), ...(b.upgrades ?? [])]),
-    ...raceData.buildings.fort,
-    raceData.buildings.tower,
-    ...raceData.buildings.barrack,
-  ].map(item => [item.id, item]));
+  // Pre-fill initial bonus upgrades levels so they appear in economy even without events
+  raceData.bonuses?.forEach(b => {
+    b.upgrades?.forEach(u => {
+      if (u.level) {
+        result.bonusUpgradeLevels[u.id] = u.level;
+        currentUpgradeLevels[u.id] = u.level;
+      }
+    });
+  });
+
+  const itemsMap = Object.fromEntries(
+    [
+      ...raceData.heroes,
+      ...Object.values(raceData.units),
+      ...Object.values(raceData.baseUpgrades),
+      ...raceData.towerUpgrades,
+      ...raceData.magic,
+      ...raceData.bonuses,
+      ...raceData.bonuses.flatMap((b) => [
+        ...(b.units ?? []),
+        ...(b.upgrades ?? []),
+      ]),
+      ...raceData.buildings.fort,
+      raceData.buildings.tower,
+      ...raceData.buildings.barrack,
+    ].map((item) => [item.id, item]),
+  );
 
   for (const event of events) {
     if (event.time > targetTimeMs) {
@@ -203,18 +236,28 @@ export const calculatePlayerEconomy = (
       if (item && item.type === 'hero') {
         result.heroesCost += (item as any).cost || 0;
       }
-    } else if (['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(event.type)) {
+    } else if (
+      ['BASE_UPGRADE', 'TOWER_UPGRADE', 'BONUS_UPGRADE'].includes(event.type)
+    ) {
+      const isBonus =
+        event.type === 'BONUS_UPGRADE' ||
+        (!raceData.magic?.some((m) => m.id === event.id) &&
+          !Object.values(raceData.baseUpgrades).some(
+            (u) => u.id === event.id,
+          ) &&
+          raceData.bonuses.some(
+            (b) =>
+              b.upgrades?.some((u) => u.id === event.id) || b.id === event.id,
+          ));
+
       if (currentUpgradeLevels[event.id] === undefined) {
-        currentUpgradeLevels[event.id] = (item as any)?.level || 0;
+        currentUpgradeLevels[event.id] = 0;
       }
       currentUpgradeLevels[event.id] += 1;
 
       if (event.type === 'BASE_UPGRADE' || event.type === 'BONUS_UPGRADE') {
         // Find if this is a bonus upgrade instead of a regular base upgrade
         // We consider it a bonus upgrade if it's not in baseUpgrades or magic, but is in bonuses
-        const isBonus = event.type === 'BONUS_UPGRADE' || (!raceData.magic?.some(m => m.id === event.id) &&
-                        !Object.values(raceData.baseUpgrades).some(u => u.id === event.id) &&
-                        raceData.bonuses.some(b => b.upgrades?.some(u => u.id === event.id) || b.id === event.id));
         if (isBonus) {
           result.bonusUpgradeLevels[event.id] = currentUpgradeLevels[event.id];
         } else {
@@ -229,7 +272,8 @@ export const calculatePlayerEconomy = (
       if (item && item.type === 'upgrade') {
         result.totalUpgradeLevels++;
 
-        const upgCost = (item as unknown as { cost: number[] }).cost[levelIdx] || 0;
+        const upgCost =
+          (item as unknown as { cost: number[] }).cost[levelIdx] || 0;
         if (event.type === 'BASE_UPGRADE' || event.type === 'BONUS_UPGRADE') {
           result.baseUpgradesCost += upgCost;
         } else {
@@ -237,7 +281,19 @@ export const calculatePlayerEconomy = (
         }
       }
     } else if (event.type === 'CANCEL_UPGRADE') {
-      const baseLevel = (item as any)?.level || 0;
+      // We need to guess if it was base or tower based on raceData arrays, but since we don't know the exact previous event context easily, we can check if it's in towerUpgrades
+      const isTower = raceData.towerUpgrades.some((t) => t.id === event.id);
+      const isBonus =
+        !isTower &&
+        !raceData.magic?.some((m) => m.id === event.id) &&
+        !Object.values(raceData.baseUpgrades).some((u) => u.id === event.id) &&
+        raceData.bonuses.some(
+          (b) =>
+            b.upgrades?.some((u) => u.id === event.id) || b.id === event.id,
+        );
+
+      // Only bonus upgrades use the item's 'level' property as a base offset.
+      const baseLevel = isBonus ? (item as any)?.level || 0 : 0;
       if (currentUpgradeLevels[event.id] === undefined) {
         currentUpgradeLevels[event.id] = baseLevel;
       }
@@ -252,12 +308,10 @@ export const calculatePlayerEconomy = (
         result.totalUpgradeLevels--;
 
         // Find which type it was to decrement correctly
-        const upgCost = (item as unknown as { cost: number[] }).cost[levelBeforeCancel - 1] || 0;
+        const upgCost =
+          (item as unknown as { cost: number[] }).cost[levelBeforeCancel - 1] ||
+          0;
         const refund = Math.round(upgCost * 0.75);
-
-        // We need to guess if it was base or tower based on raceData arrays, but since we don't know the exact previous event context easily, we can check if it's in towerUpgrades
-        const isTower = raceData.towerUpgrades.some(t => t.id === event.id);
-        const isBonus = !isTower && !raceData.magic?.some(m => m.id === event.id) && !Object.values(raceData.baseUpgrades).some(u => u.id === event.id) && raceData.bonuses.some(b => b.upgrades?.some(u => u.id === event.id) || b.id === event.id);
 
         if (isTower) {
           result.towerUpgradeLevels[event.id] = currentUpgradeLevels[event.id];
@@ -270,18 +324,25 @@ export const calculatePlayerEconomy = (
           result.baseUpgradesCost -= refund;
         }
       }
-    } else if (event.type.startsWith('UP_FORT') || event.type.startsWith('UP_BARRACK')) {
+    } else if (
+      event.type.startsWith('UP_FORT') ||
+      event.type.startsWith('UP_BARRACK')
+    ) {
       const isFort = event.type.startsWith('UP_FORT');
-      const level = parseInt(event.type.replace(isFort ? 'UP_FORT' : 'UP_BARRACK', ''), 10) || 1;
+      const level =
+        parseInt(
+          event.type.replace(isFort ? 'UP_FORT' : 'UP_BARRACK', ''),
+          10,
+        ) || 1;
 
       if (isFort) {
         result.fortLevel = Math.max(result.fortLevel, level);
       } else {
-        const idx = result.barracksLevels.findIndex(l => l === level - 1);
+        const idx = result.barracksLevels.findIndex((l) => l === level - 1);
         if (idx !== -1) {
           result.barracksLevels[idx] = level;
         } else {
-          const fallbackIdx = result.barracksLevels.findIndex(l => l < level);
+          const fallbackIdx = result.barracksLevels.findIndex((l) => l < level);
           if (fallbackIdx !== -1) {
             result.barracksLevels[fallbackIdx] = level;
           }
@@ -290,11 +351,13 @@ export const calculatePlayerEconomy = (
       }
 
       // Building level 1 is free, index is level - 1
-      const buildingArray = isFort ? raceData.buildings.fort : raceData.buildings.barrack;
+      const buildingArray = isFort
+        ? raceData.buildings.fort
+        : raceData.buildings.barrack;
       if (buildingArray && buildingArray.length >= level) {
-         // The cost of the upgrade is the cost of the building at target level
-         const bldg = buildingArray[level - 1];
-         result.buildingsCost += (bldg as any).cost || 0;
+        // The cost of the upgrade is the cost of the building at target level
+        const bldg = buildingArray[level - 1];
+        result.buildingsCost += (bldg as any).cost || 0;
       }
     }
   }

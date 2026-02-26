@@ -5,9 +5,7 @@
       <div class="economy-summary mb-4">
         <div class="d-flex justify-space-between align-center py-1">
           <span class="text-caption text-medium-emphasis">Total Gold:</span>
-          <span class="font-weight-bold text-yellow"
-            >{{ totalCost }} </span
-          >
+          <span class="font-weight-bold text-yellow">{{ totalCost }} </span>
         </div>
         <v-divider class="my-1"></v-divider>
         <div class="d-flex justify-space-between align-center py-1">
@@ -19,14 +17,10 @@
           <span>{{ economy.heroesCost }}</span>
         </div>
         <div class="d-flex justify-space-between align-center py-1">
-          <span class="text-caption text-medium-emphasis"
-            >Upgrades Cost:</span
-          >
-          <span
-            >{{
-              economy.baseUpgradesCost + economy.towerUpgradesCost
-            }}</span
-          >
+          <span class="text-caption text-medium-emphasis">Upgrades Cost:</span>
+          <span>{{
+            economy.baseUpgradesCost + economy.towerUpgradesCost
+          }}</span>
         </div>
         <div class="d-flex justify-space-between align-center py-1">
           <span class="text-caption text-medium-emphasis">Buildings Cost:</span>
@@ -41,22 +35,36 @@
       <!-- Base Upgrades -->
       <template v-if="allBaseUpgrades.length">
         <DividerLabel class="mb-2 mt-4">
-          <span class="mx-2 text-caption text-grey text-no-wrap">Base Upgrades</span>
+          <span class="mx-2 text-caption text-grey text-no-wrap"
+            >Base Upgrades</span
+          >
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="allBaseUpgrades" v-slot="{ item }" disable-details>
-          <div class="position-relative d-inline-block" :class="{ 'unresearched': !economy.baseUpgradeLevels[item.id] }">
+        <WarGrid
+          class="mx-auto"
+          :items="allBaseUpgrades"
+          v-slot="{ item }"
+          disable-details
+        >
+          <div
+            class="position-relative d-inline-block"
+            :class="{ unresearched: !economy.baseUpgradeLevels[item.id] }"
+          >
             <DetailsTooltip
               :item="item"
               :src="raceIconsSrc"
               :coords="
                 !('level' in item) || (item.iconsCount ?? 0) <= 1
                   ? iconProps(item.id, item.iconsCount)
-                  : iconProps(`${item.id}-${economy.baseUpgradeLevels[item.id] || 1}`)
+                  : iconProps(
+                      `${item.id}-${economy.baseUpgradeLevels[item.id] || 1}`,
+                    )
               "
             />
-            <span v-if="economy.baseUpgradeLevels[item.id]" class="count-badge text-caption">{{
-              economy.baseUpgradeLevels[item.id]
-            }}</span>
+            <span
+              v-if="economy.baseUpgradeLevels[item.id]"
+              class="count-badge text-caption"
+              >{{ economy.baseUpgradeLevels[item.id] }}</span
+            >
           </div>
         </WarGrid>
       </template>
@@ -64,22 +72,37 @@
       <!-- Tower Upgrades -->
       <template v-if="allTowerUpgrades.length">
         <DividerLabel class="mb-2 mt-4">
-          <span class="mx-2 text-caption text-grey text-no-wrap">Tower Upgrades</span>
+          <span class="mx-2 text-caption text-grey text-no-wrap"
+            >Tower Upgrades</span
+          >
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="allTowerUpgrades" v-slot="{ item }" :restrictedSlots="['Q', 'W']" disable-details>
-          <div class="position-relative d-inline-block" :class="{ 'unresearched': !economy.towerUpgradeLevels[item.id] }">
+        <WarGrid
+          class="mx-auto"
+          :items="allTowerUpgrades"
+          v-slot="{ item }"
+          :restrictedSlots="['Q', 'W']"
+          disable-details
+        >
+          <div
+            class="position-relative d-inline-block"
+            :class="{ unresearched: !economy.towerUpgradeLevels[item.id] }"
+          >
             <DetailsTooltip
               :item="item"
               :src="raceIconsSrc"
               :coords="
                 !('level' in item) || (item.iconsCount ?? 0) <= 1
                   ? iconProps(item.id, item.iconsCount)
-                  : iconProps(`${item.id}-${economy.towerUpgradeLevels[item.id] || 1}`)
+                  : iconProps(
+                      `${item.id}-${economy.towerUpgradeLevels[item.id] || 1}`,
+                    )
               "
             />
-            <span v-if="economy.towerUpgradeLevels[item.id]" class="count-badge text-caption">{{
-              economy.towerUpgradeLevels[item.id]
-            }}</span>
+            <span
+              v-if="economy.towerUpgradeLevels[item.id]"
+              class="count-badge text-caption"
+              >{{ economy.towerUpgradeLevels[item.id] }}</span
+            >
           </div>
         </WarGrid>
       </template>
@@ -87,9 +110,17 @@
       <!-- Buildings -->
       <template v-if="fortAndBarracks.length">
         <DividerLabel class="mb-2">
-          <span class="mx-2 text-caption text-grey text-no-wrap">Buildings</span>
+          <span class="mx-2 text-caption text-grey text-no-wrap"
+            >Buildings</span
+          >
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="fortAndBarracks" skip-hotkey v-slot="{ item }" disable-details>
+        <WarGrid
+          class="mx-auto"
+          :items="fortAndBarracks"
+          skip-hotkey
+          v-slot="{ item }"
+          disable-details
+        >
           <div class="position-relative d-inline-block">
             <DetailsTooltip
               :item="item"
@@ -108,7 +139,12 @@
         <DividerLabel class="mb-2">
           <span class="mx-2 text-caption text-grey">Heroes</span>
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="purchasedHeroes" v-slot="{ item }" disable-details>
+        <WarGrid
+          class="mx-auto"
+          :items="purchasedHeroes"
+          v-slot="{ item }"
+          disable-details
+        >
           <div class="position-relative d-inline-block">
             <DetailsTooltip
               :item="item"
@@ -127,7 +163,12 @@
         <DividerLabel class="mb-2 mt-4">
           <span class="mx-2 text-caption text-grey">Units</span>
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="purchasedUnits" v-slot="{ item }" disable-details>
+        <WarGrid
+          class="mx-auto"
+          :items="purchasedUnits"
+          v-slot="{ item }"
+          disable-details
+        >
           <div class="position-relative d-inline-block">
             <DetailsTooltip
               :item="item"
@@ -143,9 +184,16 @@
       <!-- Bonus Upgrades -->
       <template v-if="purchasedBonusUpgrades.length">
         <DividerLabel class="mb-2 mt-4">
-          <span class="mx-2 text-caption text-grey text-no-wrap">Bonus Upgrades</span>
+          <span class="mx-2 text-caption text-grey text-no-wrap"
+            >Bonus Upgrades</span
+          >
         </DividerLabel>
-        <WarGrid class="mx-auto" :items="purchasedBonusUpgrades" v-slot="{ item }" disable-details>
+        <WarGrid
+          class="mx-auto"
+          :items="purchasedBonusUpgrades"
+          v-slot="{ item }"
+          disable-details
+        >
           <div class="position-relative d-inline-block">
             <DetailsTooltip
               :item="item"
@@ -153,7 +201,9 @@
               :coords="
                 !('level' in item) || (item.iconsCount ?? 0) <= 1
                   ? iconProps(item.id, item.iconsCount)
-                  : iconProps(`${item.id}-${economy.bonusUpgradeLevels[item.id]}`)
+                  : iconProps(
+                      `${item.id}-${economy.bonusUpgradeLevels[item.id]}`,
+                    )
               "
             />
             <span class="count-badge text-caption">{{
@@ -182,19 +232,18 @@ const props = defineProps<{
   economy: PlayerEconomyData;
 }>();
 
-
 const totalCost = computed(
   () =>
     props.economy.unitsCost +
     props.economy.heroesCost +
     props.economy.baseUpgradesCost +
     props.economy.towerUpgradesCost +
-    props.economy.buildingsCost
+    props.economy.buildingsCost,
 );
 
 const purchasedHeroes = computed(() => {
   return props.raceData.heroes.filter(
-    (h) => props.economy.heroesCount[h.id] > 0
+    (h) => props.economy.heroesCount[h.id] > 0,
   );
 });
 
@@ -202,7 +251,7 @@ const purchasedUnits = computed(() => {
   const unitsObj = props.raceData.units;
   const arr = Object.values(unitsObj);
   // Also add any bonus units the race might have
-  props.raceData.bonuses.forEach(b => {
+  props.raceData.bonuses.forEach((b) => {
     if (b.units) {
       arr.push(...b.units);
     }
@@ -225,7 +274,7 @@ const allTowerUpgrades = computed(() => {
 
 const purchasedBonusUpgrades = computed(() => {
   const arr: any[] = [];
-  props.raceData.bonuses.forEach(b => {
+  props.raceData.bonuses.forEach((b) => {
     if (b.upgrades) {
       arr.push(...b.upgrades);
     }
@@ -238,7 +287,9 @@ const fortAndBarracks = computed(() => {
 
   if (props.economy.fortLevel) {
     const fortLvl = props.economy.fortLevel;
-    const fortItem = props.raceData.buildings.fort[fortLvl - 1] || props.raceData.buildings.fort[0];
+    const fortItem =
+      props.raceData.buildings.fort[fortLvl - 1] ||
+      props.raceData.buildings.fort[0];
     if (fortItem) {
       arr.push({ ...fortItem, level: fortLvl, uid: `${fortItem.id}_fort` });
     }
@@ -246,7 +297,9 @@ const fortAndBarracks = computed(() => {
 
   if (props.economy.barracksLevels) {
     props.economy.barracksLevels.forEach((bLvl, i) => {
-      const bItem = props.raceData.buildings.barrack[bLvl - 1] || props.raceData.buildings.barrack[0];
+      const bItem =
+        props.raceData.buildings.barrack[bLvl - 1] ||
+        props.raceData.buildings.barrack[0];
       if (bItem) {
         arr.push({ ...bItem, level: bLvl, uid: `${bItem.id}_barrack_${i}` });
       }
